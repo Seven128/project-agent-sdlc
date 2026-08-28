@@ -57,8 +57,14 @@ test("behavioral Claim proof needs semantic replacement even with an unrelated A
   try {
     const control =
       fixture.contract.outcomes[0].acceptance.counterfactual_controls[0];
-    control.claims = ["semantic_fact.fact.first.observable"];
-    control.expected_assertion_failures = ["first-semantic-fact"];
+    control.claims = [
+      "semantic_fact.fact.first.observable",
+      "semantic_fact.fact.first.architecture-boundary",
+    ];
+    control.expected_assertion_failures = [
+      "first-semantic-fact",
+      "first-architecture-semantic-fact",
+    ];
     assert.ok(
       fixture.contract.outcomes[0].acceptance.checks[0].artifact_globs.length,
     );
@@ -99,6 +105,17 @@ test("a semantic witness on another Check cannot satisfy the current Check", asy
     ];
     outcome.applicability.push(otherApplicability);
     outcome.product.result_applicability_refs.push(otherApplicability.key);
+    const architectureFactBinding =
+      outcome.semantic_fact_bindings.facts.find((binding) =>
+        binding.fact_ref.endsWith(".architecture-boundary"),
+      );
+    const architectureFactAssertion = first.positive_assertions.find(
+      (assertion) => assertion.key === "first-architecture-semantic-fact",
+    );
+    assert.ok(architectureFactBinding);
+    assert.ok(architectureFactAssertion);
+    architectureFactBinding.applicability_ref = otherApplicability.key;
+    architectureFactAssertion.applicability_ref = otherApplicability.key;
     second.key = "second-check";
     process.env.TY_CONTEXT_SENSITIVITY_OTHER_CHECK ??= "fixture-other-check";
     second.environment_requirements = [
@@ -120,8 +137,14 @@ test("a semantic witness on another Check cannot satisfy the current Check", asy
     outcome.acceptance.checks.push(second);
     const semanticControl = outcome.acceptance.counterfactual_controls[0];
     const otherCheckControl = structuredClone(semanticControl);
-    semanticControl.claims = ["semantic_fact.fact.first.observable"];
-    semanticControl.expected_assertion_failures = ["first-semantic-fact"];
+    semanticControl.claims = [
+      "semantic_fact.fact.first.observable",
+      "semantic_fact.fact.first.architecture-boundary",
+    ];
+    semanticControl.expected_assertion_failures = [
+      "first-semantic-fact",
+      "first-architecture-semantic-fact",
+    ];
     otherCheckControl.key = "other-check-behavior";
     otherCheckControl.check_key = second.key;
     otherCheckControl.claims = ["result"];

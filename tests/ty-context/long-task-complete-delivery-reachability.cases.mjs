@@ -221,8 +221,21 @@ function optionalExactCrossSurfaceFixture() {
     obligationRef: "claim:first.result:first-root-success:ui_browser",
     proofSurface: "ui_browser",
   });
+  const externalCheck = {
+    ...structuredClone(machineCheck),
+    key: "exact-external-result-ui-check",
+    proof_surface: "ui_browser",
+    positive_assertions: [
+      {
+        ...structuredClone(machineCheck.positive_assertions[0]),
+        key: "exact-external-result-ui-assertion",
+      },
+    ],
+    negative_assertions: [],
+  };
   const compiledChecks = [
     {
+      ...structuredClone(machineCheck),
       key: machineCheck.key,
       outcome_key: "first",
       proof_surface: "runtime_behavior",
@@ -236,7 +249,8 @@ function optionalExactCrossSurfaceFixture() {
       },
     },
     {
-      key: "exact-external-result-ui-check",
+      ...structuredClone(externalCheck),
+      key: externalCheck.key,
       outcome_key: "first",
       proof_surface: "ui_browser",
       completion_role: "semantic",
@@ -845,16 +859,18 @@ test("an admitted machine route fails closed beside an unresolved blocking Exter
     manifest: fixtureSemanticManifest(),
     compiled_checks: [
       {
+        ...structuredClone(staticResultCheck),
         key: "first-result-static-check",
         outcome_key: "first",
         completion_role: "semantic",
         observation_authorities: [
-          {
-            assertion_ref: "first-result-static",
-            claim_refs: ["result"],
-            obligation_ref: "claim:first.result",
+          compiledExactClaimAuthority({
+            assertionRef: "first-result-static",
             authority: "package_process_json_exact",
-          },
+            obligationRef:
+              "claim:first.result:first-root-success:runtime_behavior",
+            proofSurface: "runtime_behavior",
+          }),
         ],
         required_evidence_capabilities: {
           "first-result-static": ["target_runtime"],
@@ -1156,8 +1172,21 @@ test("an optional equivalent External surface is advisory when one Machine route
     ],
   };
   contract.global.acceptance.external_confirmations = [confirmation];
+  const externalCheck = {
+    ...structuredClone(machineCheck),
+    key: "external-result-ui-check",
+    proof_surface: "ui_browser",
+    positive_assertions: [
+      {
+        ...structuredClone(machineCheck.positive_assertions[0]),
+        key: "external-result-ui-assertion",
+      },
+    ],
+    negative_assertions: [],
+  };
   const compiledChecks = [
     {
+      ...structuredClone(machineCheck),
       key: machineCheck.key,
       outcome_key: "first",
       proof_surface: "runtime_behavior",
@@ -1179,7 +1208,8 @@ test("an optional equivalent External surface is advisory when one Machine route
       },
     },
     {
-      key: "external-result-ui-check",
+      ...structuredClone(externalCheck),
+      key: externalCheck.key,
       outcome_key: "first",
       proof_surface: "ui_browser",
       completion_role: "semantic",
@@ -1389,12 +1419,26 @@ test("optional cross-surface routes with different Expected are ambiguous", () =
       ],
     },
   ];
+  const externalCheck = {
+    ...structuredClone(machineCheck),
+    key: "different-expected-external-ui-check",
+    proof_surface: "ui_browser",
+    positive_assertions: [
+      {
+        ...structuredClone(machineCheck.positive_assertions[0]),
+        key: "different-expected-external-ui-assertion",
+        expected: false,
+      },
+    ],
+    negative_assertions: [],
+  };
   const reachability = compileAcceptanceReachability({
     contract,
     claims: compileProductClaimCoverage(contract, { allow_uncovered: true }),
     manifest: fixtureSemanticManifest(),
     compiled_checks: [
       {
+        ...structuredClone(machineCheck),
         key: machineCheck.key,
         outcome_key: "first",
         proof_surface: "runtime_behavior",
@@ -1417,7 +1461,8 @@ test("optional cross-surface routes with different Expected are ambiguous", () =
         },
       },
       {
-        key: "different-expected-external-ui-check",
+        ...structuredClone(externalCheck),
+        key: externalCheck.key,
         outcome_key: "first",
         proof_surface: "ui_browser",
         completion_role: "semantic",
@@ -1515,16 +1560,18 @@ test("non-equivalent optional proof surfaces fail closed as proof-surface ambigu
     manifest: fixtureSemanticManifest(),
     compiled_checks: [
       {
+        ...structuredClone(machineCheck),
         key: machineCheck.key,
         outcome_key: "first",
         completion_role: "semantic",
         observation_authorities: [
-          {
-            assertion_ref: "machine-result-runtime-assertion",
-            claim_refs: ["result"],
-            obligation_ref: "claim:first.result",
+          compiledExactClaimAuthority({
+            assertionRef: "machine-result-runtime-assertion",
             authority: "package_process_json_exact",
-          },
+            obligationRef:
+              "claim:first.result:first-root-success:runtime_behavior",
+            proofSurface: "runtime_behavior",
+          }),
         ],
         required_evidence_capabilities: {
           "machine-result-runtime-assertion": ["target_runtime"],
@@ -1554,6 +1601,7 @@ test("multiple admitted machine routes are authority-ambiguous instead of first-
     allow_uncovered: true,
   });
   const compiled = [check, duplicate].map((row) => ({
+    ...structuredClone(row),
     key: row.key,
     outcome_key: "first",
     completion_role: "semantic",
@@ -1563,6 +1611,9 @@ test("multiple admitted machine routes are authority-ambiguous instead of first-
         assertion_ref: assertion.key,
         claim_refs: [...assertion.claims],
         obligation_ref: `claim:${assertion.claims[0]}`,
+        target_ref: row.execution_target.target_ref,
+        proof_surface: row.proof_surface,
+        evidence_capabilities: [...assertion.evidence_capabilities],
         authority: "package_process_json_exact",
       })),
     required_evidence_capabilities: Object.fromEntries(

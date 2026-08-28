@@ -84,7 +84,7 @@ test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets un
     );
     assert.match(compiled.compiled_identity, /^[a-f0-9]{64}$/u);
     assert.equal(compiled.claim_coverage.uncovered_claims.length, 0);
-    assert.equal(compiled.claim_coverage.claims_total, 11);
+    assert.equal(compiled.claim_coverage.claims_total, 13);
     const check = compiled.outcomes[0].acceptance.checks[0];
     assert.equal(check.runner.resolved_cwd, "");
     assert.equal(check.runner.resolved_target, fixtureProductRootPath());

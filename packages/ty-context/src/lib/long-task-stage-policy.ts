@@ -1,5 +1,12 @@
-import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
-import { outcomeResultEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import type {
+  CompiledOutcomeV2,
+  DeliveryContractV2,
+} from "./long-task-delivery-types.js";
+import {
+  machineAuthorizedAssertions,
+  resultApplicabilityEffectivelyExternallyBlocked,
+  resultApplicabilityProfiles,
+} from "./long-task-acceptance-reachability-helpers.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 type Reporter = (message: string) => void;
@@ -10,6 +17,7 @@ export function validateDeliveryStages(
   options: {
     defer_completion_authority_closure?: boolean;
     acceptance_reachability?: AcceptanceReachabilityV1 | null;
+    compiled_outcomes?: readonly CompiledOutcomeV2[];
   } = {},
 ): void {
   unique(
@@ -73,6 +81,7 @@ function validateStageGateClosure(
   options: {
     defer_completion_authority_closure?: boolean;
     acceptance_reachability?: AcceptanceReachabilityV1 | null;
+    compiled_outcomes?: readonly CompiledOutcomeV2[];
   } = {},
 ): void {
   const outcomes = new Map(
@@ -110,15 +119,41 @@ function validateStageGateClosure(
       check.journey_roles.includes("stage_gate"),
     );
     if (options.defer_completion_authority_closure) continue;
-    const resultExternallyBlocked = outcomeResultEffectivelyExternallyBlocked(
-      options.acceptance_reachability,
-      gate.key,
+    const compiledGate = options.compiled_outcomes?.find(
+      (candidate) => candidate.key === gate.key,
     );
+    const gateProfiles = stageGateApplicabilityProfiles(gate);
+    const resultExternallyBlocked =
+      gateProfiles.length > 0 &&
+      gateProfiles.every((profile) =>
+        resultApplicabilityEffectivelyExternallyBlocked(
+          options.acceptance_reachability,
+          gate.key,
+          profile.key,
+          profile.target_ref,
+        ),
+      );
     if (!stageGateChecks.length && !resultExternallyBlocked)
       issue(report, "stage_gate_check_required", `${stage.key}:${gate.key}`);
     else if (
       !resultExternallyBlocked &&
-      !stageGateChecks.some((check) => provesGate(check, gate))
+      !gateProfiles.every(
+        (profile) =>
+          resultApplicabilityEffectivelyExternallyBlocked(
+            options.acceptance_reachability,
+            gate.key,
+            profile.key,
+            profile.target_ref,
+          ) ||
+          provesGate(
+            gate,
+            profile.key,
+            options.compiled_outcomes === undefined
+              ? undefined
+              : compiledGate?.acceptance.checks,
+            stageGateChecks,
+          ),
+      )
     )
       issue(
         report,
@@ -127,16 +162,24 @@ function validateStageGateClosure(
       );
     for (const targetRef of contract.task.target_profile.required_target_refs)
       if (
-        !outcomeResultEffectivelyExternallyBlocked(
-          options.acceptance_reachability,
-          gate.key,
-          targetRef,
-        ) &&
-        !stageGateChecks.some(
-          (check) =>
-            check.execution_target.target_ref === targetRef &&
-            check.execution_target.entrypoint === "root" &&
-            provesGate(check, gate),
+        !gateProfilesForTarget(gateProfiles, targetRef).length ||
+        !gateProfilesForTarget(gateProfiles, targetRef).every(
+          (profile) =>
+            resultApplicabilityEffectivelyExternallyBlocked(
+              options.acceptance_reachability,
+              gate.key,
+              profile.key,
+              profile.target_ref,
+            ) ||
+            provesGate(
+              gate,
+              profile.key,
+              options.compiled_outcomes === undefined
+                ? undefined
+                : compiledGate?.acceptance.checks,
+              stageGateChecks,
+              targetRef,
+            ),
         )
       )
         issue(
@@ -150,14 +193,22 @@ function validateStageGateClosure(
     if (
       !resultExternallyBlocked &&
       stageOutcomes.length > 1 &&
-      !stageGateChecks.some((check) =>
-        [...check.positive_assertions, ...check.negative_assertions].some(
-          (assertion) =>
-            assertion.evidence_capabilities.includes(
-              "cross_surface_consistency",
+      !(options.compiled_outcomes === undefined
+        ? stageGateChecks.some((check) =>
+            [...check.positive_assertions, ...check.negative_assertions].some(
+              (assertion) =>
+                assertion.claims.length > 0 &&
+                assertion.evidence_capabilities.includes(
+                  "cross_surface_consistency",
+                ),
             ),
-        ),
-      )
+          )
+        : machineAuthorizedAssertions(compiledGate?.acceptance.checks ?? [], {
+            check_journey_role: "stage_gate",
+            required_evidence_capability: "cross_surface_consistency",
+          }).some(
+            (match) => match.check.execution_target.entrypoint === "root",
+          ))
     )
       issue(
         report,
@@ -178,24 +229,62 @@ function validateStageGateClosure(
         );
 }
 
-function provesGate(
-  check: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"][number],
+function stageGateApplicabilityProfiles(
   gate: DeliveryContractV2["outcomes"][number],
+): ReturnType<typeof resultApplicabilityProfiles> {
+  const exactStageProfiles = resultApplicabilityProfiles(gate, {
+    journey_role: "stage_gate",
+  });
+  return exactStageProfiles.length
+    ? exactStageProfiles
+    : resultApplicabilityProfiles(gate);
+}
+
+function gateProfilesForTarget(
+  profiles: ReturnType<typeof resultApplicabilityProfiles>,
+  targetRef: string,
+): ReturnType<typeof resultApplicabilityProfiles> {
+  return profiles.filter((profile) => profile.target_ref === targetRef);
+}
+
+function provesGate(
+  gate: DeliveryContractV2["outcomes"][number],
+  applicabilityRef: string,
+  compiledChecks:
+    readonly CompiledOutcomeV2["acceptance"]["checks"][number][] | undefined,
+  declaredChecks: DeliveryContractV2["outcomes"][number]["acceptance"]["checks"],
+  targetRef?: string,
 ): boolean {
-  const assertions = [
-    ...check.positive_assertions,
-    ...check.negative_assertions,
-  ];
-  const provesResult =
-    assertions.some((assertion) => assertion.claims.includes("result")) ||
-    (gate.acceptance.population?.check_key === check.key &&
-      gate.acceptance.population.claims.includes("result"));
-  return (
-    provesResult &&
-    assertions.some((assertion) =>
-      assertion.evidence_capabilities.includes("target_runtime"),
+  if (compiledChecks !== undefined)
+    return machineAuthorizedAssertions(compiledChecks, {
+      local_claim_ref: "result",
+      applicability_ref: applicabilityRef,
+      target_ref: targetRef,
+      check_journey_role: "stage_gate",
+      required_evidence_capability: "target_runtime",
+    }).some((match) => match.check.execution_target.entrypoint === "root");
+  return declaredChecks.some((check) => {
+    if (
+      targetRef !== undefined &&
+      check.execution_target.target_ref !== targetRef
     )
-  );
+      return false;
+    if (check.execution_target.entrypoint !== "root") return false;
+    const assertions = [
+      ...check.positive_assertions,
+      ...check.negative_assertions,
+    ];
+    const provesResult =
+      assertions.some(
+        (assertion) =>
+          assertion.claims.includes("result") &&
+          assertion.applicability_ref === applicabilityRef &&
+          assertion.evidence_capabilities.includes("target_runtime"),
+      ) ||
+      (gate.acceptance.population?.check_key === check.key &&
+        gate.acceptance.population.claims.includes("result"));
+    return provesResult;
+  });
 }
 
 function outcomeDependsOn(

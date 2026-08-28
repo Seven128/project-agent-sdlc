@@ -2,6 +2,7 @@ import type {
   ClaimApplicabilityV2,
   CompiledCheckV2,
   CompiledObservationAuthorityV2,
+  CompiledOutcomeV2,
   DeliveryCheckV2,
   DeliveryContractV2,
   EvidenceCapabilityV2,
@@ -9,6 +10,8 @@ import type {
   ProofSurface,
 } from "./long-task-delivery-types.js";
 import { DESIGN_RESOURCE_COMPARATORS } from "./design-resource-fact-enums.js";
+import { controlFieldFacts } from "./long-task-control-fields.js";
+import { designFactObligationDescriptors } from "./long-task-design-obligation.js";
 import type {
   AcceptanceObligationReachabilityV1,
   AcceptanceReachabilityV1,
@@ -42,37 +45,362 @@ export function effectiveExternalRouteRef(
   return `${confirmationRef}\0${sourceObligationRef}`;
 }
 
-export function outcomeResultEffectivelyExternallyBlocked(
+function effectiveBlockingExternalRows(
   reachability: AcceptanceReachabilityV1 | null | undefined,
-  outcomeKey: string,
-  targetRef?: string,
-): boolean {
-  const claimRef = `${outcomeKey}.result`;
-  return Boolean(
-    reachability?.effective_external_routes.some(
-      (row) =>
-        row.outcome_key === outcomeKey &&
-        row.claim_ref === claimRef &&
-        row.local_claim_ref === "result" &&
-        row.authority === "external_confirmation" &&
-        row.status === "external_fulfillable" &&
-        row.completion_role === "blocking" &&
-        row.acceptance_effect === "required" &&
-        (targetRef === undefined || row.target_ref === targetRef),
-    ),
+): AcceptanceReachabilityV1["effective_external_routes"] {
+  return (reachability?.effective_external_routes ?? []).filter(
+    (row) =>
+      row.authority === "external_confirmation" &&
+      row.status === "external_fulfillable" &&
+      row.completion_role === "blocking" &&
+      row.acceptance_effect === "required",
   );
 }
 
-export function allOutcomeResultsEffectivelyExternallyBlocked(
+function effectiveBlockingResultRows(
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+  outcomeKey: string,
+): AcceptanceReachabilityV1["effective_external_routes"] {
+  const claimRef = `${outcomeKey}.result`;
+  return effectiveBlockingExternalRows(reachability).filter(
+    (row) =>
+      row.outcome_key === outcomeKey &&
+      row.claim_ref === claimRef &&
+      row.local_claim_ref === "result",
+  );
+}
+
+export function resultApplicabilityEffectivelyExternallyBlocked(
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+  outcomeKey: string,
+  applicabilityRef: string,
+  targetRef: string,
+): boolean {
+  const rows = effectiveBlockingResultRows(reachability, outcomeKey).filter(
+    (row) =>
+      row.applicability_ref === applicabilityRef &&
+      row.target_ref === targetRef,
+  );
+  return rows.length === 1;
+}
+
+export function resultApplicabilityProfiles(
+  outcome: Pick<CompiledOutcomeV2, "applicability" | "product">,
+  options: {
+    target_ref?: string;
+    journey_role?: ClaimApplicabilityV2["journey_role"];
+  } = {},
+): ClaimApplicabilityV2[] {
+  const profiles = new Map(
+    outcome.applicability.map((profile) => [profile.key, profile]),
+  );
+  return outcome.product.result_applicability_refs
+    .map((ref) => profiles.get(ref))
+    .filter((profile): profile is ClaimApplicabilityV2 => Boolean(profile))
+    .filter(
+      (profile) =>
+        (options.target_ref === undefined ||
+          profile.target_ref === options.target_ref) &&
+        (options.journey_role === undefined ||
+          profile.journey_role === options.journey_role),
+    );
+}
+
+export function outcomeResultScopeFullyEffectivelyExternallyBlocked(
+  outcome: Pick<CompiledOutcomeV2, "key" | "applicability" | "product">,
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+  options: {
+    target_ref?: string;
+    journey_role?: ClaimApplicabilityV2["journey_role"];
+  } = {},
+): boolean {
+  const profiles = resultApplicabilityProfiles(outcome, options);
+  if (!profiles.length) return false;
+  const requiredRefs = new Set(profiles.map((profile) => profile.key));
+  const rows = effectiveBlockingResultRows(reachability, outcome.key).filter(
+    (row) => requiredRefs.has(row.applicability_ref),
+  );
+  return (
+    rows.length === profiles.length &&
+    profiles.every(
+      (profile) =>
+        rows.filter(
+          (row) =>
+            row.applicability_ref === profile.key &&
+            row.target_ref === profile.target_ref,
+        ).length === 1,
+    )
+  );
+}
+
+export function outcomeResultFullyEffectivelyExternallyBlocked(
+  outcome: Pick<CompiledOutcomeV2, "key" | "applicability" | "product">,
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+): boolean {
+  if (
+    resultApplicabilityProfiles(outcome).length !==
+    outcome.product.result_applicability_refs.length
+  )
+    return false;
+  return outcomeResultScopeFullyEffectivelyExternallyBlocked(
+    outcome,
+    reachability,
+  );
+}
+
+export function allOutcomeResultsFullyEffectivelyExternallyBlocked(
   contract: Pick<DeliveryContractV2, "outcomes">,
   reachability: AcceptanceReachabilityV1 | null | undefined,
 ): boolean {
   return (
     contract.outcomes.length > 0 &&
     contract.outcomes.every((outcome) =>
-      outcomeResultEffectivelyExternallyBlocked(reachability, outcome.key),
+      outcomeResultFullyEffectivelyExternallyBlocked(outcome, reachability),
     )
   );
+}
+
+interface UiClaimCoordinateV1 {
+  local_claim_ref: string;
+  applicability_ref: string;
+  target_ref: string;
+  proof_surface: ProofSurface;
+}
+
+export function outcomeUiProofFullyEffectivelyExternallyBlocked(
+  contract: DeliveryContractV2,
+  outcome: DeliveryContractV2["outcomes"][number],
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+): boolean {
+  const rows = effectiveBlockingExternalRows(reachability).filter(
+    (row) => row.outcome_key === outcome.key,
+  );
+  const designObligations = designFactObligationDescriptors(contract).filter(
+    (descriptor) => descriptor.outcome_key === outcome.key,
+  );
+  const designCovered = designObligations.every(
+    (descriptor) =>
+      rows.filter(
+        (row) =>
+          row.source_obligation_ref === descriptor.source_obligation_ref &&
+          row.claim_ref === descriptor.claim_ref &&
+          row.local_claim_ref === descriptor.local_claim_ref &&
+          row.applicability_ref === descriptor.applicability_ref &&
+          row.proof_surface === descriptor.proof_surface &&
+          row.fact_ref === descriptor.fact_ref &&
+          row.proof_ref === descriptor.source_obligation_ref,
+      ).length === 1,
+  );
+  if (!designCovered) return false;
+
+  const profiles = new Map(
+    outcome.applicability.map((profile) => [profile.key, profile]),
+  );
+  const claimApplicabilities = new Set<string>();
+  for (const control of outcome.product.controls)
+    for (const fact of controlFieldFacts(control))
+      for (const applicabilityRef of fact.applicability_refs)
+        claimApplicabilities.add(
+          `${`control.${control.key}.${fact.claim_field}`}\0${applicabilityRef}`,
+        );
+  for (const surface of outcome.product.surface_bindings)
+    for (const target of surface.design_targets) {
+      const check = outcome.acceptance.checks.find(
+        (candidate) => candidate.key === target.conformance_check_ref,
+      );
+      if (!check) return false;
+      const assertionRefs = new Set([
+        target.conformance_assertion_ref,
+        ...target.verification_method_bindings.map(
+          (binding) => binding.assertion_ref,
+        ),
+        ...(target.symbolic_method_bindings ?? []).map(
+          (binding) => binding.assertion_ref,
+        ),
+        ...(target.symbolic_certificate_binding
+          ? [target.symbolic_certificate_binding.assertion_ref]
+          : []),
+      ]);
+      for (const assertion of [
+        ...check.positive_assertions,
+        ...check.negative_assertions,
+      ])
+        if (
+          assertionRefs.has(assertion.key) &&
+          assertion.claims.length === 1 &&
+          assertion.applicability_ref
+        )
+          claimApplicabilities.add(
+            `${assertion.claims[0]}\0${assertion.applicability_ref}`,
+          );
+    }
+
+  const coordinates = new Map<string, UiClaimCoordinateV1>();
+  for (const entry of claimApplicabilities) {
+    const [localClaimRef, applicabilityRef] = entry.split("\0");
+    const profile = profiles.get(applicabilityRef);
+    if (!profile) return false;
+    let resolved = false;
+    for (const check of outcome.acceptance.checks)
+      for (const assertion of [
+        ...check.positive_assertions,
+        ...check.negative_assertions,
+      ])
+        if (
+          assertion.claims.length === 1 &&
+          assertion.claims[0] === localClaimRef &&
+          assertion.applicability_ref === applicabilityRef
+        ) {
+          const coordinate = {
+            local_claim_ref: localClaimRef,
+            applicability_ref: applicabilityRef,
+            target_ref: profile.target_ref,
+            proof_surface: check.proof_surface,
+          };
+          coordinates.set(
+            [
+              coordinate.local_claim_ref,
+              coordinate.applicability_ref,
+              coordinate.target_ref,
+              coordinate.proof_surface,
+            ].join("\0"),
+            coordinate,
+          );
+          resolved = true;
+        }
+    if (!resolved) return false;
+  }
+  if (!designObligations.length && !coordinates.size) return false;
+  return [...coordinates.values()].every(
+    (coordinate) =>
+      rows.filter(
+        (row) =>
+          row.claim_ref === `${outcome.key}.${coordinate.local_claim_ref}` &&
+          row.local_claim_ref === coordinate.local_claim_ref &&
+          row.applicability_ref === coordinate.applicability_ref &&
+          row.target_ref === coordinate.target_ref &&
+          row.proof_surface === coordinate.proof_surface &&
+          row.fact_ref === null &&
+          row.proof_ref === null,
+      ).length === 1,
+  );
+}
+
+export interface MachineAuthorizedAssertionQueryV1 {
+  outcome_key?: string | null;
+  check_key?: string;
+  assertion_key?: string;
+  local_claim_ref?: string;
+  applicability_ref?: string;
+  target_ref?: string;
+  check_journey_role?: ClaimApplicabilityV2["journey_role"];
+  proof_surface?: ProofSurface;
+  polarity?: "positive" | "negative";
+  required_evidence_capability?: EvidenceCapabilityV2;
+}
+
+export interface MachineAuthorizedAssertionV1 {
+  check: CompiledCheckV2;
+  assertion: CompiledCheckV2["positive_assertions"][number];
+  authority: CompiledObservationAuthorityV2;
+  polarity: "positive" | "negative";
+}
+
+export function machineAuthorizedAssertions(
+  checks: readonly CompiledCheckV2[],
+  query: MachineAuthorizedAssertionQueryV1 = {},
+): MachineAuthorizedAssertionV1[] {
+  const matches: MachineAuthorizedAssertionV1[] = [];
+  for (const check of checks) {
+    if (check.completion_role !== "semantic") continue;
+    if (
+      query.outcome_key !== undefined &&
+      check.outcome_key !== query.outcome_key
+    )
+      continue;
+    if (query.check_key !== undefined && check.key !== query.check_key)
+      continue;
+    if (
+      query.target_ref !== undefined &&
+      check.execution_target.target_ref !== query.target_ref
+    )
+      continue;
+    if (
+      query.check_journey_role !== undefined &&
+      !check.journey_roles.includes(query.check_journey_role)
+    )
+      continue;
+    if (
+      query.proof_surface !== undefined &&
+      check.proof_surface !== query.proof_surface
+    )
+      continue;
+    const assertionGroups = [
+      ["positive", check.positive_assertions ?? []] as const,
+      ["negative", check.negative_assertions ?? []] as const,
+    ];
+    for (const [polarity, assertions] of assertionGroups) {
+      if (query.polarity !== undefined && query.polarity !== polarity) continue;
+      for (const assertion of assertions) {
+        if (!assertion.claims.length) continue;
+        if (
+          query.assertion_key !== undefined &&
+          assertion.key !== query.assertion_key
+        )
+          continue;
+        if (
+          query.local_claim_ref !== undefined &&
+          (assertion.claims.length !== 1 ||
+            assertion.claims[0] !== query.local_claim_ref)
+        )
+          continue;
+        if (
+          query.applicability_ref !== undefined &&
+          assertion.applicability_ref !== query.applicability_ref
+        )
+          continue;
+        if (
+          query.required_evidence_capability !== undefined &&
+          !assertion.evidence_capabilities.includes(
+            query.required_evidence_capability,
+          )
+        )
+          continue;
+        const authorities = check.observation_authorities.filter(
+          (authority) =>
+            authority.assertion_ref === assertion.key &&
+            authority.authority !== "external_confirmation" &&
+            authority.target_ref === check.execution_target.target_ref &&
+            authority.proof_surface === check.proof_surface &&
+            authority.claim_refs.length === assertion.claims.length &&
+            authority.claim_refs.every((claimRef) =>
+              assertion.claims.includes(claimRef),
+            ) &&
+            (query.target_ref === undefined ||
+              authority.target_ref === query.target_ref) &&
+            (query.required_evidence_capability === undefined ||
+              authority.evidence_capabilities.includes(
+                query.required_evidence_capability,
+              )),
+        );
+        if (authorities.length !== 1) continue;
+        matches.push({
+          check,
+          assertion,
+          authority: authorities[0],
+          polarity,
+        });
+      }
+    }
+  }
+  return matches;
+}
+
+export function machineAuthorizedAssertionExists(
+  checks: readonly CompiledCheckV2[],
+  query: MachineAuthorizedAssertionQueryV1 = {},
+): boolean {
+  return machineAuthorizedAssertions(checks, query).length > 0;
 }
 
 export function machineProofAdmitted(
@@ -82,18 +410,12 @@ export function machineProofAdmitted(
   assertionKey: string,
   localClaim: string,
 ): boolean {
-  const check = checks.find(
-    (item) => item.outcome_key === outcomeKey && item.key === checkKey,
-  );
-  return Boolean(
-    check?.completion_role === "semantic" &&
-    check.observation_authorities.some(
-      (authority) =>
-        authority.assertion_ref === assertionKey &&
-        authority.claim_refs.includes(localClaim) &&
-        authority.authority !== "external_confirmation",
-    ),
-  );
+  return machineAuthorizedAssertionExists(checks, {
+    outcome_key: outcomeKey,
+    check_key: checkKey,
+    assertion_key: assertionKey,
+    local_claim_ref: localClaim,
+  });
 }
 
 export function objectiveMachineClaimActualAuthority(

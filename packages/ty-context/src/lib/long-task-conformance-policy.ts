@@ -3,7 +3,10 @@ import type {
   DeliveryContractV2,
   EffectiveRiskLevel,
 } from "./long-task-delivery-types.js";
-import { allOutcomeResultsEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import {
+  allOutcomeResultsFullyEffectivelyExternallyBlocked,
+  machineAuthorizedAssertionExists,
+} from "./long-task-acceptance-reachability-helpers.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 type Reporter = (message: string) => void;
@@ -38,7 +41,7 @@ export function validateSemanticConformance(
   if (
     semanticConformanceRequired(contract, effectiveRisk) &&
     !declared.length &&
-    !allOutcomeResultsEffectivelyExternallyBlocked(contract, reachability)
+    !allOutcomeResultsFullyEffectivelyExternallyBlocked(contract, reachability)
   ) {
     issue(report, "semantic_conformance_check_required", contract.task.id);
     return;
@@ -47,10 +50,12 @@ export function validateSemanticConformance(
     if (check.runner.effect !== "read_only")
       issue(report, "conformance_check_must_be_read_only", check.key);
     if (
-      ![...check.positive_assertions, ...check.negative_assertions].some(
-        (assertion) =>
-          assertion.evidence_capabilities.includes("target_runtime"),
-      )
+      !machineAuthorizedAssertionExists(compiledChecks, {
+        outcome_key: null,
+        check_key: check.key,
+        check_journey_role: "conformance",
+        required_evidence_capability: "target_runtime",
+      })
     )
       issue(report, "conformance_target_runtime_evidence_required", check.key);
     const compiled = compiledChecks.find(

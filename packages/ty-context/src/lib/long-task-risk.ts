@@ -2,10 +2,15 @@ import type {
   DeliveryCheckV2,
   DeliveryContractV2,
   DeliveryOutcomeV2,
+  CompiledOutcomeV2,
   EffectiveRiskLevel,
   RiskFactName,
 } from "./long-task-delivery-types.js";
-import { outcomeResultEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import {
+  machineAuthorizedAssertionExists,
+  outcomeResultFullyEffectivelyExternallyBlocked,
+  outcomeUiProofFullyEffectivelyExternallyBlocked,
+} from "./long-task-acceptance-reachability-helpers.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 export interface RiskDecisionV2 {
@@ -78,15 +83,23 @@ export function validateRiskProof(
   contract: DeliveryContractV2,
   decision: RiskDecisionV2,
   reachability?: AcceptanceReachabilityV1 | null,
+  compiledOutcomes?: readonly CompiledOutcomeV2[],
 ): void {
   const errors: string[] = [];
   if (!contract.outcomes.length) errors.push("outcome_required");
   for (const check of contract.global.acceptance.checks)
     validateCheck(check, "global", errors);
   for (const outcome of contract.outcomes)
-    validateOutcome(contract, outcome, errors, reachability);
+    validateOutcome(
+      contract,
+      outcome,
+      errors,
+      reachability,
+      compiledOutcomes?.find((candidate) => candidate.key === outcome.key),
+      compiledOutcomes !== undefined,
+    );
   if (decision.effective_level === "strict")
-    validateStrict(contract, decision, errors, reachability);
+    validateStrict(contract, decision, errors, reachability, compiledOutcomes);
   if (errors.length)
     throw new Error(
       `delivery_contract_preflight_failed:\n${errors.join("\n")}`,
@@ -98,25 +111,46 @@ function validateOutcome(
   outcome: DeliveryOutcomeV2,
   errors: string[],
   reachability?: AcceptanceReachabilityV1 | null,
+  compiledOutcome?: CompiledOutcomeV2,
+  useCompiledAuthority = false,
 ): void {
-  const checks = new Map(
+  const declaredChecks = new Map(
     outcome.acceptance.checks.map((check) => [check.key, check]),
   );
-  const resultExternallyBlocked = outcomeResultEffectivelyExternallyBlocked(
-    reachability,
-    outcome.key,
-  );
-  if (!checks.size && !resultExternallyBlocked)
+  const resultExternallyBlocked =
+    outcomeResultFullyEffectivelyExternallyBlocked(outcome, reachability);
+  const hasMachineProof = useCompiledAuthority
+    ? machineAuthorizedAssertionExists(
+        compiledOutcome?.acceptance.checks ?? [],
+        { outcome_key: outcome.key },
+      )
+    : declaredChecks.size > 0;
+  if (!hasMachineProof && !resultExternallyBlocked)
     errors.push(`outcome_without_executable_check:${outcome.key}`);
   if (!outcome.technical.expected_change_paths.length)
     errors.push(`expected_change_paths_empty:${outcome.key}`);
-  for (const check of checks.values())
+  for (const check of declaredChecks.values())
     validateCheck(check, outcome.key, errors);
+  const hasMachineUiProof = useCompiledAuthority
+    ? machineAuthorizedAssertionExists(
+        compiledOutcome?.acceptance.checks ?? [],
+        { outcome_key: outcome.key, proof_surface: "ui_browser" },
+      )
+    : [...declaredChecks.values()].some(
+        (check) => check.proof_surface === "ui_browser",
+      );
+  const uiProofExternallyBlocked =
+    useCompiledAuthority &&
+    outcomeUiProofFullyEffectivelyExternallyBlocked(
+      contract,
+      outcome,
+      reachability,
+    );
   if (
     (outcome.product.owner_surfaces.length ||
       outcome.product.controls.length) &&
-    !resultExternallyBlocked &&
-    ![...checks.values()].some((check) => check.proof_surface === "ui_browser")
+    !hasMachineUiProof &&
+    !uiProofExternallyBlocked
   )
     errors.push(`ui_outcome_requires_ui_browser_proof:${outcome.key}`);
   const referenced = [
@@ -132,7 +166,7 @@ function validateOutcome(
     ),
   ];
   for (const checkKey of referenced)
-    if (!checks.has(checkKey))
+    if (!declaredChecks.has(checkKey))
       errors.push(`outcome_check_reference_unknown:${outcome.key}:${checkKey}`);
 }
 
@@ -141,19 +175,28 @@ function validateStrict(
   decision: RiskDecisionV2,
   errors: string[],
   reachability?: AcceptanceReachabilityV1 | null,
+  compiledOutcomes?: readonly CompiledOutcomeV2[],
 ): void {
   const explicitStrictWithoutFacts =
     contract.risk.requested_level === "strict" && decision.reasons.length === 0;
   for (const outcome of contract.outcomes) {
-    if (outcomeResultEffectivelyExternallyBlocked(reachability, outcome.key))
+    if (outcomeResultFullyEffectivelyExternallyBlocked(outcome, reachability))
       continue;
+    const compiledOutcome = compiledOutcomes?.find(
+      (candidate) => candidate.key === outcome.key,
+    );
+    const useCompiledAuthority = compiledOutcomes !== undefined;
     const facts = new Set(decision.reasons_by_outcome[outcome.key]);
     const checks = outcome.acceptance.checks;
-    const hasNegative = checks.some(
-      (check) => check.negative_assertions.length > 0,
-    );
-    const hasCounterfactual =
-      outcome.acceptance.counterfactual_controls.length > 0;
+    const hasNegative = useCompiledAuthority
+      ? machineAuthorizedAssertionExists(
+          compiledOutcome?.acceptance.checks ?? [],
+          { outcome_key: outcome.key, polarity: "negative" },
+        )
+      : checks.some((check) => check.negative_assertions.length > 0);
+    const hasCounterfactual = useCompiledAuthority
+      ? hasMachineCounterfactual(compiledOutcome)
+      : outcome.acceptance.counterfactual_controls.length > 0;
     if (explicitStrictWithoutFacts) {
       if (!hasNegative)
         errors.push(`strict_negative_assertion_required:${outcome.key}`);
@@ -167,6 +210,12 @@ function validateStrict(
       requireStrictProof(
         outcome,
         "security_boundary",
+        hasMachineSurfaceProof(
+          outcome,
+          compiledOutcome,
+          "security_boundary",
+          useCompiledAuthority,
+        ),
         hasNegative,
         hasCounterfactual,
         errors,
@@ -175,6 +224,12 @@ function validateStrict(
       requireStrictProof(
         outcome,
         "api_contract",
+        hasMachineSurfaceProof(
+          outcome,
+          compiledOutcome,
+          "api_contract",
+          useCompiledAuthority,
+        ),
         hasNegative,
         hasCounterfactual,
         errors,
@@ -183,6 +238,12 @@ function validateStrict(
       requireStrictProof(
         outcome,
         "data_state",
+        hasMachineSurfaceProof(
+          outcome,
+          compiledOutcome,
+          "data_state",
+          useCompiledAuthority,
+        ),
         hasNegative,
         hasCounterfactual,
         errors,
@@ -197,7 +258,12 @@ function validateStrict(
       errors.push(`strict_rollback_and_recovery_required:${outcome.key}`);
     if (facts.has("full_population_operation")) {
       if (
-        !checks.some((check) => check.proof_surface === "population_coverage")
+        !hasMachineSurfaceProof(
+          outcome,
+          compiledOutcome,
+          "population_coverage",
+          useCompiledAuthority,
+        )
       )
         errors.push(`strict_population_coverage_proof_required:${outcome.key}`);
       if (!outcome.acceptance.population)
@@ -206,10 +272,19 @@ function validateStrict(
     if (
       facts.has("critical_user_path") &&
       facts.has("weak_observability") &&
-      !checks.some(
-        (check) =>
-          check.proof_surface === "ui_browser" ||
-          check.proof_surface === "runtime_behavior",
+      !(
+        hasMachineSurfaceProof(
+          outcome,
+          compiledOutcome,
+          "ui_browser",
+          useCompiledAuthority,
+        ) ||
+        hasMachineSurfaceProof(
+          outcome,
+          compiledOutcome,
+          "runtime_behavior",
+          useCompiledAuthority,
+        )
       )
     )
       errors.push(
@@ -218,16 +293,48 @@ function validateStrict(
   }
 }
 
+function hasMachineSurfaceProof(
+  outcome: DeliveryOutcomeV2,
+  compiledOutcome: CompiledOutcomeV2 | undefined,
+  surface: DeliveryCheckV2["proof_surface"],
+  useCompiledAuthority: boolean,
+): boolean {
+  return useCompiledAuthority
+    ? machineAuthorizedAssertionExists(
+        compiledOutcome?.acceptance.checks ?? [],
+        { outcome_key: outcome.key, proof_surface: surface },
+      )
+    : outcome.acceptance.checks.some(
+        (check) => check.proof_surface === surface,
+      );
+}
+
+function hasMachineCounterfactual(
+  outcome: CompiledOutcomeV2 | undefined,
+): boolean {
+  if (!outcome) return false;
+  return outcome.acceptance.counterfactual_controls.some(
+    (control) =>
+      control.claims.length > 0 &&
+      control.expected_assertion_failures.some((assertionRef) =>
+        machineAuthorizedAssertionExists(outcome.acceptance.checks, {
+          outcome_key: outcome.key,
+          check_key: control.check_key,
+          assertion_key: assertionRef,
+        }),
+      ),
+  );
+}
+
 function requireStrictProof(
   outcome: DeliveryOutcomeV2,
   surface: DeliveryCheckV2["proof_surface"],
+  hasSurfaceProof: boolean,
   hasNegative: boolean,
   hasCounterfactual: boolean,
   errors: string[],
 ): void {
-  if (
-    !outcome.acceptance.checks.some((check) => check.proof_surface === surface)
-  )
+  if (!hasSurfaceProof)
     errors.push(`strict_${surface}_proof_required:${outcome.key}`);
   if (!hasNegative)
     errors.push(`strict_negative_assertion_required:${outcome.key}`);

@@ -49,7 +49,9 @@ async function addFixtureProcessObservation(
 }
 
 async function machineSelectedAdvisoryFixture(options = {}) {
-  const fixture = await createDeliveryFixture();
+  const fixture = await createDeliveryFixture({
+    twoOutcomes: options.twoOutcomes === true,
+  });
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
   const advisoryPublicKeyRef = "project_context/authorities/advisory-owner.pub";
   await mkdir(path.join(fixture.root, "project_context", "authorities"), {
@@ -74,6 +76,34 @@ async function machineSelectedAdvisoryFixture(options = {}) {
   assert.ok(machineAssertion);
   assert.ok(machineLiveness);
   machineAssertion.evidence_capabilities = ["target_runtime"];
+  let advisoryRawNegativeAssertion = null;
+  const removeDefaultStrictProof = () => {
+    outcome.product.control_relation_closure = {
+      state: "specified",
+      statement:
+        "The sole strict control has no cross-Control relation to declare.",
+      applicability_refs: ["first-root-success"],
+    };
+    const relationAssertion = machineCheck.negative_assertions.find(
+      (assertion) => assertion.key === "first-relations-na",
+    );
+    assert.ok(relationAssertion);
+    machineCheck.positive_assertions.push({
+      ...relationAssertion,
+      criterion: outcome.product.control_relation_closure.statement,
+      observation: "strict_relation_closure",
+      expected: true,
+    });
+    additionalProcessObservations.push({
+      ref: "strict_relation_closure",
+      value: true,
+    });
+    machineCheck.negative_assertions = [];
+    outcome.acceptance.counterfactual_controls =
+      outcome.acceptance.counterfactual_controls.filter(
+        (control) => control.key !== "make-first-relations-applicable",
+      );
+  };
   if (options.missingStrictProof) {
     fixture.contract.risk.requested_level = "strict";
     const strictControl = completeControl({
@@ -164,33 +194,28 @@ async function machineSelectedAdvisoryFixture(options = {}) {
         ...new Set([...control.preserved_assertions, ...controlAssertionKeys]),
       ];
     }
-    outcome.product.control_relation_closure = {
-      state: "specified",
-      statement:
-        "The sole strict control has no cross-Control relation to declare.",
-      applicability_refs: ["first-root-success"],
-    };
+    removeDefaultStrictProof();
+  }
+  if (options.advisoryRawNegative && !options.missingStrictProof) {
+    fixture.contract.risk.requested_level = "strict";
     const relationAssertion = machineCheck.negative_assertions.find(
       (assertion) => assertion.key === "first-relations-na",
     );
     assert.ok(relationAssertion);
-    machineCheck.positive_assertions.push({
-      ...relationAssertion,
-      criterion: outcome.product.control_relation_closure.statement,
-      observation: "strict_relation_closure",
-      expected: true,
-    });
-    additionalProcessObservations.push({
-      ref: "strict_relation_closure",
-      value: true,
-    });
-    machineCheck.negative_assertions = [];
+    advisoryRawNegativeAssertion = {
+      ...structuredClone(relationAssertion),
+      key: "advisory-control-relation-negative",
+      evidence_capabilities: ["data_state"],
+    };
+    machineCheck.negative_assertions = machineCheck.negative_assertions.filter(
+      (assertion) => assertion.key !== relationAssertion.key,
+    );
     outcome.acceptance.counterfactual_controls =
       outcome.acceptance.counterfactual_controls.filter(
         (control) => control.key !== "make-first-relations-applicable",
       );
   }
-  outcome.acceptance.checks.push({
+  const advisoryCheck = {
     ...structuredClone(machineCheck),
     key: "first-result-data-advisory-check",
     proof_surface: "data_state",
@@ -208,7 +233,34 @@ async function machineSelectedAdvisoryFixture(options = {}) {
       structuredClone(machineLiveness),
     ],
     negative_assertions: [],
-  });
+  };
+  outcome.acceptance.checks.push(advisoryCheck);
+  if (options.advisoryStageGateOnly) {
+    machineCheck.journey_roles = ["success"];
+    advisoryCheck.journey_roles = ["success", "stage_gate"];
+  }
+  if (options.advisoryRawNegative) {
+    assert.ok(advisoryRawNegativeAssertion);
+    advisoryCheck.negative_assertions.push(advisoryRawNegativeAssertion);
+  }
+  if (options.advisoryRawConformance) {
+    fixture.contract.risk.facts.weak_observability = ["first"];
+    const conformanceCheck = {
+      ...structuredClone(machineCheck),
+      key: "advisory-global-conformance",
+      journey_roles: ["conformance"],
+      positive_assertions: [
+        {
+          ...structuredClone(machineLiveness),
+          key: "advisory-global-conformance-liveness",
+          claims: [],
+        },
+      ],
+      negative_assertions: [],
+    };
+    conformanceCheck.runner.effect = "read_only";
+    fixture.contract.global.acceptance.checks.push(conformanceCheck);
+  }
   fixture.contract.global.acceptance.external_confirmations = [
     {
       key: "first-result-data-advisory",
@@ -253,6 +305,24 @@ async function machineSelectedAdvisoryFixture(options = {}) {
       ],
     },
   ];
+  if (advisoryRawNegativeAssertion) {
+    const confirmation =
+      fixture.contract.global.acceptance.external_confirmations[0];
+    confirmation.impact_claims.push("first.control_relation_closure");
+    confirmation.obligations.push({
+      key: "confirm-first-control-relation-negative",
+      claim_ref: "first.control_relation_closure",
+      applicability_ref: "first-root-success",
+      fact_ref: null,
+      proof_ref: null,
+      method: "exact_value",
+      proof_surface: "data_state",
+      evidence_capabilities: ["data_state"],
+      expected_authority_ref:
+        "contract-claim:first.control_relation_closure",
+      result_kind: "actual",
+    });
+  }
   if (options.missingSecondRequiredTarget) {
     const secondTarget = {
       ...structuredClone(fixture.contract.task.execution_targets[0]),
@@ -954,6 +1024,52 @@ for (const scenario of [
       assert.match(
         JSON.stringify(compile.value ?? compile.message),
         scenario.compile_expected ?? scenario.expected,
+      );
+    } finally {
+      await removeTemporary(fixture.root);
+    }
+  });
+
+for (const scenario of [
+  {
+    name: "stage_gate role",
+    options: { advisoryStageGateOnly: true },
+    expected: /stage_gate_target_runtime_result_required:first:first/u,
+  },
+  {
+    name: "strict negative Assertion",
+    options: { advisoryRawNegative: true },
+    expected: /strict_negative_assertion_required:first/u,
+  },
+  {
+    name: "global conformance role",
+    options: { twoOutcomes: true, advisoryRawConformance: true },
+    expected:
+      /conformance_target_runtime_evidence_required:advisory-global-conformance/u,
+  },
+])
+  test(`an effective advisory raw ${scenario.name} cannot supply Machine completion policy`, async () => {
+    const fixture = await machineSelectedAdvisoryFixture(scenario.options);
+    try {
+      const preflight = await rawCliOutcome(fixture.root, [
+        "long-task",
+        "preflight",
+        fixture.workdir,
+      ]);
+      const compile = await rawCliOutcome(fixture.root, [
+        "long-task",
+        "compile",
+        fixture.workdir,
+      ]);
+      assert.equal(preflight.ok, false, JSON.stringify(preflight.value));
+      assert.equal(compile.ok, false, JSON.stringify(compile.value));
+      assert.match(
+        JSON.stringify(preflight.value ?? preflight.message),
+        scenario.expected,
+      );
+      assert.match(
+        JSON.stringify(compile.value ?? compile.message),
+        scenario.expected,
       );
     } finally {
       await removeTemporary(fixture.root);

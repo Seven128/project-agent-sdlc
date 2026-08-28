@@ -335,6 +335,8 @@ export async function validateContractForActivation(options: {
   await attempt(mode, diagnostics, () =>
     validateResolvedCompletionAuthorityClosure(
       contract,
+      globalChecks,
+      outcomes,
       acceptanceReachability,
       mode === "collect"
         ? (error) => addDiagnosticError(diagnostics, new Error(error))
@@ -343,7 +345,7 @@ export async function validateContractForActivation(options: {
   );
   if (risk)
     await attempt(mode, diagnostics, () =>
-      validateRiskProof(contract, risk, acceptanceReachability),
+      validateRiskProof(contract, risk, acceptanceReachability, outcomes),
     );
   if (acceptanceReachability) {
     if (mode === "fail_fast") assertAcceptanceReachable(acceptanceReachability);

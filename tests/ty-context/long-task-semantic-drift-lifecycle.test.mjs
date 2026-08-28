@@ -46,7 +46,28 @@ test("read-only Product Conformance is required only for weak, complex deliverie
       blocks_target: true,
     },
   ];
-  assert.doesNotThrow(() => validateSemanticConformance(staged, "strict", []));
+  const blockingReachability = {
+    effective_external_routes: staged.outcomes.map((outcome) => ({
+      outcome_key: outcome.key,
+      claim_ref: `${outcome.key}.result`,
+      local_claim_ref: "result",
+      applicability_ref: outcome.product.result_applicability_refs[0],
+      target_ref: "fixture-app",
+      authority: "external_confirmation",
+      status: "external_fulfillable",
+      completion_role: "blocking",
+      acceptance_effect: "required",
+    })),
+  };
+  assert.doesNotThrow(() =>
+    validateSemanticConformance(
+      staged,
+      "strict",
+      [],
+      undefined,
+      blockingReachability,
+    ),
+  );
   staged.global.acceptance.external_confirmations[0].blocks_target = false;
   assert.throws(
     () => validateSemanticConformance(staged, "strict", []),
@@ -58,13 +79,99 @@ test("read-only Product Conformance is required only for weak, complex deliverie
   conformance.key = "product-conformance";
   conformance.journey_roles = ["conformance"];
   conformance.positive_assertions[0].key = "product-conformance-result";
-  conformance.positive_assertions[0].claims = [];
+  conformance.positive_assertions[0].claims = ["global-conformance"];
   conformance.runner.effect = "read_only";
   staged.global.acceptance.checks.push(conformance);
   const compiled = compiledCheck(staged, conformance, null);
   compiled.raw_execution_identity = "independent-conformance-runtime";
   assert.doesNotThrow(() =>
     validateSemanticConformance(staged, "strict", [compiled]),
+  );
+});
+
+test("an advisory raw global Check cannot supply Machine conformance after Freeze", () => {
+  const contract = deliveryContract({ twoOutcomes: true });
+  contract.risk.facts.weak_observability = ["first"];
+  const advisory = structuredClone(
+    contract.outcomes[0].acceptance.checks[0],
+  );
+  advisory.key = "advisory-conformance";
+  advisory.journey_roles = ["conformance"];
+  advisory.runner.effect = "read_only";
+  advisory.positive_assertions[0].key = "advisory-conformance-result";
+  advisory.positive_assertions[0].claims = ["global-conformance"];
+  contract.global.acceptance.checks.push(advisory);
+
+  const projected = compiledCheck(contract, advisory, null);
+  projected.positive_assertions = projected.positive_assertions.filter(
+    (assertion) => assertion.claims.length === 0,
+  );
+  projected.negative_assertions = [];
+  projected.observation_authorities = [];
+  projected.raw_execution_identity = "independent-advisory-conformance";
+
+  assert.throws(
+    () => validateSemanticConformance(contract, "strict", [projected]),
+    /conformance_target_runtime_evidence_required:advisory-conformance/u,
+  );
+});
+
+test("partial result applicability takeover cannot waive Machine conformance", () => {
+  const contract = deliveryContract({ twoOutcomes: true });
+  contract.risk.facts.weak_observability = ["first"];
+  const first = contract.outcomes[0];
+  const privileged = {
+    ...structuredClone(first.applicability[0]),
+    key: "first-privileged-success",
+    dimensions: [{ key: "fixture-user", value: "privileged" }],
+  };
+  first.applicability.push(privileged);
+  first.product.result_applicability_refs.push(privileged.key);
+  const blockingRow = (outcome, applicabilityRef) => ({
+    outcome_key: outcome.key,
+    claim_ref: `${outcome.key}.result`,
+    local_claim_ref: "result",
+    applicability_ref: applicabilityRef,
+    target_ref: outcome.applicability.find(
+      (profile) => profile.key === applicabilityRef,
+    ).target_ref,
+    authority: "external_confirmation",
+    status: "external_fulfillable",
+    completion_role: "blocking",
+    acceptance_effect: "required",
+  });
+  const partialReachability = {
+    effective_external_routes: [
+      blockingRow(first, "first-root-success"),
+      blockingRow(
+        contract.outcomes[1],
+        contract.outcomes[1].product.result_applicability_refs[0],
+      ),
+    ],
+  };
+
+  assert.throws(
+    () =>
+      validateSemanticConformance(
+        contract,
+        "strict",
+        [],
+        undefined,
+        partialReachability,
+      ),
+    /semantic_conformance_check_required/u,
+  );
+  partialReachability.effective_external_routes.push(
+    blockingRow(first, privileged.key),
+  );
+  assert.doesNotThrow(() =>
+    validateSemanticConformance(
+      contract,
+      "strict",
+      [],
+      undefined,
+      partialReachability,
+    ),
   );
 });
 
@@ -286,12 +393,27 @@ function compiledCheck(contract, declared, outcomeKey) {
   const target = contract.task.execution_targets.find(
     (candidate) => candidate.key === check.execution_target.target_ref,
   );
+  const assertions = [
+    ...check.positive_assertions,
+    ...check.negative_assertions,
+  ];
   return {
     ...check,
     internal_id: `CHECK.${outcomeKey ?? "GLOBAL"}.${check.key}`,
     outcome_key: outcomeKey,
     execution_target_definition: target,
     known_execution_targets: contract.task.execution_targets,
+    completion_role: "semantic",
+    observation_authorities: assertions
+      .filter((assertion) => assertion.claims.length > 0)
+      .map((assertion) => ({
+        assertion_ref: assertion.key,
+        claim_refs: assertion.claims,
+        target_ref: check.execution_target.target_ref,
+        proof_surface: check.proof_surface,
+        evidence_capabilities: assertion.evidence_capabilities,
+        authority: "package_process_json_exact",
+      })),
     raw_execution_identity: `raw-${check.key}`,
   };
 }

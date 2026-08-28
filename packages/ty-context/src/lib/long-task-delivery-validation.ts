@@ -1,4 +1,8 @@
-import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import type {
+  CompiledCheckV2,
+  CompiledOutcomeV2,
+  DeliveryContractV2,
+} from "./long-task-delivery-types.js";
 import {
   assertCompiledClaimsCovered,
   compileProductClaimCoverage,
@@ -84,10 +88,16 @@ export function deliveryContractStructureDiagnostics(
 
 export function validateResolvedCompletionAuthorityClosure(
   contract: DeliveryContractV2,
+  compiledGlobalChecks: readonly CompiledCheckV2[],
+  compiledOutcomes: readonly CompiledOutcomeV2[],
   reachability: AcceptanceReachabilityV1 | null,
   report?: ValidationReporter,
 ): void {
-  const options = { acceptance_reachability: reachability };
+  const options = {
+    acceptance_reachability: reachability,
+    compiled_global_checks: compiledGlobalChecks,
+    compiled_outcomes: compiledOutcomes,
+  };
   validateDeliveryStages(contract, report, options);
   validateExecutionTargets(contract, report, options);
 }

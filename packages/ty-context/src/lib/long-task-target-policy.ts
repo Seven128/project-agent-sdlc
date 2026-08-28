@@ -1,7 +1,14 @@
 import type { CompiledClaimsV2 } from "./long-task-claims.js";
-import { outcomeResultEffectivelyExternallyBlocked } from "./long-task-acceptance-reachability-helpers.js";
+import {
+  machineAuthorizedAssertions,
+  resultApplicabilityEffectivelyExternallyBlocked,
+  resultApplicabilityProfiles,
+} from "./long-task-acceptance-reachability-helpers.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
-import type { DeliveryContractV2 } from "./long-task-delivery-types.js";
+import type {
+  CompiledOutcomeV2,
+  DeliveryContractV2,
+} from "./long-task-delivery-types.js";
 
 type Reporter = (message: string) => void;
 type ExecutionTarget = DeliveryContractV2["task"]["execution_targets"][number];
@@ -22,6 +29,7 @@ export function validateExecutionTargets(
   options: {
     defer_completion_authority_closure?: boolean;
     acceptance_reachability?: AcceptanceReachabilityV1 | null;
+    compiled_outcomes?: readonly CompiledOutcomeV2[];
   } = {},
 ): void {
   const targets = indexExecutionTargets(contract, report);
@@ -35,6 +43,7 @@ export function validateExecutionTargets(
       requiredTargetRefs,
       report,
       options.acceptance_reachability,
+      options.compiled_outcomes,
     );
 }
 
@@ -189,22 +198,25 @@ function validateCriticalPathTargets(
   requiredTargetRefs: string[],
   report?: Reporter,
   reachability?: AcceptanceReachabilityV1 | null,
+  compiledOutcomes?: readonly CompiledOutcomeV2[],
 ): void {
   for (const outcomeKey of contract.risk.facts.critical_user_path) {
     const outcome = contract.outcomes.find(
       (candidate) => candidate.key === outcomeKey,
     );
     if (!outcome) continue;
+    const compiledOutcome = compiledOutcomes?.find(
+      (candidate) => candidate.key === outcome.key,
+    );
     for (const targetRef of requiredTargetRefs)
       if (
-        !outcomeResultEffectivelyExternallyBlocked(
-          reachability,
-          outcome.key,
+        !provesEverySuccessApplicability({
+          outcome,
+          compiledOutcome,
           targetRef,
-        ) &&
-        !outcome.acceptance.checks.some((check) =>
-          provesSuccess(check, targetRef),
-        )
+          reachability,
+          useCompiledAuthority: compiledOutcomes !== undefined,
+        })
       )
         issue(
           report,
@@ -214,12 +226,67 @@ function validateCriticalPathTargets(
   }
 }
 
-function provesSuccess(check: DeliveryCheck, targetRef: string): boolean {
+function provesEverySuccessApplicability(options: {
+  outcome: DeliveryContractV2["outcomes"][number];
+  compiledOutcome: CompiledOutcomeV2 | undefined;
+  targetRef: string;
+  reachability: AcceptanceReachabilityV1 | null | undefined;
+  useCompiledAuthority: boolean;
+}): boolean {
+  const profiles = resultApplicabilityProfiles(options.outcome, {
+    target_ref: options.targetRef,
+    journey_role: "success",
+  });
+  if (!profiles.length) return false;
+  return profiles.every(
+    (profile) =>
+      resultApplicabilityEffectivelyExternallyBlocked(
+        options.reachability,
+        options.outcome.key,
+        profile.key,
+        profile.target_ref,
+      ) ||
+      (options.useCompiledAuthority
+        ? provesCompiledSuccess(
+            options.compiledOutcome?.acceptance.checks ?? [],
+            options.targetRef,
+            profile.key,
+          )
+        : options.outcome.acceptance.checks.some((check) =>
+            provesDeclaredSuccess(check, options.targetRef, profile.key),
+          )),
+  );
+}
+
+function provesCompiledSuccess(
+  checks: readonly CompiledOutcomeV2["acceptance"]["checks"][number][],
+  targetRef: string,
+  applicabilityRef: string,
+): boolean {
+  return machineAuthorizedAssertions(checks, {
+    local_claim_ref: "result",
+    applicability_ref: applicabilityRef,
+    target_ref: targetRef,
+    check_journey_role: "success",
+    required_evidence_capability: "target_runtime",
+  }).some((match) => match.check.execution_target.entrypoint === "root");
+}
+
+function provesDeclaredSuccess(
+  check: DeliveryCheck,
+  targetRef: string,
+  applicabilityRef: string,
+): boolean {
   return (
     check.execution_target.target_ref === targetRef &&
     check.journey_roles.includes("success") &&
     check.execution_target.entrypoint === "root" &&
-    provesTargetRuntime(check)
+    [...check.positive_assertions, ...check.negative_assertions].some(
+      (assertion) =>
+        assertion.claims.includes("result") &&
+        assertion.applicability_ref === applicabilityRef &&
+        assertion.evidence_capabilities.includes("target_runtime"),
+    )
   );
 }
 

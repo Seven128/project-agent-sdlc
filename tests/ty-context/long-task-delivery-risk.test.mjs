@@ -4,7 +4,13 @@ import {
   classifyLongTaskRisk,
   validateRiskProof,
 } from "../../packages/ty-context/dist/lib/long-task-risk.js";
-import { deliveryContract } from "./long-task-delivery-fixtures.mjs";
+import { validateDeliveryStages } from "../../packages/ty-context/dist/lib/long-task-stage-policy.js";
+import { validateExecutionTargets } from "../../packages/ty-context/dist/lib/long-task-target-policy.js";
+import {
+  addProductionControlBinding,
+  completeControl,
+  deliveryContract,
+} from "./long-task-delivery-fixtures.mjs";
 
 test("ordinary Contract is standard and explicit strict raises it", () => {
   const standard = deliveryContract({ twoOutcomes: true });
@@ -141,6 +147,7 @@ test("raw blocking declaration cannot waive strict proof when Reachability makes
         outcome_key: "first",
         claim_ref: "first.result",
         local_claim_ref: "result",
+        applicability_ref: "first-root-success",
         target_ref: "fixture-app",
         authority: "external_confirmation",
         status: "external_fulfillable",
@@ -190,6 +197,7 @@ test("an exact effective blocking result route can take over strict machine proo
         outcome_key: "first",
         claim_ref: "first.result",
         local_claim_ref: "result",
+        applicability_ref: "first-root-success",
         target_ref: "fixture-app",
         authority: "external_confirmation",
         status: "external_fulfillable",
@@ -206,3 +214,362 @@ test("an exact effective blocking result route can take over strict machine proo
     ),
   );
 });
+
+test("an advisory raw negative Assertion cannot satisfy strict Machine proof after Freeze", () => {
+  const contract = deliveryContract();
+  contract.risk.requested_level = "strict";
+  const outcome = contract.outcomes[0];
+  const machineCheck = outcome.acceptance.checks[0];
+  const rawNegative = machineCheck.negative_assertions[0];
+  assert.ok(rawNegative);
+  machineCheck.negative_assertions = [];
+  outcome.acceptance.counterfactual_controls = [
+    {
+      key: "retained-machine-counterfactual",
+      binding_key: "state-first",
+      claims: ["result"],
+      check_key: machineCheck.key,
+      mutation: {
+        type: "replace_json_value",
+        path: "src/state.json",
+        pointer: "/first",
+        value: false,
+      },
+      expected_assertion_failures: ["first-result"],
+      preserved_assertions: ["first-liveness"],
+      allowed_fanout_assertions: [],
+    },
+  ];
+  const advisoryCheck = structuredClone(machineCheck);
+  advisoryCheck.key = "advisory-negative-check";
+  advisoryCheck.negative_assertions = [
+    { ...structuredClone(rawNegative), key: "advisory-negative" },
+  ];
+  outcome.acceptance.checks.push(advisoryCheck);
+
+  const compiledMachine = compiledCheck(contract, machineCheck, "first", [
+    "first-result",
+  ]);
+  const advisoryLiveness = advisoryCheck.positive_assertions.find(
+    (assertion) => assertion.key === "first-liveness",
+  );
+  assert.ok(advisoryLiveness);
+  const compiledAdvisory = compiledCheck(
+    contract,
+    {
+      ...advisoryCheck,
+      positive_assertions: [advisoryLiveness],
+      negative_assertions: [],
+    },
+    "first",
+    [],
+  );
+
+  assert.throws(
+    () =>
+      validateRiskProof(
+        contract,
+        classifyLongTaskRisk(contract),
+        advisoryReachability("first-root-success", "advisory"),
+        [compiledOutcome(outcome, [compiledMachine, compiledAdvisory])],
+      ),
+    /strict_negative_assertion_required:first/u,
+  );
+});
+
+test("an advisory raw stage_gate Check cannot supply Machine gate proof after Freeze", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  const machineCheck = outcome.acceptance.checks[0];
+  machineCheck.journey_roles = ["success"];
+  const advisoryCheck = structuredClone(machineCheck);
+  advisoryCheck.key = "advisory-stage-gate";
+  advisoryCheck.journey_roles = ["stage_gate"];
+  advisoryCheck.positive_assertions = advisoryCheck.positive_assertions.map(
+    (assertion) => ({
+      ...assertion,
+      key: `advisory-stage-${assertion.key}`,
+    }),
+  );
+  outcome.acceptance.checks.push(advisoryCheck);
+
+  const compiledMachine = compiledCheck(contract, machineCheck, "first", [
+    "first-result",
+  ]);
+  const advisoryLiveness = advisoryCheck.positive_assertions.find(
+    (assertion) => assertion.claims.length === 0,
+  );
+  assert.ok(advisoryLiveness);
+  const compiledAdvisory = compiledCheck(
+    contract,
+    {
+      ...advisoryCheck,
+      positive_assertions: [advisoryLiveness],
+      negative_assertions: [],
+    },
+    "first",
+    [],
+  );
+
+  assert.throws(
+    () =>
+      validateDeliveryStages(contract, undefined, {
+        acceptance_reachability: advisoryReachability(
+          "first-root-success",
+          "advisory",
+        ),
+        compiled_outcomes: [
+          compiledOutcome(outcome, [compiledMachine, compiledAdvisory]),
+        ],
+      }),
+    /stage_gate_target_runtime_result_required:first:first/u,
+  );
+});
+
+test("one blocking result applicability cannot waive a second Machine applicability", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  addResultApplicability(outcome, "first-privileged-success", "success");
+  outcome.acceptance.checks = [];
+  outcome.acceptance.counterfactual_controls = [];
+  contract.risk.requested_level = "strict";
+
+  assert.throws(
+    () =>
+      validateRiskProof(
+        contract,
+        classifyLongTaskRisk(contract),
+        blockingReachability(["first-root-success"]),
+        [compiledOutcome(outcome, [])],
+      ),
+    /outcome_without_executable_check:first|strict_negative_assertion_required:first/u,
+  );
+});
+
+test("same-target partial External takeover cannot waive the remaining target applicability", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  addResultApplicability(outcome, "first-privileged-success", "success");
+  contract.risk.facts.critical_user_path = ["first"];
+  const compiled = compiledCheck(
+    contract,
+    outcome.acceptance.checks[0],
+    "first",
+    [],
+  );
+
+  assert.throws(
+    () =>
+      validateExecutionTargets(contract, undefined, {
+        acceptance_reachability: blockingReachability([
+          "first-root-success",
+        ]),
+        compiled_outcomes: [compiledOutcome(outcome, [compiled])],
+      }),
+    /critical_path_required_target_proof_missing:first:fixture-app/u,
+  );
+});
+
+test("a blocking success applicability cannot waive a separate stage_gate applicability", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  addResultApplicability(outcome, "first-stage-gate", "stage_gate");
+  outcome.acceptance.checks = [];
+
+  assert.throws(
+    () =>
+      validateDeliveryStages(contract, undefined, {
+        acceptance_reachability: blockingReachability([
+          "first-root-success",
+        ]),
+        compiled_outcomes: [compiledOutcome(outcome, [])],
+      }),
+    /stage_gate_check_required:first:first|stage_gate_target_runtime_result_required:first:first/u,
+  );
+});
+
+test("all exact result applicabilities may be taken over by blocking External routes", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  addResultApplicability(outcome, "first-stage-gate", "stage_gate");
+  outcome.acceptance.checks = [];
+  outcome.acceptance.counterfactual_controls = [];
+  contract.risk.requested_level = "strict";
+  contract.risk.facts.critical_user_path = ["first"];
+  const reachability = blockingReachability([
+    "first-root-success",
+    "first-stage-gate",
+  ]);
+  const compiledOutcomes = [compiledOutcome(outcome, [])];
+
+  assert.doesNotThrow(() =>
+    validateRiskProof(
+      contract,
+      classifyLongTaskRisk(contract),
+      reachability,
+      compiledOutcomes,
+    ),
+  );
+  assert.doesNotThrow(() =>
+    validateDeliveryStages(contract, undefined, {
+      acceptance_reachability: reachability,
+      compiled_outcomes: compiledOutcomes,
+    }),
+  );
+  assert.doesNotThrow(() =>
+    validateExecutionTargets(contract, undefined, {
+      acceptance_reachability: reachability,
+      compiled_outcomes: compiledOutcomes,
+    }),
+  );
+});
+
+test("UI External takeover requires every exact control Claim obligation", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  const check = outcome.acceptance.checks[0];
+  outcome.product.controls.push(
+    completeControl({
+      key: "main",
+      surface: "fixture-main",
+      location: "root",
+    }),
+  );
+  addProductionControlBinding(contract, {
+    controlKey: "main",
+    surfaceRef: "fixture-main",
+    rootClaimRef: "control.main.location",
+  });
+  const compiled = compiledCheck(contract, check, "first", ["first-result"]);
+  const controlRows = [
+    ...check.positive_assertions,
+    ...check.negative_assertions,
+  ]
+    .filter(
+      (assertion) =>
+        assertion.claims.length === 1 &&
+        assertion.claims[0].startsWith("control.main."),
+    )
+    .map((assertion) => ({
+      source_obligation_ref: `claim:first.${assertion.claims[0]}:first-root-success:runtime_behavior`,
+      outcome_key: "first",
+      claim_ref: `first.${assertion.claims[0]}`,
+      local_claim_ref: assertion.claims[0],
+      applicability_ref: assertion.applicability_ref,
+      target_ref: "fixture-app",
+      fact_ref: null,
+      proof_ref: null,
+      proof_surface: "runtime_behavior",
+      authority: "external_confirmation",
+      status: "external_fulfillable",
+      completion_role: "blocking",
+      acceptance_effect: "required",
+    }));
+  assert.ok(controlRows.length > 1);
+  const compiledOutcomes = [compiledOutcome(outcome, [compiled])];
+
+  assert.throws(
+    () =>
+      validateRiskProof(
+        contract,
+        classifyLongTaskRisk(contract),
+        { effective_external_routes: controlRows.slice(0, -1) },
+        compiledOutcomes,
+      ),
+    /ui_outcome_requires_ui_browser_proof:first/u,
+  );
+  assert.doesNotThrow(() =>
+    validateRiskProof(
+      contract,
+      classifyLongTaskRisk(contract),
+      { effective_external_routes: controlRows },
+      compiledOutcomes,
+    ),
+  );
+});
+
+function addResultApplicability(outcome, key, journeyRole) {
+  outcome.applicability.push({
+    ...structuredClone(outcome.applicability[0]),
+    key,
+    journey_role: journeyRole,
+    dimensions: [{ key: "fixture-state", value: key }],
+  });
+  outcome.product.result_applicability_refs.push(key);
+}
+
+function compiledCheck(
+  contract,
+  declared,
+  outcomeKey,
+  machineAssertionKeys,
+) {
+  const check = structuredClone(declared);
+  const assertions = [
+    ...check.positive_assertions,
+    ...check.negative_assertions,
+  ];
+  const selected = new Set(machineAssertionKeys);
+  return {
+    ...check,
+    internal_id: `CHECK.${outcomeKey ?? "GLOBAL"}.${check.key}`,
+    outcome_key: outcomeKey,
+    execution_target_definition: contract.task.execution_targets.find(
+      (target) => target.key === check.execution_target.target_ref,
+    ),
+    known_execution_targets: contract.task.execution_targets,
+    completion_role: "semantic",
+    observation_authorities: assertions
+      .filter((assertion) => selected.has(assertion.key))
+      .map((assertion) => ({
+        assertion_ref: assertion.key,
+        claim_refs: assertion.claims,
+        target_ref: check.execution_target.target_ref,
+        proof_surface: check.proof_surface,
+        evidence_capabilities: assertion.evidence_capabilities,
+        authority: "package_process_json_exact",
+      })),
+    raw_execution_identity: `raw-${check.key}`,
+  };
+}
+
+function compiledOutcome(outcome, checks) {
+  return {
+    ...structuredClone(outcome),
+    internal_id: `OUT.${outcome.key}`,
+    acceptance: {
+      ...structuredClone(outcome.acceptance),
+      checks,
+    },
+  };
+}
+
+function advisoryReachability(applicabilityRef, completionRole) {
+  return {
+    effective_external_routes: [
+      externalRoute(applicabilityRef, completionRole),
+    ],
+  };
+}
+
+function blockingReachability(applicabilityRefs) {
+  return {
+    effective_external_routes: applicabilityRefs.map((applicabilityRef) =>
+      externalRoute(applicabilityRef, "blocking"),
+    ),
+  };
+}
+
+function externalRoute(applicabilityRef, completionRole) {
+  return {
+    outcome_key: "first",
+    claim_ref: "first.result",
+    local_claim_ref: "result",
+    applicability_ref: applicabilityRef,
+    target_ref: "fixture-app",
+    authority: "external_confirmation",
+    status: "external_fulfillable",
+    completion_role: completionRole,
+    acceptance_effect: completionRole === "blocking" ? "required" : "none",
+  };
+}
