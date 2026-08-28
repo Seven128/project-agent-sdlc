@@ -20,6 +20,7 @@ import type {
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { findDesignFactObligation } from "./long-task-design-obligation.js";
 import { semanticFactCustomPropertyHasClosedStandardProfile } from "./long-task-semantic-proof-profile.js";
+import { assertionObligationRef } from "./long-task-observation-authority.js";
 import { canonicalValueJson } from "./strict-codec.js";
 
 export function claimProofMethod(
@@ -62,12 +63,21 @@ function effectiveBlockingResultRows(
   outcomeKey: string,
 ): AcceptanceReachabilityV1["effective_external_routes"] {
   const claimRef = `${outcomeKey}.result`;
-  return effectiveBlockingExternalRows(reachability).filter(
-    (row) =>
+  return effectiveBlockingExternalRows(reachability).filter((row) => {
+    const ordinaryObligationRef = claimObligationRef(
+      claimRef,
+      row.applicability_ref,
+      row.proof_surface,
+    );
+    return (
       row.outcome_key === outcomeKey &&
       row.claim_ref === claimRef &&
-      row.local_claim_ref === "result",
-  );
+      row.local_claim_ref === "result" &&
+      row.fact_ref === null &&
+      row.proof_ref === null &&
+      row.source_obligation_ref === ordinaryObligationRef
+    );
+  });
 }
 
 export function resultApplicabilityEffectivelyExternallyBlocked(
@@ -287,6 +297,7 @@ export function outcomeUiProofFullyEffectivelyExternallyBlocked(
 }
 
 export interface MachineAuthorizedAssertionQueryV1 {
+  authority_scope: "ordinary_claim" | "fact_bound" | "any";
   outcome_key?: string | null;
   check_key?: string;
   assertion_key?: string;
@@ -308,7 +319,7 @@ export interface MachineAuthorizedAssertionV1 {
 
 export function machineAuthorizedAssertions(
   checks: readonly CompiledCheckV2[],
-  query: MachineAuthorizedAssertionQueryV1 = {},
+  query: MachineAuthorizedAssertionQueryV1,
 ): MachineAuthorizedAssertionV1[] {
   const matches: MachineAuthorizedAssertionV1[] = [];
   for (const check of checks) {
@@ -381,7 +392,13 @@ export function machineAuthorizedAssertions(
             (query.required_evidence_capability === undefined ||
               authority.evidence_capabilities.includes(
                 query.required_evidence_capability,
-              )),
+              )) &&
+            machineAuthorityMatchesScope(
+              check,
+              assertion,
+              authority,
+              query.authority_scope,
+            ),
         );
         if (authorities.length !== 1) continue;
         matches.push({
@@ -398,7 +415,7 @@ export function machineAuthorizedAssertions(
 
 export function machineAuthorizedAssertionExists(
   checks: readonly CompiledCheckV2[],
-  query: MachineAuthorizedAssertionQueryV1 = {},
+  query: MachineAuthorizedAssertionQueryV1,
 ): boolean {
   return machineAuthorizedAssertions(checks, query).length > 0;
 }
@@ -411,6 +428,7 @@ export function machineProofAdmitted(
   localClaim: string,
 ): boolean {
   return machineAuthorizedAssertionExists(checks, {
+    authority_scope: "ordinary_claim",
     outcome_key: outcomeKey,
     check_key: checkKey,
     assertion_key: assertionKey,
@@ -425,19 +443,47 @@ export function objectiveMachineClaimActualAuthority(
   assertionKey: string,
   localClaim: string,
 ): CompiledObservationAuthorityV2 | null {
-  const check = checks.find(
-    (item) => item.outcome_key === outcomeKey && item.key === checkKey,
+  const candidates = machineAuthorizedAssertions(checks, {
+    authority_scope: "ordinary_claim",
+    outcome_key: outcomeKey,
+    check_key: checkKey,
+    assertion_key: assertionKey,
+    local_claim_ref: localClaim,
+  });
+  return candidates.length === 1 ? candidates[0].authority : null;
+}
+
+function machineAuthorityMatchesScope(
+  check: CompiledCheckV2,
+  assertion: CompiledCheckV2["positive_assertions"][number],
+  authority: CompiledObservationAuthorityV2,
+  scope: MachineAuthorizedAssertionQueryV1["authority_scope"],
+): boolean {
+  if (scope === "any") return true;
+  if (scope === "fact_bound") return authority.fact_ref !== null;
+  if (
+    authority.fact_ref !== null ||
+    assertion.claims.length !== 1 ||
+    !assertion.applicability_ref
+  )
+    return false;
+  const fullClaim = check.outcome_key
+    ? `${check.outcome_key}.${assertion.claims[0]}`
+    : `GLOBAL.${assertion.claims[0]}`;
+  const exactClaimObligationRef = claimObligationRef(
+    fullClaim,
+    assertion.applicability_ref,
+    check.proof_surface,
   );
-  if (check?.completion_role !== "semantic") return null;
-  const candidates = check.observation_authorities.filter(
-    (authority) =>
-      authority.assertion_ref === assertionKey &&
-      authority.authority !== "external_confirmation" &&
-      authority.fact_ref === null &&
-      authority.claim_refs.length === 1 &&
-      authority.claim_refs[0] === localClaim,
+  const exactAssertionObligationRef = assertionObligationRef(
+    check.outcome_key,
+    check.key,
+    assertion.key,
   );
-  return candidates.length === 1 ? candidates[0] : null;
+  return (
+    authority.obligation_ref === exactClaimObligationRef ||
+    authority.obligation_ref === exactAssertionObligationRef
+  );
 }
 
 export function pendingExternalRow(

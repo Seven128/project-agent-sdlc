@@ -264,6 +264,7 @@ function provesCompiledSuccess(
   applicabilityRef: string,
 ): boolean {
   return machineAuthorizedAssertions(checks, {
+    authority_scope: "ordinary_claim",
     local_claim_ref: "result",
     applicability_ref: applicabilityRef,
     target_ref: targetRef,

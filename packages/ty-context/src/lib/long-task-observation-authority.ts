@@ -740,7 +740,7 @@ function externalizableObservationError(error: unknown): boolean {
   ].some((prefix) => error.message.startsWith(prefix));
 }
 
-function assertionObligationRef(
+export function assertionObligationRef(
   outcomeKey: string | null,
   checkKey: string,
   assertionKey: string,

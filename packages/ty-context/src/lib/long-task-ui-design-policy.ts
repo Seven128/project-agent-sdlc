@@ -159,12 +159,21 @@ function validateDesignTargets({
           "ui_design_target_verification_assertion_unknown",
           `${label}:${methodBinding.method}:${methodBinding.assertion_ref}`,
         );
-      else if (!methodAssertion.evidence_capabilities.includes("design_method"))
-        issue(
+      else {
+        validateDesignMethodAssertionClaims(
+          target,
+          methodAssertion,
+          label,
+          methodBinding.method,
           report,
-          "ui_design_target_verification_capability_required",
-          `${label}:${methodBinding.method}:design_method`,
         );
+        if (!methodAssertion.evidence_capabilities.includes("design_method"))
+          issue(
+            report,
+            "ui_design_target_verification_capability_required",
+            `${label}:${methodBinding.method}:design_method`,
+          );
+      }
       const conditionKeys = methodBinding.evidence_artifacts.map(
         (item) => item.condition_key,
       );
@@ -260,12 +269,21 @@ function validateSymbolicDesignBindings(
         "ui_design_symbolic_method_assertion_unknown",
         `${label}:${binding.method}:${binding.assertion_ref}`,
       );
-    else if (!assertion.evidence_capabilities.includes("design_method"))
-      issue(
+    else {
+      validateDesignMethodAssertionClaims(
+        target,
+        assertion,
+        label,
+        binding.method,
         report,
-        "ui_design_symbolic_method_capability_required",
-        `${label}:${binding.method}`,
       );
+      if (!assertion.evidence_capabilities.includes("design_method"))
+        issue(
+          report,
+          "ui_design_symbolic_method_capability_required",
+          `${label}:${binding.method}`,
+        );
+    }
     if (!binding.rule_expectations.length)
       issue(
         report,
@@ -338,6 +356,22 @@ function validateSymbolicDesignBindings(
     artifactPaths,
     report,
   );
+}
+
+function validateDesignMethodAssertionClaims(
+  target: DeliveryOutcomeV2["product"]["surface_bindings"][number]["design_targets"][number],
+  assertion: DeliveryCheckV2["positive_assertions"][number],
+  label: string,
+  method: string,
+  report?: Reporter,
+): void {
+  for (const claimRef of assertion.claims)
+    if (claimRef === "result")
+      issue(
+        report,
+        "ui_design_target_verification_claim_not_owned",
+        `${label}:${method}:${target.conformance_check_ref}:${assertion.key}:${claimRef}`,
+      );
 }
 
 function validateSymbolicArtifactPath(

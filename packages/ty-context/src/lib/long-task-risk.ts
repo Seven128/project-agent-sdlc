@@ -122,7 +122,7 @@ function validateOutcome(
   const hasMachineProof = useCompiledAuthority
     ? machineAuthorizedAssertionExists(
         compiledOutcome?.acceptance.checks ?? [],
-        { outcome_key: outcome.key },
+        { authority_scope: "ordinary_claim", outcome_key: outcome.key },
       )
     : declaredChecks.size > 0;
   if (!hasMachineProof && !resultExternallyBlocked)
@@ -134,7 +134,11 @@ function validateOutcome(
   const hasMachineUiProof = useCompiledAuthority
     ? machineAuthorizedAssertionExists(
         compiledOutcome?.acceptance.checks ?? [],
-        { outcome_key: outcome.key, proof_surface: "ui_browser" },
+        {
+          authority_scope: "ordinary_claim",
+          outcome_key: outcome.key,
+          proof_surface: "ui_browser",
+        },
       )
     : [...declaredChecks.values()].some(
         (check) => check.proof_surface === "ui_browser",
@@ -191,7 +195,11 @@ function validateStrict(
     const hasNegative = useCompiledAuthority
       ? machineAuthorizedAssertionExists(
           compiledOutcome?.acceptance.checks ?? [],
-          { outcome_key: outcome.key, polarity: "negative" },
+          {
+            authority_scope: "ordinary_claim",
+            outcome_key: outcome.key,
+            polarity: "negative",
+          },
         )
       : checks.some((check) => check.negative_assertions.length > 0);
     const hasCounterfactual = useCompiledAuthority
@@ -302,7 +310,11 @@ function hasMachineSurfaceProof(
   return useCompiledAuthority
     ? machineAuthorizedAssertionExists(
         compiledOutcome?.acceptance.checks ?? [],
-        { outcome_key: outcome.key, proof_surface: surface },
+        {
+          authority_scope: "ordinary_claim",
+          outcome_key: outcome.key,
+          proof_surface: surface,
+        },
       )
     : outcome.acceptance.checks.some(
         (check) => check.proof_surface === surface,
@@ -318,6 +330,7 @@ function hasMachineCounterfactual(
       control.claims.length > 0 &&
       control.expected_assertion_failures.some((assertionRef) =>
         machineAuthorizedAssertionExists(outcome.acceptance.checks, {
+          authority_scope: "ordinary_claim",
           outcome_key: outcome.key,
           check_key: control.check_key,
           assertion_key: assertionRef,

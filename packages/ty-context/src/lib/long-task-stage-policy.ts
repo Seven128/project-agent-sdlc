@@ -204,6 +204,7 @@ function validateStageGateClosure(
             ),
           )
         : machineAuthorizedAssertions(compiledGate?.acceptance.checks ?? [], {
+            authority_scope: "ordinary_claim",
             check_journey_role: "stage_gate",
             required_evidence_capability: "cross_surface_consistency",
           }).some(
@@ -257,6 +258,7 @@ function provesGate(
 ): boolean {
   if (compiledChecks !== undefined)
     return machineAuthorizedAssertions(compiledChecks, {
+      authority_scope: "ordinary_claim",
       local_claim_ref: "result",
       applicability_ref: applicabilityRef,
       target_ref: targetRef,

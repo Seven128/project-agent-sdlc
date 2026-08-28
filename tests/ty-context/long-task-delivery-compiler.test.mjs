@@ -1855,7 +1855,7 @@ test("Long-Task Compile binds every declared design verification method to an in
     const assertion = outcome.acceptance.checks[0].positive_assertions.find(
       (item) => item.key === binding.assertion_ref,
     );
-    assertion.claims = ["result"];
+    assertion.claims = [...target.claim_refs];
     await writeContract(missingClaim.workdir, missingClaim.contract);
     await assert.rejects(
       compileDeliveryContract(missingClaim.workdir, missingClaim.root, {
@@ -1971,6 +1971,77 @@ test("design binding covers method Source Claims through separate single-Claim r
     const consumer = createLongTaskDesignHandoffConsumer(fixture.contract);
     consumer.consume(preflight);
     assert.doesNotThrow(() => consumer.finish());
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Design verification method Assertion cannot claim the ordinary Result", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(fixture);
+    const outcome = fixture.contract.outcomes[0];
+    const target = outcome.product.surface_bindings[0].design_targets[0];
+    const check = outcome.acceptance.checks.find(
+      (candidate) => candidate.key === target.conformance_check_ref,
+    );
+    const methodAssertion = check.positive_assertions.find(
+      (assertion) =>
+        assertion.key === target.verification_method_bindings[0].assertion_ref,
+    );
+    assert.ok(methodAssertion);
+    methodAssertion.claims = ["result"];
+    assert.throws(
+      () =>
+        validateDeliveryContractStructure(
+          parseDeliveryContractText(YAML.stringify(fixture.contract)),
+        ),
+      /ui_design_target_verification_claim_not_owned/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Design Fact Result impersonation fails closed through Preflight, Compile, and Final Gate", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(fixture);
+    const outcome = fixture.contract.outcomes[0];
+    const target = outcome.product.surface_bindings[0].design_targets[0];
+    const check = outcome.acceptance.checks.find(
+      (candidate) => candidate.key === target.conformance_check_ref,
+    );
+    const methodAssertion = check.positive_assertions.find(
+      (assertion) =>
+        assertion.key === target.verification_method_bindings[0].assertion_ref,
+    );
+    assert.ok(methodAssertion);
+    methodAssertion.claims = ["result"];
+    await writeContract(fixture.workdir, fixture.contract);
+    await runCli(fixture.root, ["enable", "long-task"]);
+
+    const preflight = await runCliFailure(fixture.root, [
+      "long-task",
+      "preflight",
+      fixture.workdir,
+    ]);
+    assert.match(
+      JSON.stringify(preflight),
+      /ui_design_target_verification_claim_not_owned/u,
+    );
+    await assert.rejects(
+      () =>
+        runCli(fixture.root, [
+          "long-task",
+          "compile",
+          fixture.workdir,
+        ]),
+      /ui_design_target_verification_claim_not_owned/u,
+    );
+    await assert.rejects(() =>
+      runCli(fixture.root, ["long-task", "final-gate", fixture.workdir]),
+    );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { compileAcceptanceReachability } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability.js";
-import { exactExternalClaimActualObligationRefsByAssertion } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability-helpers.js";
+import {
+  exactExternalClaimActualObligationRefsByAssertion,
+  resultApplicabilityEffectivelyExternallyBlocked,
+} from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability-helpers.js";
 import { compiledAcceptanceAuthorityHash } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/long-task-claims.js";
 import { deriveRelevantExternalInputIdentity } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-plan.js";
@@ -612,7 +615,7 @@ test("effective External completion role changes the existing Acceptance Authori
   );
 });
 
-test("Design Fact reachability retains its exact obligation identity and rejects Judgment", () => {
+test("Design Fact Machine authority cannot admit the ordinary Result claim", () => {
   const contract = deliveryContract();
   contract.task.target_profile.completion_authority = "declared_authorities";
   const outcome = contract.outcomes[0];
@@ -784,6 +787,119 @@ test("Design Fact reachability retains its exact obligation identity and rejects
       (row) => row.source_obligation_ref === sourceObligationRef,
     )?.status,
     "unreachable",
+  );
+
+  const machineContract = structuredClone(contract);
+  machineContract.global.acceptance.external_confirmations = [];
+  const designMachineAuthority = {
+    ...compiledExactClaimAuthority({
+      assertionRef: assertion.key,
+      authority: "package_static_json_exact",
+      obligationRef: sourceObligationRef,
+      proofSurface: check.proof_surface,
+      expected: expectedValue,
+    }),
+    obligation_ref: sourceObligationRef,
+    fact_ref: factRef,
+    method: "layout_geometry",
+    evidence_capabilities: [...assertion.evidence_capabilities],
+  };
+  const machineReachability = compileAcceptanceReachability({
+    contract: machineContract,
+    claims: compileProductClaimCoverage(machineContract, {
+      allow_uncovered: true,
+    }),
+    manifest: fixtureSemanticManifest(),
+    compiled_checks: [
+      {
+        ...structuredClone(check),
+        outcome_key: outcome.key,
+        completion_role: "semantic",
+        observation_authorities: [designMachineAuthority],
+        required_evidence_capabilities: {
+          [assertion.key]: [...assertion.evidence_capabilities],
+        },
+        expected_authority_refs: {
+          [assertion.key]: `design-proof:${sourceObligationRef}`,
+        },
+      },
+    ],
+  });
+  assert.equal(
+    machineReachability.obligations.find(
+      (row) => row.source_obligation_ref === sourceObligationRef,
+    )?.status,
+    "machine_admitted",
+    "the Design Fact must retain its independent Machine route",
+  );
+  const ordinaryResult = machineReachability.obligations.find(
+    (row) =>
+      row.source_obligation_ref ===
+      `claim:first.result:first-root-success:${check.proof_surface}`,
+  );
+  assert.ok(ordinaryResult);
+  assert.equal(ordinaryResult.fact_ref, null);
+  assert.equal(ordinaryResult.proof_ref, null);
+  assert.equal(ordinaryResult.status, "unreachable");
+});
+
+test("Design Fact External row cannot take over an ordinary Result applicability", () => {
+  const designRow = {
+    obligation_ref:
+      "design.fixture-design-target.layout_geometry.fixture-design-condition.fixture.design.fact",
+    source_obligation_ref:
+      "design.fixture-design-target.layout_geometry.fixture-design-condition.fixture.design.fact",
+    outcome_key: "first",
+    claim_ref: "first.result",
+    local_claim_ref: "result",
+    applicability_ref: "first-root-success",
+    target_ref: "fixture-app",
+    fact_ref: "fixture.design.fact",
+    proof_ref:
+      "design.fixture-design-target.layout_geometry.fixture-design-condition.fixture.design.fact",
+    method: "layout_geometry",
+    proof_surface: "runtime_behavior",
+    required_evidence_capabilities: ["design_method", "target_runtime"],
+    authority: "external_confirmation",
+    confirmation_ref: "confirm-fixture-design",
+    status: "external_fulfillable",
+    reason: null,
+    session_group: null,
+    completion_role: "blocking",
+    acceptance_effect: "required",
+    semantic_identity: "a".repeat(64),
+    machine_obligation_ref: null,
+  };
+  assert.equal(
+    resultApplicabilityEffectivelyExternallyBlocked(
+      { obligations: [designRow], effective_external_routes: [designRow] },
+      "first",
+      "first-root-success",
+      "fixture-app",
+    ),
+    false,
+  );
+
+  const ordinaryRow = {
+    ...structuredClone(designRow),
+    obligation_ref:
+      "claim:first.result:first-root-success:runtime_behavior",
+    source_obligation_ref:
+      "claim:first.result:first-root-success:runtime_behavior",
+    fact_ref: null,
+    proof_ref: null,
+    method: "exact_value",
+    required_evidence_capabilities: ["target_runtime"],
+  };
+  assert.equal(
+    resultApplicabilityEffectivelyExternallyBlocked(
+      { obligations: [ordinaryRow], effective_external_routes: [ordinaryRow] },
+      "first",
+      "first-root-success",
+      "fixture-app",
+    ),
+    true,
+    "an exact ordinary blocking Result row remains a must-allow takeover",
   );
 });
 
@@ -1610,7 +1726,8 @@ test("multiple admitted machine routes are authority-ambiguous instead of first-
       .map((assertion) => ({
         assertion_ref: assertion.key,
         claim_refs: [...assertion.claims],
-        obligation_ref: `claim:${assertion.claims[0]}`,
+        obligation_ref: `claim:first.${assertion.claims[0]}:${assertion.applicability_ref}:${row.proof_surface}`,
+        fact_ref: null,
         target_ref: row.execution_target.target_ref,
         proof_surface: row.proof_surface,
         evidence_capabilities: [...assertion.evidence_capabilities],

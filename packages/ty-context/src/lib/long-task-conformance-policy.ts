@@ -51,6 +51,7 @@ export function validateSemanticConformance(
       issue(report, "conformance_check_must_be_read_only", check.key);
     if (
       !machineAuthorizedAssertionExists(compiledChecks, {
+        authority_scope: "ordinary_claim",
         outcome_key: null,
         check_key: check.key,
         check_journey_role: "conformance",

@@ -9,7 +9,6 @@ import {
   claimObligationRef,
   claimProofMethod,
   externalConfirmationSessionMatchesApplicability,
-  machineProofAdmitted,
   objectiveMachineClaimActualAuthority,
   pendingExternalRow,
   resolveObjectiveExternalClaimActualAuthority,
@@ -316,20 +315,11 @@ function claimSurfaceAuthorityProfile(
     surface,
   );
   const machineCandidates = candidates.flatMap((proof) => {
-    if (
-      !proof.assertion_key ||
-      !machineProofAdmitted(
-        input.compiled_checks,
-        outcomeKey,
-        proof.check_key,
-        proof.assertion_key,
-        localClaim,
-      )
-    )
-      return [];
+    if (!proof.assertion_key) return [];
     const check = input.compiled_checks.find(
       (item) => item.outcome_key === outcomeKey && item.key === proof.check_key,
-    )!;
+    );
+    if (!check) return [];
     const authority = objectiveMachineClaimActualAuthority(
       input.compiled_checks,
       outcomeKey,
@@ -337,6 +327,7 @@ function claimSurfaceAuthorityProfile(
       proof.assertion_key,
       localClaim,
     );
+    if (!authority) return [];
     const requiredCapabilities =
       check.required_evidence_capabilities[proof.assertion_key] ?? [];
     const expectedAuthorityRef =
@@ -349,20 +340,18 @@ function claimSurfaceAuthorityProfile(
         proof_surface: proof.proof_surface,
         method,
         required_evidence_capabilities: requiredCapabilities,
-        semantic_identity: authority
-          ? objectiveClaimSemanticIdentity({
-              contract: input.contract,
-              outcome_key: outcomeKey,
-              claim_ref: fullClaim,
-              local_claim_ref: localClaim,
-              applicability_ref: applicabilityRef,
-              required_polarity: requiredPolarity,
-              expected_authority_ref: expectedAuthorityRef,
-              method,
-              required_evidence_capabilities: requiredCapabilities,
-              observation_authority: authority,
-            })
-          : null,
+        semantic_identity: objectiveClaimSemanticIdentity({
+          contract: input.contract,
+          outcome_key: outcomeKey,
+          claim_ref: fullClaim,
+          local_claim_ref: localClaim,
+          applicability_ref: applicabilityRef,
+          required_polarity: requiredPolarity,
+          expected_authority_ref: expectedAuthorityRef,
+          method,
+          required_evidence_capabilities: requiredCapabilities,
+          observation_authority: authority,
+        }),
       },
     ];
   });

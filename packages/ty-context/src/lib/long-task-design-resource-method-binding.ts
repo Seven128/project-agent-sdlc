@@ -144,6 +144,22 @@ export function validateSymbolicVerificationMethodBindings(
     const expected = preflight.manifest.semantic_proof_obligations
       .filter((obligation) => obligation.method === binding.method)
       .map((obligation) => symbolicRuleExpectation(preflight, obligation.key));
+    const sourceItems = new Set(
+      expected.flatMap(
+        (expectation) =>
+          preflight.manifest.fact_rules.find(
+            (item) => item.key === expectation.fact_rule_ref,
+          )?.source_item_refs ?? [],
+      ),
+    );
+    validateMethodAssertionClaimOwnership(
+      target,
+      assertion.claims,
+      sourceItems,
+      claimsBySourceItem,
+      "v2_verification_method_claim_not_owned",
+      `${target.key}:${binding.method}`,
+    );
     assertCanonicalRowsByKey(
       binding.rule_expectations,
       expected,
@@ -358,6 +374,14 @@ export function validateVerificationMethodBindings(
         )
         .flatMap((fact) => fact.source_item_refs),
     );
+    validateMethodAssertionClaimOwnership(
+      target,
+      assertion.claims,
+      sourceItems,
+      claimsBySourceItem,
+      "verification_method_claim_not_owned",
+      `${target.key}:${binding.method}`,
+    );
     for (const sourceItemRef of sourceItems)
       for (const claimRef of claimsBySourceItem.get(sourceItemRef) ?? [])
         if (!assertedClaims.has(claimRef))
@@ -438,6 +462,22 @@ function claimsAssertedByRootOrMethod(
     (item) => item.key === target.conformance_assertion_ref,
   );
   return new Set([...(rootAssertion?.claims ?? []), ...methodClaims]);
+}
+
+function validateMethodAssertionClaimOwnership(
+  target: ContractDesignTarget["target"],
+  methodClaims: readonly string[],
+  sourceItems: ReadonlySet<string>,
+  claimsBySourceItem: ReadonlyMap<string, string[]>,
+  code: string,
+  detail: string,
+): void {
+  const allowedClaims = new Set(target.claim_refs);
+  for (const sourceItemRef of sourceItems)
+    for (const claimRef of claimsBySourceItem.get(sourceItemRef) ?? [])
+      allowedClaims.add(claimRef);
+  for (const claimRef of methodClaims)
+    if (!allowedClaims.has(claimRef)) invalid(code, `${detail}:${claimRef}`);
 }
 
 function designFactExpectation(

@@ -144,11 +144,18 @@ test("raw blocking declaration cannot waive strict proof when Reachability makes
   const advisoryReachability = {
     effective_external_routes: [
       {
+        obligation_ref:
+          "claim:first.result:first-root-success:runtime_behavior",
+        source_obligation_ref:
+          "claim:first.result:first-root-success:runtime_behavior",
         outcome_key: "first",
         claim_ref: "first.result",
         local_claim_ref: "result",
         applicability_ref: "first-root-success",
         target_ref: "fixture-app",
+        fact_ref: null,
+        proof_ref: null,
+        proof_surface: "runtime_behavior",
         authority: "external_confirmation",
         status: "external_fulfillable",
         completion_role: "advisory",
@@ -194,11 +201,18 @@ test("an exact effective blocking result route can take over strict machine proo
   const blockingReachability = {
     effective_external_routes: [
       {
+        obligation_ref:
+          "claim:first.result:first-root-success:runtime_behavior",
+        source_obligation_ref:
+          "claim:first.result:first-root-success:runtime_behavior",
         outcome_key: "first",
         claim_ref: "first.result",
         local_claim_ref: "result",
         applicability_ref: "first-root-success",
         target_ref: "fixture-app",
+        fact_ref: null,
+        proof_ref: null,
+        proof_surface: "runtime_behavior",
         authority: "external_confirmation",
         status: "external_fulfillable",
         completion_role: "blocking",
@@ -522,6 +536,8 @@ function compiledCheck(
     observation_authorities: assertions
       .filter((assertion) => selected.has(assertion.key))
       .map((assertion) => ({
+        obligation_ref: `claim:${outcomeKey ?? "GLOBAL"}.${assertion.claims[0]}:${assertion.applicability_ref}:${check.proof_surface}`,
+        fact_ref: null,
         assertion_ref: assertion.key,
         claim_refs: assertion.claims,
         target_ref: check.execution_target.target_ref,
@@ -561,12 +577,18 @@ function blockingReachability(applicabilityRefs) {
 }
 
 function externalRoute(applicabilityRef, completionRole) {
+  const sourceObligationRef = `claim:first.result:${applicabilityRef}:runtime_behavior`;
   return {
+    obligation_ref: sourceObligationRef,
+    source_obligation_ref: sourceObligationRef,
     outcome_key: "first",
     claim_ref: "first.result",
     local_claim_ref: "result",
     applicability_ref: applicabilityRef,
     target_ref: "fixture-app",
+    fact_ref: null,
+    proof_ref: null,
+    proof_surface: "runtime_behavior",
     authority: "external_confirmation",
     status: "external_fulfillable",
     completion_role: completionRole,
