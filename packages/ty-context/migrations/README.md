@@ -2,6 +2,15 @@
 
 Schema migrations for Harness config and managed file layout belong here.
 
+Version 0.10.1 adds `ty-context context create --path <path> --role <role>`.
+It writes one TODO-only, unregistered Markdown scaffold and does not modify
+`project_context/context.toml` or the default footprint. Existing files,
+registered paths, unsafe/link-traversing paths and concurrently appearing
+destinations are refused rather than overwritten. Replace every TODO with
+durable owner facts before a separate registration step; the unchanged
+scaffold intentionally does not satisfy registered-Context recoverability.
+This is a new opt-in command and requires no consumer migration.
+
 Version 0.10.0 includes `context-units-to-context`. Explicit `upgrade` applies
 only when every retired `[[context_units]]` table is a provably simple
 single-line TOML table. It renames the table and removes only retired `id` and

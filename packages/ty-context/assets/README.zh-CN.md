@@ -136,9 +136,14 @@ Schema v4 继续接受 `default`、`on-demand`、`always`、`optional` 和 `neve
 ```bash
 ty-context route --task "修改天气地图契约" --path apps/client/src/map.ts --explain
 ty-context context inspect project_context/areas/main/weather.md --task "修改天气地图契约"
+ty-context context create --path project_context/areas/main/weather.md --role domain
 ```
 
-`route` 是实验性、无状态的字面量候选诊断，会扫描全部符合条件的 `project_context/**`，并明确标记未登记文件。其版本化 JSON、固定扫描预算、稳定顺序、选择原因与字节成本不建立 Authority、不参与默认 footprint，也不能替代 Workflow 仍然必需的 bounded search；预算超限会显式返回不完整结果。`context inspect` 只读报告单个文件的登记状态、Role、读取元数据、默认选择原因、显式反向引用、稳定 key 冲突和可选路由解释。0.10 不提供 Context 写入命令。两个新命令使用统一退出码：`0` 完成，`2` 参数错误，`3` Catalog 阻断错误，`4` 扫描预算导致结果不完整，`5` I/O 或路径安全错误，`6` 内部错误；普通 ambiguous/unresolved 仍是已完成的诊断结果。
+`route` 是实验性、无状态的字面量候选诊断，会扫描全部符合条件的 `project_context/**`，并明确标记未登记文件。其版本化 JSON、固定扫描预算、稳定顺序、选择原因与字节成本不建立 Authority、不参与默认 footprint，也不能替代 Workflow 仍然必需的 bounded search；预算超限会显式返回不完整结果。`context inspect` 只读报告单个文件的登记状态、Role、读取元数据、默认选择原因、显式反向引用、稳定 key 冲突和可选路由解释。
+
+0.10.1 只增加边界明确的 `context create` 写入：它在 `project_context/**` 下发布一个 Role 专属、仅含 TODO 的 Markdown scaffold，明确标记为未登记，拒绝不安全路径、既有目标和并发出现的目标，并报告 default footprint 未变化。它不会修改 `context.toml`，不会自动创作产品或架构事实，也没有“创建并登记”或强制覆盖选项。必须先用真实 owner facts 替换全部 TODO，再单独登记；占位 scaffold 一旦登记会故意无法通过恢复性验证。`register` 和 `move` 在 lossless transaction 与恢复 Gate 完成前仍不可用。
+
+这些 Context 命令使用统一退出码：`0` 完成，`2` 参数错误，`3` Catalog 阻断错误，`4` 扫描预算导致结果不完整，`5` I/O 或路径安全错误，`6` 内部错误；普通 route ambiguous/unresolved 仍是已完成的诊断结果。
 
 Context 负责耐久的意图和边界，代码负责当前实现，测试/CI/浏览器或运行时证据/人工负责行为与产品验收。
 

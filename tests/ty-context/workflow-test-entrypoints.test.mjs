@@ -235,6 +235,7 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   assert.match(tarballSmoke, /"ty-context",\s*"init"/);
   assert.match(tarballSmoke, /"ty-context", "doctor"/);
   assert.match(tarballSmoke, /"ty-context",\s*"route"/);
+  assert.match(tarballSmoke, /"context",\s*"create"/);
   assert.match(tarballSmoke, /"ty-context",\s*"context",\s*"inspect"/);
   assert.match(tarballSmoke, /"ty-context", "validate-context"/);
   assert.match(tarballSmoke, /"long-task", "final-gate"/);

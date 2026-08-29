@@ -227,9 +227,14 @@ Two read-only maintenance commands share the same Manifest interpretation as val
 ```bash
 ty-context route --task "change the weather map contract" --path apps/client/src/map.ts --explain
 ty-context context inspect project_context/areas/main/weather.md --task "change the weather map contract"
+ty-context context create --path project_context/areas/main/weather.md --role domain
 ```
 
-`route` is an experimental, stateless literal candidate diagnostic over all eligible `project_context/**`, including clearly labelled unregistered files. Its versioned JSON, fixed scan budgets, stable ordering, explanations and byte costs do not establish Authority, participate in the default footprint or satisfy the Workflow-required bounded search. Budget exhaustion returns an explicitly incomplete result. `context inspect` reports one file's registration, Role, read metadata, default reasons, explicit backlinks, stable-key conflicts and optional route explanation without writing files. Version 0.10 exposes no Context mutation command. Both new commands use classified exits: `0` completed, `2` arguments, `3` blocking Catalog, `4` incomplete scan budget, `5` I/O/path safety and `6` internal; ordinary ambiguity and unresolved paths remain completed diagnostic results.
+`route` is an experimental, stateless literal candidate diagnostic over all eligible `project_context/**`, including clearly labelled unregistered files. Its versioned JSON, fixed scan budgets, stable ordering, explanations and byte costs do not establish Authority, participate in the default footprint or satisfy the Workflow-required bounded search. Budget exhaustion returns an explicitly incomplete result. `context inspect` reports one file's registration, Role, read metadata, default reasons, explicit backlinks, stable-key conflicts and optional route explanation without writing files.
+
+Version 0.10.1 adds only the bounded `context create` write. It publishes one Role-specific TODO-only Markdown scaffold below `project_context/**`, labels it unregistered, refuses unsafe paths and existing/concurrently appearing targets, and reports the unchanged default footprint. It never edits `context.toml`, never creates durable product or architecture facts, and has no combined register or force-overwrite option. Replace every TODO with real owner facts before separately registering the file; a placeholder scaffold intentionally fails registered-Context recoverability. `register` and `move` remain unavailable until their lossless transaction and recovery Gates are implemented.
+
+These Context commands use classified exits: `0` completed, `2` arguments, `3` blocking Catalog, `4` incomplete scan budget, `5` I/O/path safety and `6` internal; ordinary route ambiguity and unresolved paths remain completed diagnostic results.
 
 Typical roles are area/domain, contract, foundation, decision-rationale, implementation-index, verification and deployment. Context owns durable intended boundaries; code owns current implementation; tests, CI, browser/runtime evidence and people own behavior and product acceptance.
 

@@ -62,6 +62,35 @@ try {
     ],
     root,
   );
+  run(
+    "npx",
+    [
+      "--no-install",
+      "ty-context",
+      "context",
+      "create",
+      "--path",
+      "project_context/areas/main/scaffold.md",
+      "--role",
+      "domain",
+      "--format",
+      "json",
+    ],
+    root,
+  );
+  run(
+    "npx",
+    [
+      "--no-install",
+      "ty-context",
+      "context",
+      "inspect",
+      "project_context/areas/main/scaffold.md",
+      "--format",
+      "json",
+    ],
+    root,
+  );
   run("npx", ["--no-install", "ty-context", "validate-context"], root);
 
   if (!portableOnly) {
@@ -101,7 +130,7 @@ try {
 
   console.log(
     portableOnly
-      ? `Tarball smoke passed: ${path.basename(tarball)}; portable init, doctor, route, inspect, validate-context and contents accepted.`
+      ? `Tarball smoke passed: ${path.basename(tarball)}; portable init, doctor, route, create, inspect, validate-context and contents accepted.`
       : `Tarball smoke passed: ${path.basename(tarball)}; portable checks plus long-task-delivery-v2 compile and Live Final Gate accepted.`,
   );
   await rm(root, { recursive: true, force: true });

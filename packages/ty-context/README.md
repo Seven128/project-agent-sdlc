@@ -209,9 +209,12 @@ Explicit `ty-context upgrade` separately converts provably simple pre-v4 `[[cont
 ```bash
 ty-context route --task "change the weather map contract" --path apps/client/src/map.ts --explain
 ty-context context inspect project_context/areas/main/weather.md --task "change the weather map contract"
+ty-context context create --path project_context/areas/main/weather.md --role domain
 ```
 
-The experimental `route` command performs a stateless, deterministic literal scan of all eligible `project_context/**`, including labelled unregistered files. It has versioned JSON, fixed budgets and explicit incomplete results, but it establishes no Authority, changes no default selection and does not replace the Workflow-required bounded search. `context inspect` reports ownership/read metadata, default reasons, explicit backlinks, declared-key conflicts and optional route reasons. Both are read-only; Context writes are not part of 0.10. Their classified exits are `0` complete, `2` arguments, `3` blocking Catalog, `4` incomplete budget, `5` I/O/path safety and `6` internal; ordinary ambiguity/unresolved output remains exit `0`.
+The experimental `route` command performs a stateless, deterministic literal scan of all eligible `project_context/**`, including labelled unregistered files. It has versioned JSON, fixed budgets and explicit incomplete results, but it establishes no Authority, changes no default selection and does not replace the Workflow-required bounded search. `context inspect` reports ownership/read metadata, default reasons, explicit backlinks, declared-key conflicts and optional route reasons. Both remain read-only.
+
+Version 0.10.1 adds only `context create`: a collision-safe, unregistered, Role-specific TODO scaffold below `project_context/**`. It reports an unchanged default footprint and never edits the Manifest, authors durable facts, registers the file or force-overwrites a target. A scaffold must receive real owner facts before separate registration and intentionally fails recoverability if registered unchanged. `register` and `move` remain unavailable until their lossless transaction and recovery Gates close. Classified exits are `0` complete, `2` arguments, `3` blocking Catalog, `4` incomplete budget, `5` I/O/path safety and `6` internal; ordinary route ambiguity/unresolved output remains exit `0`.
 
 ### Bounded Context discovery
 

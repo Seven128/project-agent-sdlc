@@ -137,6 +137,8 @@ try {
   run("npx", ["--no-install", "ty-context", "init"], demoDir);
   run("npx", ["--no-install", "ty-context", "route", "--task", "inspect project context", "--term", "Project Goal", "--format", "json"], demoDir);
   run("npx", ["--no-install", "ty-context", "context", "inspect", "project_context/global.md", "--format", "json"], demoDir);
+  run("npx", ["--no-install", "ty-context", "context", "create", "--path", "project_context/areas/main/scaffold.md", "--role", "domain", "--format", "json"], demoDir);
+  run("npx", ["--no-install", "ty-context", "context", "inspect", "project_context/areas/main/scaffold.md", "--format", "json"], demoDir);
   run("npx", ["--no-install", "ty-context", "validate-context"], demoDir);
 
   const expectedFiles = [
@@ -148,7 +150,8 @@ try {
     "project_context/global.md",
     "project_context/architecture.md",
     "project_context/areas/main.md",
-    "project_context/areas/main/verification.md"
+    "project_context/areas/main/verification.md",
+    "project_context/areas/main/scaffold.md"
   ];
 
   for (const file of expectedFiles) {
@@ -157,6 +160,7 @@ try {
   assertContains(path.join(demoDir, "AGENTS.md"), /Minimal Context Harness/);
   assertContains(path.join(demoDir, "project_context/global.md"), /## Project Goal/);
   assertContains(path.join(demoDir, "project_context/architecture.md"), /## System Boundary/);
+  assertContains(path.join(demoDir, "project_context/areas/main/scaffold.md"), /registration=unregistered/);
   assertContains(path.join(demoDir, ".github/workflows/harness.yml"), /Run harness gate/);
 
   writeFileSync(
