@@ -95,6 +95,12 @@ Executable continuity is `design-resource-v1-capacity-guard.test.mjs`, `symbolic
 - The adapter records the actual package version and API surface, preserves the optional 0.4 diagnostic rule identity, normalizes exported text to one final newline and supports the package's local `json-tailwind`, `css-tailwind`, `tailwind`, `dtcg` and `css-vars` emitters. A CSS-variable prefix is explicit export input and cannot silently affect another format.
 - `tests/ty-context/design-md-tool-adapter.test.mjs` compares lint, export, diff and regression semantics against the installed CLI and proves deterministic serializable output. Open Design capability discovery and candidate generation remain exclusively in the explicit authoring Skills; this adapter is not an `OpenDesignProvider`.
 
+## Impeccable Detector Boundary
+
+- The package dependency `impeccable` supplies the local `npx impeccable detect <target>` review command named by the generated unconfigured `DESIGN.md`; it is neither an Open Design provider nor a candidate, provenance, selection or adoption owner.
+- Detector output is advisory design-review input. Its stable package boundary for Harness is the local Node-compatible CLI plus deterministic JSON-ready findings and documented `0` (clean), `2` (findings) and argument-error exits; findings cannot update Context or Design Authority.
+- `tests/ty-context/impeccable-compatibility.test.mjs` characterizes the programmatic detector/registry, CLI JSON and exit behavior, malformed-argument containment, and generated `DESIGN.md` wording. Existing design-system/design-resource Skill tests separately preserve provider invocation, candidate, provenance and explicit-adoption semantics.
+
 ## Sparse Context Workspace / Monorepo Owners
 
 - Durable purpose, read-versus-change distinction, alternatives, compatibility and anti-degradation reasoning: `PROJECT_SPEC.md`, `foundation/context-model.md`, `contracts/workflow-contract.md` and `decision-rationale/minimal-context.md`.
