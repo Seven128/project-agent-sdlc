@@ -1,12 +1,17 @@
 import path from "node:path";
 import { existsSync } from "node:fs";
-import { realpath } from "node:fs/promises";
 import { readConfig } from "./config.js";
+import type { ContextRole } from "./context-manifest-schema.js";
 import {
-  type ContextManifest,
-  type ContextRole,
-  parseContextManifest,
-} from "./context-manifest-schema.js";
+  CONTEXT_READ_POLICY_SET,
+  normalizeContextRole,
+} from "./context-catalog/catalog-portable-contract.js";
+import {
+  catalogErrors,
+  catalogWarnings,
+} from "./context-catalog/catalog-diagnostics.js";
+import { loadContextCatalog } from "./context-catalog/catalog-load.js";
+import { isPathWithin } from "./context-catalog/catalog-paths.js";
 import { harnessPath, harnessRoot } from "./harness-root.js";
 import { listFiles, pathExists, readText } from "./fs.js";
 import { runModularityCheck } from "./modularity.js";
@@ -58,41 +63,6 @@ const ARCHITECTURE_REQUIRED_SECTIONS = sectionSpecs([
   "Verification Implications",
   "Open Risks",
 ]);
-
-const ROLE_ALIASES: Record<string, ContextRole> = {
-  global: "global",
-  architecture: "architecture",
-  area: "area",
-  domain: "domain",
-  subdomain: "subdomain",
-  foundation: "foundation",
-  archive: "archive",
-  contract: "contract",
-  verification: "verification",
-  deployment: "deployment",
-  "implementation-index": "implementation-index",
-  implementation_index: "implementation-index",
-  "decision-rationale": "decision-rationale",
-  decision_rationale: "decision-rationale",
-};
-
-const VALID_READ_POLICIES = new Set([
-  "default",
-  "always",
-  "optional",
-  "on-demand",
-  "never-default",
-]);
-const EXPORT_ARTIFACT_NAME_PATTERNS = [
-  /full-project-context/i,
-  /当前项目context/i,
-  /当前项目代码实现(?:context)?/i,
-  /code-level-implementation/i,
-  /project-overview/i,
-  /context-bundle/i,
-  /context-summary/i,
-  /context-export/i,
-];
 
 const FAKE_VERIFICATION_PATTERNS = [
   /\btests?\s+(?:pass(?:ed|es)?|green)\b/i,
@@ -190,8 +160,9 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
     "project_context",
     "context.toml",
   );
-  const manifestRoles = new Map<string, ContextRole>();
-  const manifestReadPolicies = new Map<string, string>();
+  let manifestRoles = new Map<string, ContextRole>();
+  let manifestReadPolicies = new Map<string, string>();
+  let manifestCatalogLoaded = false;
   let schemaVersion = "4";
 
   if (!(await pathExists(configPath))) {
@@ -277,17 +248,14 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
   }
 
   if (await pathExists(manifestPath)) {
-    const parsed = parseContextManifest(await readText(manifestPath));
-    errors.push(...parsed.errors);
-    if (parsed.manifest) {
-      await validateContextManifest(
-        projectRoot,
-        parsed.manifest,
-        manifestRoles,
-        manifestReadPolicies,
-        errors,
-      );
-      const manifest = parsed.manifest;
+    const catalog = await loadContextCatalog(projectRoot);
+    manifestCatalogLoaded = true;
+    errors.push(...catalogErrors(catalog.diagnostics));
+    warnings.push(...catalogWarnings(catalog.diagnostics));
+    manifestRoles = catalog.roles_by_path;
+    manifestReadPolicies = catalog.read_policies_by_path;
+    if (catalog.manifest) {
+      const manifest = catalog.manifest;
       info.push(
         `loaded project_context/context.toml with ${manifest.areas.length} area(s) and ${manifest.contexts.length} context node(s)`,
       );
@@ -315,7 +283,7 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
     );
     if (
       frontMatter.read_policy &&
-      !VALID_READ_POLICIES.has(frontMatter.read_policy)
+      !CONTEXT_READ_POLICY_SET.has(frontMatter.read_policy)
     ) {
       errors.push(
         `${relative} has unsupported read_policy: ${frontMatter.read_policy}`,
@@ -337,7 +305,7 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
         `${relative} front matter read_policy ${frontMatter.read_policy} does not match manifest read_policy ${manifestReadPolicy}`,
       );
     }
-    if (!manifestRole) {
+    if (!manifestRole && !manifestCatalogLoaded) {
       warnings.push(
         `${relative} is an unregistered Context Markdown file; add it to project_context/context.toml or move it out of project_context/**`,
       );
@@ -385,198 +353,6 @@ function validateContextFile(
   assertNoFakeVerification(file, content, errors);
   assertMinimumRecoverability(file, content, errors);
   assertRoleRecoverability(projectRoot, file, content, role, errors);
-}
-
-async function validateContextManifest(
-  projectRoot: string,
-  manifest: ContextManifest,
-  manifestRoles: Map<string, ContextRole>,
-  manifestReadPolicies: Map<string, string>,
-  errors: string[],
-): Promise<void> {
-  if (manifest.areas.length === 0) {
-    errors.push(
-      "project_context/context.toml must declare at least one [[areas]] entry",
-    );
-  }
-
-  const areaIds = new Set<string>();
-  const registeredPaths = new Set<string>();
-  const defaultAreas = manifest.areas.filter((area) => area.default);
-  if (manifest.areas.length > 0 && defaultAreas.length !== 1) {
-    errors.push(
-      `project_context/context.toml must mark exactly one [[areas]] entry with default = true; found ${defaultAreas.length}`,
-    );
-  }
-
-  for (const area of manifest.areas) {
-    if (areaIds.has(area.id)) {
-      errors.push(
-        `project_context/context.toml has duplicate area id: ${area.id}`,
-      );
-    }
-    areaIds.add(area.id);
-    await validateManifestPath(
-      projectRoot,
-      area.root,
-      projectRoot,
-      `area ${area.id} root`,
-      false,
-      errors,
-    );
-    const relative = normalizeContextPath(area.context);
-    if (registeredPaths.has(relative)) {
-      errors.push(
-        `project_context/context.toml has duplicate Context path: ${relative}`,
-      );
-    }
-    registeredPaths.add(relative);
-    await addManifestRole(
-      projectRoot,
-      manifestRoles,
-      manifestReadPolicies,
-      area.context,
-      "area",
-      undefined,
-      `area ${area.id}`,
-      errors,
-    );
-  }
-
-  for (const context of manifest.contexts) {
-    const relative = normalizeContextPath(context.path);
-    if (registeredPaths.has(relative)) {
-      errors.push(
-        `project_context/context.toml has duplicate Context path: ${relative}`,
-      );
-    }
-    registeredPaths.add(relative);
-    if (context.read_policy && !VALID_READ_POLICIES.has(context.read_policy)) {
-      errors.push(
-        `project_context/context.toml line ${context.line} has unsupported read_policy: ${context.read_policy}`,
-      );
-    }
-    const role = normalizeRole(context.role);
-    if (!role) {
-      errors.push(
-        `project_context/context.toml line ${context.line} has unsupported context role: ${context.role}`,
-      );
-      continue;
-    }
-    await addManifestRole(
-      projectRoot,
-      manifestRoles,
-      manifestReadPolicies,
-      context.path,
-      role,
-      context.read_policy,
-      `context ${context.path}`,
-      errors,
-    );
-  }
-
-  for (const context of manifest.contexts) {
-    for (const child of context.default_children) {
-      const normalizedChild = normalizeContextPath(child);
-      if (!registeredPaths.has(normalizedChild)) {
-        errors.push(
-          `project_context/context.toml line ${context.line} default_children references unregistered Context path: ${child}`,
-        );
-      }
-    }
-  }
-}
-
-async function addManifestRole(
-  projectRoot: string,
-  roles: Map<string, ContextRole>,
-  readPolicies: Map<string, string>,
-  rawPath: string,
-  role: ContextRole,
-  readPolicy: string | undefined,
-  source: string,
-  errors: string[],
-): Promise<void> {
-  const relative = normalizeContextPath(rawPath);
-  if (looksLikeExportArtifact(relative)) {
-    errors.push(
-      `project_context/context.toml ${source} must not reference temporary export artifact ${rawPath}; export artifacts belong in tmp/ty-context/context-exports/** and must not be registered as Context graph nodes or implementation-index`,
-    );
-    return;
-  }
-  if (!relative.startsWith("project_context/") || !relative.endsWith(".md")) {
-    errors.push(
-      `project_context/context.toml ${source} must reference a markdown file under project_context/: ${rawPath}`,
-    );
-    return;
-  }
-  if (
-    !(await validateManifestPath(
-      projectRoot,
-      rawPath,
-      path.join(projectRoot, "project_context"),
-      source,
-      true,
-      errors,
-    ))
-  ) {
-    return;
-  }
-  roles.set(relative, role);
-  if (readPolicy) {
-    readPolicies.set(relative, readPolicy);
-  }
-}
-
-async function validateManifestPath(
-  projectRoot: string,
-  rawPath: string,
-  allowedRoot: string,
-  source: string,
-  allowFile: boolean,
-  errors: string[],
-): Promise<boolean> {
-  if (
-    path.isAbsolute(rawPath) ||
-    rawPath.replace(/\\/g, "/").split("/").includes("..")
-  ) {
-    errors.push(
-      `project_context/context.toml ${source} path must be relative and must not contain '..': ${rawPath}`,
-    );
-    return false;
-  }
-  const target = path.resolve(projectRoot, rawPath);
-  if (!isWithin(allowedRoot, target)) {
-    errors.push(
-      `project_context/context.toml ${source} escapes its allowed root: ${rawPath}`,
-    );
-    return false;
-  }
-  if (!(await pathExists(target))) {
-    errors.push(
-      `project_context/context.toml references missing ${allowFile ? "context file" : "area root"}: ${normalizeContextPath(rawPath)}`,
-    );
-    return false;
-  }
-  const realAllowedRoot = await realpath(allowedRoot);
-  const realTarget = await realpath(target);
-  if (!isWithin(realAllowedRoot, realTarget)) {
-    errors.push(
-      `project_context/context.toml ${source} resolves through a symbolic link outside its allowed root: ${rawPath}`,
-    );
-    return false;
-  }
-  return true;
-}
-
-function isWithin(root: string, target: string): boolean {
-  const relative = path.relative(root, target);
-  return (
-    relative === "" ||
-    (!relative.startsWith(`..${path.sep}`) &&
-      relative !== ".." &&
-      !path.isAbsolute(relative))
-  );
 }
 
 function assertSections(
@@ -695,7 +471,7 @@ function assertRoleRecoverability(
         return false;
       }
       const target = path.resolve(projectRoot, clean);
-      return isWithin(projectRoot, target) && existsSync(target);
+      return isPathWithin(projectRoot, target) && existsSync(target);
     });
     if (!hasRepositoryPath) {
       errors.push(
@@ -804,7 +580,7 @@ function frontMatterContextRole(
   if (!role) {
     return undefined;
   }
-  const normalized = normalizeRole(role);
+  const normalized = normalizeContextRole(role);
   if (!normalized) {
     errors.push(`${file} has unsupported context_role: ${role}`);
   }
@@ -828,21 +604,6 @@ function parseFrontMatter(content: string): Record<string, string> {
     }
   }
   return {};
-}
-
-function normalizeRole(value: string): ContextRole | undefined {
-  return ROLE_ALIASES[value.trim().toLowerCase()];
-}
-
-function normalizeContextPath(value: string): string {
-  return value.replace(/\\/g, "/").replace(/^\.\//, "");
-}
-
-function looksLikeExportArtifact(value: string): boolean {
-  const normalized = value.replace(/\\/g, "/");
-  return EXPORT_ARTIFACT_NAME_PATTERNS.some((pattern) =>
-    pattern.test(normalized),
-  );
 }
 
 function stripQuotes(value: string): string {

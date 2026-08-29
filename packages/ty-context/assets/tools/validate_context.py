@@ -3,6 +3,7 @@
 
 from pathlib import Path, PureWindowsPath
 import json
+import os
 import re
 import subprocess
 import sys
@@ -15,6 +16,45 @@ except ImportError:  # Python 3.10 compatibility; Node is already required by ty
 
 ROOT = Path.cwd().resolve()
 CONTEXT_ROOT = ROOT / "project_context"
+
+
+def load_context_rules():
+    rules_path = Path(__file__).resolve().with_name("context_rules.json")
+    try:
+        value = json.loads(rules_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"unable to load portable Context rules from {rules_path.name}: {error}") from error
+    required_arrays = (
+        "roles",
+        "read_policies",
+        "legacy_read_policies",
+        "top_level_fields",
+        "area_fields",
+        "context_fields",
+    )
+    for field in required_arrays:
+        entries = value.get(field)
+        if (
+            not isinstance(entries, list)
+            or any(not isinstance(entry, str) or not entry.strip() for entry in entries)
+            or len(entries) != len(set(entries))
+        ):
+            raise RuntimeError(f"portable Context rules field {field} must contain unique non-empty strings")
+    aliases = value.get("role_aliases")
+    if not isinstance(aliases, dict) or any(
+        not isinstance(key, str)
+        or not key.strip()
+        or not isinstance(target, str)
+        or target not in value["roles"]
+        for key, target in aliases.items()
+    ):
+        raise RuntimeError("portable Context rules role_aliases are invalid")
+    if any(policy not in value["read_policies"] for policy in value["legacy_read_policies"]):
+        raise RuntimeError("portable Context legacy read policies must be a subset of read_policies")
+    return value
+
+
+CONTEXT_RULES = load_context_rules()
 
 GLOBAL_CHECKS = [
     ("project goal", ["project goal", "项目目标", "目标"]),
@@ -35,28 +75,13 @@ ARCHITECTURE_CHECKS = [
     ("verification implications", ["verification implications", "验证影响", "验证入口"]),
 ]
 
-VALID_ROLES = {
-    "global",
-    "architecture",
-    "area",
-    "domain",
-    "subdomain",
-    "foundation",
-    "archive",
-    "contract",
-    "verification",
-    "deployment",
-    "implementation-index",
-    "decision-rationale",
-}
-ROLE_ALIASES = {
-    "implementation_index": "implementation-index",
-    "decision_rationale": "decision-rationale",
-}
-READ_POLICIES = {"default", "always", "optional", "on-demand", "never-default"}
-TOP_LEVEL_FIELDS = {"areas", "context"}
-AREA_FIELDS = {"id", "root", "context", "kind", "default", "forbidden_runtime_dependencies"}
-CONTEXT_FIELDS = {"path", "role", "read_when", "read_policy", "triggers", "default_children"}
+VALID_ROLES = set(CONTEXT_RULES["roles"])
+ROLE_ALIASES = CONTEXT_RULES["role_aliases"]
+READ_POLICIES = set(CONTEXT_RULES["read_policies"])
+LEGACY_READ_POLICIES = set(CONTEXT_RULES["legacy_read_policies"])
+TOP_LEVEL_FIELDS = set(CONTEXT_RULES["top_level_fields"])
+AREA_FIELDS = set(CONTEXT_RULES["area_fields"])
+CONTEXT_FIELDS = set(CONTEXT_RULES["context_fields"])
 CONFIG_CANDIDATES = [
     ".agent/config.yaml",
     ".codex/config.yaml",
@@ -149,13 +174,45 @@ def parse_toml(content):
             return tomllib.loads(content)
         except tomllib.TOMLDecodeError as error:
             raise ValueError(str(error)) from error
-    script = "import('smol-toml').then(({parse})=>{let s='';process.stdin.setEncoding('utf8');process.stdin.on('data',c=>s+=c);process.stdin.on('end',()=>process.stdout.write(JSON.stringify(parse(s))))}).catch(e=>{console.error(e.message);process.exit(1)})"
+    script = """
+import('node:module').then(async ({ createRequire }) => {
+  const { pathToFileURL } = await import('node:url');
+  const { resolve } = await import('node:path');
+  const roots = JSON.parse(process.env.TY_CONTEXT_NODE_SEARCH_ROOTS || '[]');
+  let modulePath;
+  for (const root of roots) {
+    try {
+      modulePath = createRequire(resolve(root, 'package.json')).resolve('smol-toml');
+      break;
+    } catch {}
+  }
+  if (!modulePath) throw new Error('unable to resolve smol-toml from the project or portable-tool ancestors');
+  const { parse } = await import(pathToFileURL(modulePath).href);
+  let source = '';
+  process.stdin.setEncoding('utf8');
+  process.stdin.on('data', chunk => source += chunk);
+  process.stdin.on('end', () => process.stdout.write(JSON.stringify(parse(source))));
+}).catch(error => {
+  console.error(error.message);
+  process.exit(1);
+});
+"""
+    search_roots = []
+    for candidate in (ROOT, *Path(__file__).resolve().parents):
+        value = str(candidate)
+        if value not in search_roots:
+            search_roots.append(value)
+    environment = dict(os.environ)
+    environment["TY_CONTEXT_NODE_SEARCH_ROOTS"] = json.dumps(search_roots)
     result = subprocess.run(
         ["node", "--input-type=module", "--eval", script],
         input=content,
         text=True,
+        encoding="utf-8",
+        errors="strict",
         capture_output=True,
         cwd=ROOT,
+        env=environment,
         check=False,
     )
     if result.returncode != 0:
@@ -186,8 +243,6 @@ def string_array(entry, key, errors):
     if not isinstance(value, list) or any(not isinstance(item, str) or not item.strip() for item in value):
         errors.append(f"project_context/context.toml line {entry['line']} {key} must be an array of non-empty strings")
         return []
-    if len(value) != len(set(value)):
-        errors.append(f"project_context/context.toml line {entry['line']} {key} must not contain duplicates")
     return value
 
 
@@ -222,7 +277,75 @@ def safe_manifest_path(raw, allowed_root, label, expected, errors):
     return resolved_target
 
 
-def validate_manifest(errors):
+def validate_area_entry(area, area_ids, registered_paths, roles, policies, errors):
+    area_id = required_string(area, "id", errors)
+    area_root = required_string(area, "root", errors)
+    context_path = required_string(area, "context", errors)
+    optional_string(area, "kind", errors)
+    if "default" in area and not isinstance(area["default"], bool):
+        errors.append(f"project_context/context.toml line {area['line']} default must be a boolean")
+    string_array(area, "forbidden_runtime_dependencies", errors)
+    if area_id:
+        if area_id in area_ids:
+            errors.append(f"project_context/context.toml has duplicate area id: {area_id}")
+        area_ids.add(area_id)
+    label = f"area {area_id or area['line']}"
+    if area_root:
+        safe_manifest_path(area_root, ROOT, f"{label} root", "area root", errors)
+    if context_path:
+        register_context_path(context_path, "area", None, label, registered_paths, roles, policies, errors)
+
+
+def validate_context_entry(entry, registered_paths, roles, policies, errors, warnings):
+    context_path = required_string(entry, "path", errors)
+    raw_role = required_string(entry, "role", errors)
+    optional_string(entry, "read_when", errors)
+    read_policy = optional_string(entry, "read_policy", errors)
+    string_array(entry, "triggers", errors)
+    string_array(entry, "default_children", errors)
+    role = normalize_role(raw_role) if raw_role else None
+    if raw_role and role is None:
+        errors.append(f"project_context/context.toml line {entry['line']} has unsupported context role: {raw_role}")
+    if read_policy and read_policy not in READ_POLICIES:
+        errors.append(f"project_context/context.toml line {entry['line']} has unsupported read_policy: {read_policy}")
+    if read_policy in LEGACY_READ_POLICIES:
+        warnings.append(
+            f"project_context/context.toml line {entry['line']} uses legacy read_policy {read_policy}; "
+            "Schema v4 preserves its current selection behavior and migration must be explicit"
+        )
+    if context_path and role:
+        register_context_path(
+            context_path,
+            role,
+            read_policy,
+            f"context {context_path}",
+            registered_paths,
+            roles,
+            policies,
+            errors,
+        )
+
+
+def validate_default_children(contexts, registered_paths, errors, warnings):
+    contexts_by_path = {
+        normalize_context_path(entry["path"]): entry
+        for entry in contexts
+        if isinstance(entry.get("path"), str) and entry["path"].strip()
+    }
+    for entry in contexts:
+        for child in entry.get("default_children", []):
+            normalized = normalize_context_path(child)
+            if normalized not in registered_paths:
+                errors.append(f"project_context/context.toml line {entry['line']} default_children references unregistered Context path: {child}")
+            elif contexts_by_path.get(normalized, {}).get("read_policy") == "never-default":
+                warnings.append(
+                    f"project_context/context.toml line {entry['line']} default_children selects {normalized} even though its current "
+                    "read_policy is never-default; Schema v4 preserves this behavior and a future migration must remove the edge or "
+                    "change the policy explicitly"
+                )
+
+
+def validate_manifest(errors, warnings):
     manifest_path = CONTEXT_ROOT / "context.toml"
     roles = {}
     policies = {}
@@ -242,42 +365,10 @@ def validate_manifest(errors):
     registered_paths = set()
 
     for area in areas:
-        area_id = required_string(area, "id", errors)
-        area_root = required_string(area, "root", errors)
-        context_path = required_string(area, "context", errors)
-        optional_string(area, "kind", errors)
-        if "default" in area and not isinstance(area["default"], bool):
-            errors.append(f"project_context/context.toml line {area['line']} default must be a boolean")
-        string_array(area, "forbidden_runtime_dependencies", errors)
-        if area_id:
-            if area_id in area_ids:
-                errors.append(f"project_context/context.toml has duplicate area id: {area_id}")
-            area_ids.add(area_id)
-        if area_root:
-            safe_manifest_path(area_root, ROOT, f"area {area_id or area['line']} root", "area root", errors)
-        if context_path:
-            register_context_path(context_path, "area", None, f"area {area_id or area['line']}", registered_paths, roles, policies, errors)
-
+        validate_area_entry(area, area_ids, registered_paths, roles, policies, errors)
     for entry in contexts:
-        context_path = required_string(entry, "path", errors)
-        raw_role = required_string(entry, "role", errors)
-        optional_string(entry, "read_when", errors)
-        read_policy = optional_string(entry, "read_policy", errors)
-        string_array(entry, "triggers", errors)
-        string_array(entry, "default_children", errors)
-        role = normalize_role(raw_role) if raw_role else None
-        if raw_role and role is None:
-            errors.append(f"project_context/context.toml line {entry['line']} has unsupported context role: {raw_role}")
-        if read_policy and read_policy not in READ_POLICIES:
-            errors.append(f"project_context/context.toml line {entry['line']} has unsupported read_policy: {read_policy}")
-        if context_path and role:
-            register_context_path(context_path, role, read_policy, f"context {context_path}", registered_paths, roles, policies, errors)
-
-    for entry in contexts:
-        for child in entry.get("default_children", []):
-            normalized = normalize_context_path(child)
-            if normalized not in registered_paths:
-                errors.append(f"project_context/context.toml line {entry['line']} default_children references unregistered Context path: {child}")
+        validate_context_entry(entry, registered_paths, roles, policies, errors, warnings)
+    validate_default_children(contexts, registered_paths, errors, warnings)
     return roles, policies
 
 
@@ -400,7 +491,7 @@ def main():
         validate_checks("project_context/architecture.md", text, ARCHITECTURE_CHECKS, errors)
         validate_context_file("project_context/architecture.md", text, "architecture", errors)
 
-    manifest_roles, manifest_policies = validate_manifest(errors)
+    manifest_roles, manifest_policies = validate_manifest(errors, warnings)
     checked = 0
     context_files = sorted(CONTEXT_ROOT.rglob("*.md")) if CONTEXT_ROOT.exists() else []
     for path in context_files:

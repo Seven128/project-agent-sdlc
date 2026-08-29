@@ -29,6 +29,14 @@ The current recovery and writeback path is:
 - Every task chooses exactly one `Context Delta: none|required`. Durable ownership, architecture, interface/API/schema/data, state/recovery, dependency, security, surface responsibility or repeatable verification/deployment change is `required`; a semantics-preserving local repair is `none`.
 - Context owns durable intended truth; code owns current implementation truth; project evidence proves behavior. Missing, unreadable or conflicting controlling Context blocks an unqualified conclusion for the affected scope.
 
+## Shared Catalog And Experimental Routing
+
+Manifest parsing, safe path interpretation, registered/unregistered discovery, default-footprint calculation and reusable diagnostics converge in one package-owned Shared Context Catalog. Existing validate and default-footprint entrypoints delegate to that read model only after characterization fixtures prove the same accepted Schema v4 policies, paths, order, byte totals, diagnostic categories and default CLI behavior. The extraction removes duplicate interpretation; it does not create a registry, persisted discovery state, permission model or automatic owner inference.
+
+The first Router release is intentionally experimental and additive. It scans all eligible `project_context/**` with literal terms under explicit file, byte, term and output budgets, distinguishes registered and unregistered candidates, reports ambiguity and incomplete scans deterministically and writes nothing. The existing Workflow search remains mandatory and unchanged. Router promotion requires frozen fresh-Agent baseline/candidate pairs proving zero critical-owner omission, no recovery regression, bounded fixed cost and no systematic unregistered loss; static JSON determinism or lower candidate bytes alone cannot authorize replacing the search.
+
+Legacy read-policy cleanup follows compatibility rather than naming intuition. In Schema v4 only `default` directly enters the default set, while every transitive `default_children` edge currently selects its child irrespective of policy. Therefore `always -> default` can expand the footprint and `never-default` cannot currently override an incoming edge. Version 0.10 preserves this behavior and adds diagnostics only; any later conversion is explicit, diffed and fixture-backed.
+
 ## Effect Non-Degradation
 
 Every Context mechanism or placement change must preserve or strengthen all of these recovery properties:

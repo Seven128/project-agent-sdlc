@@ -70,6 +70,179 @@ test("default Context selection includes only core, default areas and default-ro
   assert.equal(selected.has("project_context/areas/main/archive.md"), false);
 });
 
+test("Schema v4 legacy policies retain current direct and default-child selection semantics", () => {
+  const policies = [
+    "default",
+    "on-demand",
+    "always",
+    "optional",
+    "never-default",
+  ];
+  const direct = policies.map((policy) => ({
+    path: `project_context/areas/main/direct-${policy}.md`,
+    role: "contract",
+    read_policy: policy,
+    triggers: [],
+    default_children: [],
+  }));
+  const children = policies.map((policy) => ({
+    path: `project_context/areas/main/child-${policy}.md`,
+    role: "contract",
+    read_policy: policy,
+    triggers: [],
+    default_children: [],
+  }));
+  const selected = selectDefaultContextPaths({
+    areas: [
+      {
+        id: "main",
+        root: ".",
+        context: "project_context/areas/main.md",
+        default: true,
+      },
+    ],
+    contexts: [
+      ...direct,
+      ...children,
+      {
+        path: "project_context/areas/main/default-parent.md",
+        role: "foundation",
+        read_policy: "default",
+        triggers: [],
+        default_children: children.map((entry) => entry.path),
+      },
+    ],
+  });
+
+  for (const policy of policies) {
+    assert.equal(
+      selected.has(`project_context/areas/main/direct-${policy}.md`),
+      policy === "default",
+      `direct ${policy}`,
+    );
+    assert.equal(
+      selected.has(`project_context/areas/main/child-${policy}.md`),
+      true,
+      `default child ${policy}`,
+    );
+  }
+  assert.deepEqual(
+    [...selected.get("project_context/areas/main/child-default.md")].sort(),
+    ["default_child", "default_role"],
+  );
+  for (const policy of policies.filter((value) => value !== "default")) {
+    assert.deepEqual(
+      [...selected.get(`project_context/areas/main/child-${policy}.md`)],
+      ["default_child"],
+    );
+  }
+});
+
+test("default-child traversal remains finite across duplicates, nesting and cycles", () => {
+  const parent = "project_context/areas/main/parent.md";
+  const child = "project_context/areas/main/child.md";
+  const grandchild = "project_context/areas/main/grandchild.md";
+  const selected = selectDefaultContextPaths({
+    areas: [
+      {
+        id: "main",
+        root: ".",
+        context: "project_context/areas/main.md",
+        default: true,
+      },
+    ],
+    contexts: [
+      {
+        path: parent,
+        role: "foundation",
+        read_policy: "default",
+        triggers: [],
+        default_children: [child, child],
+      },
+      {
+        path: child,
+        role: "contract",
+        read_policy: "never-default",
+        triggers: [],
+        default_children: [grandchild],
+      },
+      {
+        path: grandchild,
+        role: "verification",
+        read_policy: "optional",
+        triggers: [],
+        default_children: [parent],
+      },
+    ],
+  });
+
+  assert.deepEqual(
+    [parent, child, grandchild].map((entry) => [
+      entry,
+      [...selected.get(entry)].sort(),
+    ]),
+    [
+      [parent, ["default_child", "default_role"]],
+      [child, ["default_child"]],
+      [grandchild, ["default_child"]],
+    ],
+  );
+});
+
+test("legacy policy migration choices expose their exact default-footprint diff", () => {
+  const alwaysPath = "project_context/areas/main/always.md";
+  const neverPath = "project_context/areas/main/never.md";
+  const manifest = {
+    areas: [
+      {
+        id: "main",
+        root: ".",
+        context: "project_context/areas/main.md",
+        default: true,
+      },
+    ],
+    contexts: [
+      {
+        path: "project_context/areas/main/parent.md",
+        role: "foundation",
+        read_policy: "default",
+        triggers: [],
+        default_children: [neverPath],
+      },
+      {
+        path: alwaysPath,
+        role: "contract",
+        read_policy: "always",
+        triggers: [],
+        default_children: [],
+      },
+      {
+        path: neverPath,
+        role: "contract",
+        read_policy: "never-default",
+        triggers: [],
+        default_children: [],
+      },
+    ],
+  };
+  const before = selectDefaultContextPaths(manifest);
+  const alwaysDefault = structuredClone(manifest);
+  alwaysDefault.contexts[1].read_policy = "default";
+  const afterAlwaysDefault = selectDefaultContextPaths(alwaysDefault);
+  const alwaysOnDemand = structuredClone(manifest);
+  alwaysOnDemand.contexts[1].read_policy = "on-demand";
+  const afterAlwaysOnDemand = selectDefaultContextPaths(alwaysOnDemand);
+  const withoutNeverEdge = structuredClone(manifest);
+  withoutNeverEdge.contexts[0].default_children = [];
+  const afterNeverEdgeRemoval = selectDefaultContextPaths(withoutNeverEdge);
+
+  assert.equal(before.has(alwaysPath), false);
+  assert.equal(afterAlwaysDefault.has(alwaysPath), true);
+  assert.deepEqual([...afterAlwaysOnDemand.keys()], [...before.keys()]);
+  assert.equal(before.has(neverPath), true);
+  assert.equal(afterNeverEdgeRemoval.has(neverPath), false);
+});
+
 test("repository-common defaults keep sparse workspace Context on-demand", () => {
   const selected = selectDefaultContextPaths({
     areas: [

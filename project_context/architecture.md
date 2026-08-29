@@ -11,9 +11,11 @@ This is the minimum durable component, authority and data-flow map for the Harne
 ## Component Map
 
 - CLI and command routing: `packages/ty-context/src/cli.ts` and `packages/ty-context/src/commands/**`.
-- Context manifest/graph/validation/export/sync/doctor: `packages/ty-context/src/lib/context-*`, `validators.ts`, `sync-engine.ts`, `doctor.ts` and managed templates.
+- Context manifest/graph/validation/export/sync/doctor: an immutable Shared Context Catalog under `packages/ty-context/src/lib/context-catalog/**` owns parsed/normalized Manifest facts, registered and unregistered discovery, reusable diagnostics and default-footprint projection; existing validators, `context-*`, `sync-engine.ts`, `doctor.ts` and managed templates consume it through their current public entrypoints.
+- Read-only Context diagnostics: `commands/route.ts` and `commands/context.ts` consume the Catalog. Experimental route scans all eligible `project_context/**` under deterministic literal-search budgets without replacing Workflow discovery; `context inspect` explains one current node without writing.
+- Context mutation: `packages/ty-context/src/lib/context-mutation/**` is the future staging/CAS/journal/recovery owner for register and move. It reuses Catalog validation over a candidate overlay and current Long-Task binding/Authority checks; no ordinary command claims a multi-file filesystem transaction is physically atomic.
 - Managed-source owner: `.codex/ty-context-managed/**`; package output: `packages/ty-context/assets/**`; copy authority: `packages/ty-context/source-mappings.yaml`.
-- Design Authority and authoring adapters: `design-md.ts`, package-managed design Skills and project-owned `DESIGN.md`/Context. External resources remain Source, not a package registry or acceptance state.
+- Design Authority and authoring adapters: `design-md.ts`, package-managed design Skills and project-owned `DESIGN.md`/Context. Root `DESIGN.md` remains the single entry/revision/initial Token owner; an optional sparse manifest binds a complete subordinate/generated closure digest, and every DRA or Long-Task consumer revalidates that identity. External resources and Authority-delta assessments remain Source/diagnostics, not a package registry or acceptance state.
 - DRA replay/recovery/writeback: the package-managed `design-resource-authoring` Skill plus `commands/design-resource.ts` and owner-local recovery modules. A conditional ignored checkpoint stores only replay inputs; live Provider/artifact/suitability/audit/writeback views are re-derived, and no DRA state enters Long-Task authority.
 - Long-Task: `packages/ty-context/src/schemas/long-task-delivery-v2/**` plus focused Source, Contract, evidence, authority, revision, recovery and Final-Gate modules under `packages/ty-context/src/lib/long-task-*`.
 - Direct-process actual acquisition reuses `long-task-source-target-*`, `long-task-observation-authority.ts`, `long-task-process-runtime-closure.ts`, `long-task-execution-observation.ts`, the existing Counterfactual owners and the shared exact comparator. The compiled closure contains only the Source-backed root, safe repository-relative argv values which match production Bindings by exact path or pattern, and exact Claim/Counterfactual production carriers; `input_paths` remains scope/freshness only.
@@ -40,6 +42,10 @@ The complete Context purpose, effect/efficiency non-degradation and change admis
 Default:
 
 `minimum Context + manifest candidates + bounded search + dependency widening -> intended-target resolution when needed -> material requirements/conditions/owners/failure-recovery understanding -> Architecture Deliberation -> Context Delta -> Goal-owned implementation -> fresh project checks and failure repair -> current-candidate Contract/Engineering/Architecture Conformance -> qualified handoff -> Context drift`
+
+Experimental diagnostic:
+
+`task/path/literal terms + Shared Context Catalog + bounded all-Context scan -> stable registered/unregistered candidates + costs/ambiguity/completeness diagnostics -> Agent judgment`; this path writes no state, does not change the minimum Context set and does not satisfy the default search in its first release.
 
 Long-Task:
 
@@ -69,6 +75,7 @@ Long-Task:
 - Context owns durable intended facts; Source owns task-specific product/technical meaning; code owns current implementation; project evidence proves behavior.
 - Managed sources are edited at their canonical owner and reach installed/package/public copies through source mappings and workspace sync. Generated copies never become independent semantic owners.
 - Migrations are versioned, deterministic and exact-ownership-aware. Ordinary sync does not run a tombstone registry or reinterpret user files.
+- Context structural writes are staged and content-identity protected. Lossless Manifest patching, current-byte CAS, an owner journal and explicit recovery precede multi-file publication; single-file rename is not generalized into a cross-file atomicity claim.
 - External generators may produce Source but cannot become Context, Design Authority, Contract or acceptance. The only DRA workflow-state exception is the versioned task-local non-authoritative replay checkpoint defined by the owning authoring contract; it is neither Provider lifecycle nor Long-Task state.
 - Product-surface responsibility, visual Design Authority and engineering architecture stay with their existing non-overlapping Context/Skill owners.
 

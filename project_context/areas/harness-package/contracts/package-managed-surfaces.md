@@ -23,6 +23,10 @@ This contract defines source-only, managed, packaged and human-facing surfaces f
 - `PROJECT_SPEC.md` is the full source-workspace workflow design specification, not a consumer asset.
 - `project_context/**` is source-workspace durable fact authority and is not copied wholesale to consumers.
 
+Public Context tooling is projected from package code and one shared machine-readable Schema/read-policy rule set. The 0.10 surface includes the behavior-compatible validate/default-footprint entrypoints, advisory full-Context Doctor, read-only `context inspect` and an explicitly experimental `route` command with versioned deterministic JSON, bounded literal scanning and documented nonzero argument/catalog/incomplete/I/O/internal exits. It preserves the existing Workflow search and reports unregistered Context rather than silently excluding it. TypeScript and portable Python validators retain language-native implementations but consume the same rule meaning and fixtures.
+
+Context mutation is intentionally split from those read surfaces. `create` first publishes only an unregistered scaffold. `register` and `move` cannot ship until a lossless Manifest edit decision, staging validation, current-byte CAS, journal/recovery and active Long-Task binding checks exist. Canonical full-file TOML normalization, if ever offered, is a separate explicit command rather than a write-helper side effect.
+
 ## Profile And Consumer Boundary
 
 - `core-portable` plus `workflow-default` are installed by default.
@@ -42,6 +46,8 @@ This contract defines source-only, managed, packaged and human-facing surfaces f
 - Public `sync` refreshes enabled package-managed assets only; semantic migration belongs to `upgrade`.
 
 ## Generated Skill Boundary
+
+Design Authority may use a sparse subordinate bundle without creating another Authority. Root `DESIGN.md` remains the sole entry, human revision owner and initial exact-value Token owner; a package-validated manifest owns only closure membership/digest, and `tokens.json` is initially deterministic output from supported DESIGN front matter. `design-system-authoring` remains explicit-only. `design-resource-authoring` may emit a non-authoritative Authority Delta Assessment, but an Authority candidate stops there until the user separately invokes DSA and separately adopts, rebinds and revalidates a new complete closure. Open Design execution stays in Skills; package code contains no provider network/auth/lifecycle runtime.
 
 - Package-managed Skills are business-agnostic. Project facts belong in the consumer Context or separate project-local Skills.
 - Package-managed AGENTS is the sole automatic runtime projection of the stable Shared Engineering Quality design owned by `PROJECT_SPEC.md` and Context. The content-sensitive `context_development_engineer` adds material architecture/engineering-design judgment when the task substance requires it, while generic implementation/fix/refactor wording and ordinary local work do not activate it merely by themselves; it does not own ordinary implementation. Its on-demand engineering-design reference carries deeper fact/assumption, driver/path-dependence, alternative/counterfactual, minimum-experiment and concrete-boundary reasoning without making every method mandatory. `long-task-workflow` and public docs preserve one visible risk-proportional Architecture Deliberation with triggered quality-attribute assessment, Goal-owned implementation guardrails and one current-candidate Engineering Quality Conformance containing Architecture Conformance. Default Contract Conformance and Long-Task Final Gate are mutually exclusive carriers; the Gate proves only declared falsifiable project-check-bound invariants. Freshness, debt and Context-drift direction stay explicit, with no quality artifact/matrix, field/aspect/Claim kind/risk, second Authority/Gate, state or broad quality Boolean.

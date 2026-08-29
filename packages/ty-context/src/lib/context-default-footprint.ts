@@ -2,15 +2,19 @@ import { createHash } from "node:crypto";
 import { lstat, readFile } from "node:fs/promises";
 import path from "node:path";
 import {
-  parseContextManifest,
-  type ContextManifest,
-} from "./context-manifest-schema.js";
+  selectDefaultContextPaths,
+  type DefaultContextSelectionReason,
+} from "./context-catalog/catalog-default-footprint.js";
+import { loadContextCatalog } from "./context-catalog/catalog-load.js";
+import { normalizeContextPath } from "./context-catalog/catalog-paths.js";
+
+export {
+  selectDefaultContextPaths,
+  type DefaultContextSelectionReason,
+} from "./context-catalog/catalog-default-footprint.js";
 
 export const DEFAULT_CONTEXT_TOTAL_SOFT_BUDGET_BYTES = 64 * 1024;
 export const DEFAULT_CONTEXT_FILE_SOFT_BUDGET_BYTES = 16 * 1024;
-
-export type DefaultContextSelectionReason =
-  "core" | "default_area" | "default_role" | "default_child";
 
 export interface DefaultContextFileFootprint {
   path: string;
@@ -28,17 +32,22 @@ export async function inspectDefaultContextFootprint(
   projectRootInput: string,
 ): Promise<DefaultContextFootprint> {
   const projectRoot = path.resolve(projectRootInput);
-  const manifestPath = "project_context/context.toml";
-  const manifestContent = await readFile(
-    path.join(projectRoot, ...manifestPath.split("/")),
-    "utf8",
-  );
-  const parsed = parseContextManifest(manifestContent, manifestPath);
-  if (!parsed.manifest || parsed.errors.length > 0) {
-    throw new Error(`context_manifest_invalid:${parsed.errors.join("|")}`);
+  const catalog = await loadContextCatalog(projectRoot, {
+    discover_files: false,
+    validate_manifest: false,
+  });
+  const parseErrors = catalog.diagnostics
+    .filter(
+      (entry) =>
+        entry.code === "context_manifest_parse" ||
+        entry.code === "context_manifest_missing",
+    )
+    .map((entry) => entry.message);
+  if (!catalog.manifest || parseErrors.length > 0) {
+    throw new Error(`context_manifest_invalid:${parseErrors.join("|")}`);
   }
 
-  const selected = selectDefaultContextPaths(parsed.manifest);
+  const selected = catalog.default_footprint;
   const files: DefaultContextFileFootprint[] = [];
   const hashes = new Map<string, string[]>();
   for (const [relativePath, reasons] of [...selected.entries()].sort(
@@ -76,67 +85,6 @@ export async function inspectDefaultContextFootprint(
   };
 }
 
-// This is the advisory startup set only. It does not restrict later reads or
-// turn default Area/read-policy selection into a Context or edit permission.
-export function selectDefaultContextPaths(
-  manifest: ContextManifest,
-): Map<string, Set<DefaultContextSelectionReason>> {
-  const selected = new Map<string, Set<DefaultContextSelectionReason>>();
-  const add = (
-    value: string,
-    reason: DefaultContextSelectionReason,
-  ): boolean => {
-    const normalized = normalizeContextPath(value);
-    const reasons = selected.get(normalized) ?? new Set();
-    const changed = !reasons.has(reason);
-    reasons.add(reason);
-    selected.set(normalized, reasons);
-    return changed;
-  };
-
-  for (const core of [
-    "project_context/context.toml",
-    "project_context/global.md",
-    "project_context/architecture.md",
-  ])
-    add(core, "core");
-
-  for (const area of manifest.areas) {
-    if (area.default) add(area.context, "default_area");
-  }
-
-  const children = new Map(
-    manifest.contexts.map(
-      (context) =>
-        [
-          normalizeContextPath(context.path),
-          context.default_children.map(normalizeContextPath),
-        ] as const,
-    ),
-  );
-  const queue: string[] = [];
-  const queued = new Set<string>();
-  const enqueue = (contextPath: string): void => {
-    if (queued.has(contextPath)) return;
-    queued.add(contextPath);
-    queue.push(contextPath);
-  };
-  for (const context of manifest.contexts) {
-    if (context.read_policy !== "default") continue;
-    const normalized = normalizeContextPath(context.path);
-    add(normalized, "default_role");
-    enqueue(normalized);
-  }
-  while (queue.length > 0) {
-    const parent = queue.shift()!;
-    for (const child of children.get(parent) ?? []) {
-      add(child, "default_child");
-      enqueue(child);
-    }
-  }
-  return selected;
-}
-
 function resolveProjectFile(projectRoot: string, relativePath: string): string {
   const absolutePath = path.resolve(
     projectRoot,
@@ -151,8 +99,4 @@ function resolveProjectFile(projectRoot: string, relativePath: string): string {
     throw new Error(`default_context_path_outside_project:${relativePath}`);
   }
   return absolutePath;
-}
-
-function normalizeContextPath(value: string): string {
-  return value.replace(/\\/gu, "/").replace(/^\.\//u, "");
 }

@@ -1,18 +1,12 @@
 import { parse } from "smol-toml";
+import {
+  CONTEXT_AREA_FIELDS,
+  CONTEXT_NODE_FIELDS,
+  CONTEXT_TOP_LEVEL_FIELDS,
+  type ContextRole,
+} from "./context-catalog/catalog-portable-contract.js";
 
-export type ContextRole =
-  | "global"
-  | "architecture"
-  | "area"
-  | "domain"
-  | "subdomain"
-  | "foundation"
-  | "archive"
-  | "contract"
-  | "verification"
-  | "deployment"
-  | "implementation-index"
-  | "decision-rationale";
+export type { ContextRole } from "./context-catalog/catalog-portable-contract.js";
 
 export interface ContextAreaEntry {
   line: number;
@@ -44,24 +38,6 @@ export interface ContextManifestParseResult {
   errors: string[];
 }
 
-const TOP_LEVEL_FIELDS = new Set(["areas", "context"]);
-const AREA_FIELDS = new Set([
-  "id",
-  "root",
-  "context",
-  "kind",
-  "default",
-  "forbidden_runtime_dependencies",
-]);
-const CONTEXT_FIELDS = new Set([
-  "path",
-  "role",
-  "read_when",
-  "read_policy",
-  "triggers",
-  "default_children",
-]);
-
 export function parseContextManifest(
   content: string,
   file = "project_context/context.toml",
@@ -78,7 +54,7 @@ export function parseContextManifest(
     };
   }
 
-  rejectUnknownFields(parsed, TOP_LEVEL_FIELDS, file, errors);
+  rejectUnknownFields(parsed, CONTEXT_TOP_LEVEL_FIELDS, file, errors);
   const rawAreas = tableArray(parsed.areas, "[[areas]]", file, errors);
   const rawContexts = tableArray(parsed.context, "[[context]]", file, errors);
   const areaLines = tableLines(content, "areas");
@@ -87,7 +63,7 @@ export function parseContextManifest(
   const areas: ContextAreaEntry[] = [];
   for (const [index, value] of rawAreas.entries()) {
     const location = `${file} line ${areaLines[index] ?? 1}`;
-    rejectUnknownFields(value, AREA_FIELDS, location, errors);
+    rejectUnknownFields(value, CONTEXT_AREA_FIELDS, location, errors);
     const id = requiredString(value, "id", location, errors);
     const root = requiredString(value, "root", location, errors);
     const context = requiredString(value, "context", location, errors);
@@ -116,7 +92,7 @@ export function parseContextManifest(
   const contexts: ContextNodeEntry[] = [];
   for (const [index, value] of rawContexts.entries()) {
     const location = `${file} line ${contextLines[index] ?? 1}`;
-    rejectUnknownFields(value, CONTEXT_FIELDS, location, errors);
+    rejectUnknownFields(value, CONTEXT_NODE_FIELDS, location, errors);
     const path = requiredString(value, "path", location, errors);
     const role = requiredString(value, "role", location, errors);
     const readWhen = optionalString(value, "read_when", location, errors);

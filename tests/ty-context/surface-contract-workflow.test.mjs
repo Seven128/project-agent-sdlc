@@ -21,6 +21,7 @@ const [
   packageManagedSurfaces,
   verificationContext,
   validators,
+  contextRules,
   sourceProductSkill,
   sourceUiuxSkill,
   sourceDevelopmentSkill,
@@ -43,6 +44,7 @@ const [
   read("project_context/areas/harness-package/contracts/package-managed-surfaces.md"),
   read("project_context/areas/harness-package/verification.md"),
   read("packages/ty-context/src/lib/validators.ts"),
+  read(".codex/ty-context-managed/minimal_tools/context_rules.json"),
   read(".codex/ty-context-managed/skills/context_product_plan/SKILL.md"),
   read(".codex/ty-context-managed/skills/context_uiux_design/SKILL.md"),
   read(".codex/ty-context-managed/skills/context_development_engineer/SKILL.md"),
@@ -261,4 +263,9 @@ assert.match(packageManagedSurfaces, /Skill activation grants no Context write a
 for (const role of ["surface-contract", "product-surface", "web-contract", "app-contract", "game-surface", "screen", "design"]) {
   assert.doesNotMatch(validators, new RegExp(`["']${role}["']\\s*:`));
 }
-assert.match(validators, /contract: "contract"/);
+const parsedContextRules = JSON.parse(contextRules);
+assert.ok(parsedContextRules.roles.includes("contract"));
+for (const role of ["surface-contract", "product-surface", "web-contract", "app-contract", "game-surface", "screen", "design"]) {
+  assert.equal(parsedContextRules.roles.includes(role), false);
+}
+assert.match(validators, /catalog-portable-contract\.js/u);
