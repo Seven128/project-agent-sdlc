@@ -88,6 +88,13 @@ Executable continuity is `design-resource-v1-capacity-guard.test.mjs`, `symbolic
 - Characterization and language-parity coverage is owned by `tests/ty-context/context-default-footprint.test.mjs`, `context-manifest-hardening.test.mjs`, `context-catalog.test.mjs` and `validators.test.mjs`. It freezes all five Schema v4 policies, direct/default-child behavior, duplicate/nested/cyclic child traversal, explicit migration diffs, unregistered discovery, legacy/conflict warnings, no-write loading and TypeScript/Python shared-rule behavior.
 - The experimental Router, full-Context Doctor and `context inspect` consume this Catalog in later read-only layers. They cannot alter the Workflow-required bounded search, default-footprint algorithm or Authority.
 
+## Local DESIGN.md Tool Adapter Owners
+
+- `packages/ty-context/src/lib/design-md-tool-adapter.ts` is the sole package-local compatibility facade over the public `@google/design.md/linter` API. It exposes local parse/validate, lint, deterministic Token export and semantic diff only; it performs no generation, network request, authentication, polling, retry, cancellation, remote cleanup or adoption.
+- `design-md-tool-types.ts` owns the adapter's JSON-ready protocol. `design-md-tool-normalization.ts` owns installed-version fingerprinting plus stable diagnostic, Map and Token-change projection so external package classes, insertion order and optional version-specific fields do not leak into Harness callers.
+- The adapter records the actual package version and API surface, preserves the optional 0.4 diagnostic rule identity, normalizes exported text to one final newline and supports the package's local `json-tailwind`, `css-tailwind`, `tailwind`, `dtcg` and `css-vars` emitters. A CSS-variable prefix is explicit export input and cannot silently affect another format.
+- `tests/ty-context/design-md-tool-adapter.test.mjs` compares lint, export, diff and regression semantics against the installed CLI and proves deterministic serializable output. Open Design capability discovery and candidate generation remain exclusively in the explicit authoring Skills; this adapter is not an `OpenDesignProvider`.
+
 ## Sparse Context Workspace / Monorepo Owners
 
 - Durable purpose, read-versus-change distinction, alternatives, compatibility and anti-degradation reasoning: `PROJECT_SPEC.md`, `foundation/context-model.md`, `contracts/workflow-contract.md` and `decision-rationale/minimal-context.md`.
