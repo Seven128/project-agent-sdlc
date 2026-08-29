@@ -2,6 +2,17 @@
 
 Schema migrations for Harness config and managed file layout belong here.
 
+Later 0.10.x adds opt-in, dry-run-first `context register`, `context move` and
+`context transaction status|rollback|complete`. They do not migrate existing
+projects or reinterpret legacy policies. Register losslessly appends one
+recoverable Context node. Move preserves one registered Context/Area owner,
+structured default-child references and explicit local Context-Markdown links;
+unstructured exact references or an incomplete bounded scan block apply. Both
+use current-byte/file-identity CAS, candidate-tree validation and one logical
+recoverable journal published as immutable digest-linked generations. There is
+no automatic policy conversion, force bypass, hidden TOML
+normalization or claim of cross-file physical atomicity.
+
 Version 0.10.1 adds `ty-context context create --path <path> --role <role>`.
 It writes one TODO-only, unregistered Markdown scaffold and does not modify
 `project_context/context.toml` or the default footprint. Existing files,

@@ -13,6 +13,8 @@ import { validateCatalogManifest } from "./catalog-validation.js";
 export interface LoadContextCatalogOptions {
   discover_files?: boolean;
   validate_manifest?: boolean;
+  file_overrides?: ReadonlyMap<string, Uint8Array | null>;
+  directory_overrides?: ReadonlySet<string>;
 }
 
 export async function loadContextCatalog(
@@ -26,16 +28,27 @@ export async function loadContextCatalog(
     ...manifestPath.split("/"),
   );
   const diagnostics = [];
+  const fileOverrides = normalizeFileOverrides(options.file_overrides);
+  const directoryOverrides = normalizeDirectoryOverrides(
+    options.directory_overrides,
+  );
   const contextFiles =
     options.discover_files === false
       ? []
-      : await discoverContextMarkdownFiles(projectRoot);
+      : await discoverContextMarkdownFiles(projectRoot, fileOverrides);
   const withoutCoreFiles = contextFiles.filter(
     (entry) =>
       entry.path !== "project_context/global.md" &&
       entry.path !== "project_context/architecture.md",
   );
-  if (!(await pathExists(absoluteManifestPath))) {
+  const manifestOverride = fileOverrides.has(manifestPath)
+    ? fileOverrides.get(manifestPath)
+    : undefined;
+  if (
+    manifestOverride === null ||
+    (manifestOverride === undefined &&
+      !(await pathExists(absoluteManifestPath)))
+  ) {
     diagnostics.push(
       catalogDiagnostic(
         "context_manifest_missing",
@@ -59,7 +72,10 @@ export async function loadContextCatalog(
     };
   }
 
-  const manifestContent = await readFile(absoluteManifestPath, "utf8");
+  const manifestContent =
+    manifestOverride === undefined
+      ? await readFile(absoluteManifestPath, "utf8")
+      : Buffer.from(manifestOverride).toString("utf8");
   const parsed = parseContextManifest(manifestContent, manifestPath);
   diagnostics.push(
     ...parsed.errors.map((message) =>
@@ -93,7 +109,12 @@ export async function loadContextCatalog(
           read_policies_by_path: new Map(),
           diagnostics: [],
         }
-      : await validateCatalogManifest(projectRoot, parsed.manifest);
+      : await validateCatalogManifest(
+          projectRoot,
+          parsed.manifest,
+          fileOverrides,
+          directoryOverrides,
+        );
   diagnostics.push(...validation.diagnostics);
   const registeredPaths = new Set([
     "project_context/global.md",
@@ -122,6 +143,27 @@ export async function loadContextCatalog(
     read_policies_by_path: validation.read_policies_by_path,
     diagnostics,
   };
+}
+
+function normalizeDirectoryOverrides(
+  values: ReadonlySet<string> | undefined,
+): ReadonlySet<string> {
+  if (!values) return new Set();
+  return new Set([...values].map(normalizeContextPath));
+}
+
+function normalizeFileOverrides(
+  values: ReadonlyMap<string, Uint8Array | null> | undefined,
+): ReadonlyMap<string, Uint8Array | null> {
+  if (!values) return new Map();
+  const normalized = new Map<string, Uint8Array | null>();
+  for (const [file, bytes] of values) {
+    const relative = normalizeContextPath(file);
+    if (normalized.has(relative))
+      throw new Error(`context_catalog_override_duplicate:${relative}`);
+    normalized.set(relative, bytes === null ? null : Buffer.from(bytes));
+  }
+  return normalized;
 }
 
 function addUnregisteredDiagnostics(

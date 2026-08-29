@@ -15,6 +15,29 @@ const repositoryBackedInputKinds = new Set([
   "repository_preservation",
 ]);
 
+export async function synchronizeRepositoryInputDigests(
+  repository,
+  manifest,
+) {
+  let manifestInputsUpdated = 0;
+  for (const input of manifest.inputs) {
+    if (!repositoryBackedInputKinds.has(input.kind)) continue;
+    const inputPath = await assertProtectedRepositoryFile(
+      repository,
+      protectedPath(repository, input.source_ref, `input_${input.key}`),
+      `compact_migration_input:${input.key}`,
+    );
+    const currentSha256 = sha256Hex(await readFile(inputPath));
+    if (input.sha256 === currentSha256) continue;
+    input.sha256 = currentSha256;
+    manifestInputsUpdated += 1;
+  }
+  return {
+    requested: true,
+    manifest_inputs_updated: manifestInputsUpdated,
+  };
+}
+
 export async function synchronizeSourceAuthority(
   repository,
   sourcePath,

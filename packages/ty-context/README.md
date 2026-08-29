@@ -210,11 +210,18 @@ Explicit `ty-context upgrade` separately converts provably simple pre-v4 `[[cont
 ty-context route --task "change the weather map contract" --path apps/client/src/map.ts --explain
 ty-context context inspect project_context/areas/main/weather.md --task "change the weather map contract"
 ty-context context create --path project_context/areas/main/weather.md --role domain
+ty-context context register --path project_context/areas/main/weather.md --role domain
+ty-context context move --from project_context/deployment.md --to project_context/deployment/index.md
+ty-context context transaction status
 ```
 
 The experimental `route` command performs a stateless, deterministic literal scan of all eligible `project_context/**`, including labelled unregistered files. It has versioned JSON, fixed budgets and explicit incomplete results, but it establishes no Authority, changes no default selection and does not replace the Workflow-required bounded search. `context inspect` reports ownership/read metadata, default reasons, explicit backlinks, declared-key conflicts and optional route reasons. Both remain read-only.
 
-Version 0.10.1 adds only `context create`: a collision-safe, unregistered, Role-specific TODO scaffold below `project_context/**`. It reports an unchanged default footprint and never edits the Manifest, authors durable facts, registers the file or force-overwrites a target. A scaffold must receive real owner facts before separate registration and intentionally fails recoverability if registered unchanged. `register` and `move` remain unavailable until their lossless transaction and recovery Gates close. Classified exits are `0` complete, `2` arguments, `3` blocking Catalog, `4` incomplete budget, `5` I/O/path safety and `6` internal; ordinary route ambiguity/unresolved output remains exit `0`.
+Version 0.10.1 adds only `context create`: a collision-safe, unregistered, Role-specific TODO scaffold below `project_context/**`. It reports an unchanged default footprint and never edits the Manifest, authors durable facts, registers the file or force-overwrites a target. A scaffold must receive real owner facts before separate registration and intentionally fails recoverability if registered unchanged.
+
+Later 0.10.x adds dry-run-first `context register` and `context move` after their separate Gate. Register appends one parser-validated Context block for an existing recoverable file without whole-file TOML serialization. Move preserves one registered Context/Area owner, structured default-child edges and explicit local Context-Markdown links; exact prose/code/config references are reported and block apply until resolved. Both use staged Catalog validation, current-byte/file-identity CAS, synchronized same-directory temporaries, one logical no-replace journal published as immutable digest-linked generations, deterministic commit/live validation, active Long-Task refusal and `context transaction status|rollback|complete`. They provide recoverable multi-file publication rather than physical cross-file atomicity, and expose no force bypass.
+
+Classified exits are `0` complete, `2` arguments, `3` blocking Catalog, `4` incomplete route budget, `5` I/O/path safety and `6` internal; ordinary route ambiguity/unresolved output and mutation dry-runs remain exit `0`.
 
 ### Bounded Context discovery
 

@@ -33,6 +33,13 @@ export function extractContextMarkdown(
         line,
         column,
       });
+    else if (node.type === "image")
+      references.push({
+        destination: node.url,
+        kind: "image",
+        line,
+        column,
+      });
     else if (node.type === "definition")
       references.push({
         destination: node.url,

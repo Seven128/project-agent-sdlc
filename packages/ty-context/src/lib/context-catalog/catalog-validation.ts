@@ -27,6 +27,8 @@ export interface CatalogManifestValidation {
 export async function validateCatalogManifest(
   projectRoot: string,
   manifest: ContextManifest,
+  fileOverrides: ReadonlyMap<string, Uint8Array | null> = new Map(),
+  directoryOverrides: ReadonlySet<string> = new Set(),
 ): Promise<CatalogManifestValidation> {
   const diagnostics: CatalogDiagnostic[] = [];
   const registeredContexts: CatalogRegisteredContext[] = [];
@@ -80,6 +82,8 @@ export async function validateCatalogManifest(
       `area ${area.id} root`,
       false,
       addError,
+      fileOverrides,
+      directoryOverrides,
     );
     const relative = normalizeContextPath(area.context);
     if (registeredPaths.has(relative)) {
@@ -104,6 +108,8 @@ export async function validateCatalogManifest(
         area,
       },
       addError,
+      fileOverrides,
+      directoryOverrides,
     );
   }
 
@@ -158,6 +164,8 @@ export async function validateCatalogManifest(
         context,
       },
       addError,
+      fileOverrides,
+      directoryOverrides,
     );
   }
 
@@ -213,6 +221,8 @@ async function addRegisteredContext(
   readPoliciesByPath: Map<string, string>,
   input: AddRegisteredContextInput,
   addError: CatalogPathErrorReporter,
+  fileOverrides: ReadonlyMap<string, Uint8Array | null>,
+  directoryOverrides: ReadonlySet<string>,
 ): Promise<void> {
   const relative = normalizeContextPath(input.rawPath);
   if (looksLikeContextExportArtifact(relative)) {
@@ -239,6 +249,8 @@ async function addRegisteredContext(
       input.sourceLabel,
       true,
       addError,
+      fileOverrides,
+      directoryOverrides,
     ))
   ) {
     return;

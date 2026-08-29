@@ -131,17 +131,24 @@ Schema v4 继续接受 `default`、`on-demand`、`always`、`optional` 和 `neve
 
 独立的显式 `ty-context upgrade` 可以迁移 v4 之前的旧 `[[context_units]]` 表名，但只处理每个旧表都能证明为简单单行字段的情况。它只重命名表、删除已废弃的 `id`/`area` 字段，并保留所有未触碰字节和原始换行；复杂或混合格式 TOML、当前/旧路径冲突都会变成 `manual_required`。普通 `sync` 永不执行该迁移。
 
-验证、Doctor 与下面两个只读维护命令共用同一套 Manifest 解释：
+验证、Doctor 与下面这些 Context 维护命令共用同一套 Catalog 解释：
 
 ```bash
 ty-context route --task "修改天气地图契约" --path apps/client/src/map.ts --explain
 ty-context context inspect project_context/areas/main/weather.md --task "修改天气地图契约"
 ty-context context create --path project_context/areas/main/weather.md --role domain
+ty-context context register --path project_context/areas/main/weather.md --role domain
+ty-context context move --from project_context/deployment.md --to project_context/deployment/index.md
+ty-context context transaction status
 ```
 
 `route` 是实验性、无状态的字面量候选诊断，会扫描全部符合条件的 `project_context/**`，并明确标记未登记文件。其版本化 JSON、固定扫描预算、稳定顺序、选择原因与字节成本不建立 Authority、不参与默认 footprint，也不能替代 Workflow 仍然必需的 bounded search；预算超限会显式返回不完整结果。`context inspect` 只读报告单个文件的登记状态、Role、读取元数据、默认选择原因、显式反向引用、稳定 key 冲突和可选路由解释。
 
-0.10.1 只增加边界明确的 `context create` 写入：它在 `project_context/**` 下发布一个 Role 专属、仅含 TODO 的 Markdown scaffold，明确标记为未登记，拒绝不安全路径、既有目标和并发出现的目标，并报告 default footprint 未变化。它不会修改 `context.toml`，不会自动创作产品或架构事实，也没有“创建并登记”或强制覆盖选项。必须先用真实 owner facts 替换全部 TODO，再单独登记；占位 scaffold 一旦登记会故意无法通过恢复性验证。`register` 和 `move` 在 lossless transaction 与恢复 Gate 完成前仍不可用。
+0.10.1 只增加边界明确的 `context create` 写入：它在 `project_context/**` 下发布一个 Role 专属、仅含 TODO 的 Markdown scaffold，明确标记为未登记，拒绝不安全路径、既有目标和并发出现的目标，并报告 default footprint 未变化。它不会修改 `context.toml`，不会自动创作产品或架构事实，也没有“创建并登记”或强制覆盖选项。必须先用真实 owner facts 替换全部 TODO，再单独登记；占位 scaffold 一旦登记会故意无法通过恢复性验证。
+
+后续 0.10.x mutation 命令默认都是 dry-run。`context register` 只接受一个现有、可恢复、未登记的文件，只生成规范的 `default`/`on-demand` policy，并在不改写其他 TOML 字节的前提下追加一个经 parser 验证的 `[[context]]` block。`context move` 只接受唯一登记的 Context/Area owner，同时更新 owner 与结构化 `default_children`，用 CommonMark AST 重基全部 Context Markdown 中的显式本地链接；正文、代码和配置中的精确旧路径只报告不改写。只要 bounded repository scan 不完整或仍有未决引用，apply 就会拒绝；缺失的目标目录也属于可恢复计划。
+
+实际应用的 register/move 共用当前字节与文件 identity CAS、同目录同步临时文件、以不可变摘要链 generation 发布的单一逻辑 no-replace journal、完整 candidate-tree overlay 验证、确定性提交顺序、live after-state 复核，以及 `context transaction status|rollback|complete`。恢复只接受 journal 精确拥有的部分临时文件，并拒绝外部冲突或无 owner 链接；活跃 Long-Task 必须使用既有 Authority Revision/rebinding。这里承诺的是确定性崩溃恢复，不是文件系统级跨文件物理原子性；不存在 `--force` 或隐式全 Manifest normalize 路径。
 
 这些 Context 命令使用统一退出码：`0` 完成，`2` 参数错误，`3` Catalog 阻断错误，`4` 扫描预算导致结果不完整，`5` I/O 或路径安全错误，`6` 内部错误；普通 route ambiguous/unresolved 仍是已完成的诊断结果。
 

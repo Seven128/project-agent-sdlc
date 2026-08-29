@@ -21,6 +21,7 @@ export async function analyzeContextMarkdownCatalog(input: {
   project_root: string;
   files: CatalogFile[];
   long_line_threshold: number;
+  file_overrides?: ReadonlyMap<string, Uint8Array | null>;
 }): Promise<ContextMarkdownCatalogAnalysis> {
   const files: ContextMarkdownFileAnalysis[] = [];
   for (const file of [...input.files].sort((left, right) =>
@@ -31,6 +32,7 @@ export async function analyzeContextMarkdownCatalog(input: {
         project_root: input.project_root,
         file,
         long_line_threshold: input.long_line_threshold,
+        file_overrides: input.file_overrides,
       }),
     );
   const declarations = files.flatMap((file) => file.declarations);
@@ -47,8 +49,13 @@ export async function analyzeContextMarkdownFile(input: {
   project_root: string;
   file: CatalogFile;
   long_line_threshold: number;
+  file_overrides?: ReadonlyMap<string, Uint8Array | null>;
 }): Promise<ContextMarkdownFileAnalysis> {
-  const content = await readFile(input.file.absolute_path, "utf8");
+  const override = input.file_overrides?.get(input.file.path);
+  const content =
+    override === undefined
+      ? await readFile(input.file.absolute_path, "utf8")
+      : Buffer.from(override ?? []).toString("utf8");
   const extracted = extractContextMarkdown(content, input.file.path);
   const lengths = lineLengths(content, input.long_line_threshold);
   const references: ContextMarkdownReference[] = [];
@@ -57,6 +64,7 @@ export async function analyzeContextMarkdownFile(input: {
       input.project_root,
       input.file.path,
       reference,
+      input.file_overrides,
     );
     if (resolved) references.push(resolved);
   }
@@ -75,6 +83,7 @@ async function resolveReference(
   projectRoot: string,
   sourcePath: string,
   reference: ContextMarkdownRawReference,
+  fileOverrides?: ReadonlyMap<string, Uint8Array | null>,
 ): Promise<ContextMarkdownReference | null> {
   const split = splitDestination(reference.destination);
   if (split.disposition === "ignored") return null;
@@ -106,6 +115,23 @@ async function resolveReference(
       status: "outside_repository",
       detail: "local Markdown destination resolves outside the repository",
     };
+  if (fileOverrides?.has(targetPath)) {
+    if (fileOverrides.get(targetPath) === null)
+      return {
+        ...reference,
+        source_path: sourcePath,
+        target_path: targetPath,
+        fragment: split.fragment,
+        status: "missing",
+      };
+    return {
+      ...reference,
+      source_path: sourcePath,
+      target_path: targetPath,
+      fragment: split.fragment,
+      status: "valid",
+    };
+  }
   try {
     await lstat(absolute);
   } catch (error) {

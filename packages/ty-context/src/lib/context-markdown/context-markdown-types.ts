@@ -1,4 +1,5 @@
-export type ContextMarkdownReferenceKind = "inline" | "definition" | "angle";
+export type ContextMarkdownReferenceKind =
+  "inline" | "image" | "definition" | "angle";
 export type ContextMarkdownReferenceStatus =
   "valid" | "missing" | "outside_repository" | "invalid";
 

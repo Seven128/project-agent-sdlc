@@ -22,7 +22,10 @@ import {
   canonicalValueJson,
   sha256Hex,
 } from "../packages/ty-context/dist/lib/strict-codec.js";
-import { synchronizeSourceAuthority } from "./migrate_long_task_compact_carrier_authority.mjs";
+import {
+  synchronizeRepositoryInputDigests,
+  synchronizeSourceAuthority,
+} from "./migrate_long_task_compact_carrier_authority.mjs";
 
 const repository = path.resolve(fileURLToPath(new URL("..", import.meta.url)));
 const options = parseArguments(process.argv.slice(2));
@@ -41,6 +44,9 @@ if (sourceRows.length !== 1)
 const sourceRow = sourceRows[0];
 const manifest = structuredClone(sourceRow.manifest);
 const contract = parseDeliveryContractTextForMigration(contractBefore);
+const repositoryInputSync = options.syncRepositoryInputs
+  ? await synchronizeRepositoryInputDigests(repository, manifest)
+  : { requested: false, manifest_inputs_updated: 0 };
 const sourceForItemParsing = options.syncSourceAuthority
   ? replaceSemanticManifestBlock(
       sourceBefore,
@@ -140,6 +146,7 @@ process.stdout.write(
       obligation_count: reparsedSource.manifest.proof_obligations.length,
       input_count: reparsedSource.manifest.inputs.length,
       manifest_sha256: compactManifestSha256,
+      repository_input_sync: repositoryInputSync,
       source_authority_sync: sourceAuthoritySync,
       source_capacity: compactSource.capacity,
       contract_capacity: compactContract.compact_semantic_carrier.capacity,
@@ -159,17 +166,22 @@ function parseArguments(arguments_) {
     contract:
       ".work_products/symbolic-denotation-efficiency/delivery-contract.yaml",
     write: false,
+    syncRepositoryInputs: false,
     syncSourceAuthority: false,
   };
   for (let index = 0; index < arguments_.length; index += 1) {
     const argument = arguments_[index];
     if (argument === "--write") result.write = true;
+    else if (argument === "--sync-repository-inputs")
+      result.syncRepositoryInputs = true;
     else if (argument === "--sync-source-authority")
       result.syncSourceAuthority = true;
     else if (argument === "--source") result.source = arguments_[++index];
     else if (argument === "--contract") result.contract = arguments_[++index];
     else throw new Error(`compact_migration_unknown_argument:${argument}`);
   }
+  if (result.syncRepositoryInputs && result.syncSourceAuthority)
+    throw new Error("compact_migration_sync_mode_conflict");
   return result;
 }
 

@@ -1,6 +1,8 @@
 import path from "node:path";
 import { realpath } from "node:fs/promises";
 import { pathExists } from "../fs.js";
+import { assertSafeRepositoryFilePath } from "../repository-path-safety.js";
+import { assertCatalogStagedFilePath } from "./catalog-staged-path-safety.js";
 import { isPathWithin, normalizeContextPath } from "./catalog-paths.js";
 
 const EXPORT_ARTIFACT_NAME_PATTERNS = [
@@ -27,6 +29,8 @@ export async function validateCatalogManifestPath(
   source: string,
   allowFile: boolean,
   addError: CatalogPathErrorReporter,
+  fileOverrides: ReadonlyMap<string, Uint8Array | null> = new Map(),
+  directoryOverrides: ReadonlySet<string> = new Set(),
 ): Promise<boolean> {
   if (
     path.isAbsolute(rawPath) ||
@@ -46,6 +50,31 @@ export async function validateCatalogManifestPath(
     );
     return false;
   }
+  const relative = normalizeContextPath(path.relative(projectRoot, target));
+  if (allowFile && fileOverrides.has(relative)) {
+    if (fileOverrides.get(relative) === null) {
+      addError(
+        "manifest_path_missing",
+        `project_context/context.toml references missing context file: ${relative}`,
+      );
+      return false;
+    }
+    try {
+      await assertCatalogStagedFilePath(
+        projectRoot,
+        relative,
+        directoryOverrides,
+        `catalog_staged_file:${source}`,
+      );
+      return true;
+    } catch (error) {
+      addError(
+        "manifest_path_staged_unsafe",
+        `project_context/context.toml ${source} staged path is unsafe: ${message(error)}`,
+      );
+      return false;
+    }
+  }
   if (!(await pathExists(target))) {
     addError(
       "manifest_path_missing",
@@ -63,6 +92,10 @@ export async function validateCatalogManifestPath(
     return false;
   }
   return true;
+}
+
+function message(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
 }
 
 export function looksLikeContextExportArtifact(value: string): boolean {

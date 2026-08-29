@@ -57,6 +57,12 @@ export function help(): void {
   route --task <text>  Experimentally route to read-only Context candidates
   context inspect <path>
                        Inspect one Context owner, references and optional route explanation
+  context register --path <path> --role <role> [--apply]
+                       Dry-run or transactionally register one recoverable Context
+  context move --from <path> --to <path> [--apply]
+                       Dry-run or transactionally move one registered Context
+  context transaction status|rollback|complete
+                       Inspect or resolve an unfinished Context mutation journal
   check-modularity --touched|--file <path>|--base <ref> [--limit 300] [--fail-on-warning]
                        Warn when selected handwritten source files exceed a line-count limit
   export-context --full|--code|--all|--source-pack|--code-index|--task-context

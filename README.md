@@ -222,17 +222,24 @@ Schema v4 continues to accept `default`, `on-demand`, `always`, `optional` and `
 
 The separate explicit `ty-context upgrade` path can convert the retired pre-v4 `[[context_units]]` table name when every legacy table has a provably simple single-line representation. It renames the table, removes only retired `id`/`area` fields and preserves every untouched byte and line ending. Complex or mixed-format TOML and current/legacy path conflicts become `manual_required`; ordinary `sync` never performs this migration.
 
-Two read-only maintenance commands share the same Manifest interpretation as validation and Doctor:
+Context maintenance commands share the same Catalog interpretation as validation and Doctor:
 
 ```bash
 ty-context route --task "change the weather map contract" --path apps/client/src/map.ts --explain
 ty-context context inspect project_context/areas/main/weather.md --task "change the weather map contract"
 ty-context context create --path project_context/areas/main/weather.md --role domain
+ty-context context register --path project_context/areas/main/weather.md --role domain
+ty-context context move --from project_context/deployment.md --to project_context/deployment/index.md
+ty-context context transaction status
 ```
 
 `route` is an experimental, stateless literal candidate diagnostic over all eligible `project_context/**`, including clearly labelled unregistered files. Its versioned JSON, fixed scan budgets, stable ordering, explanations and byte costs do not establish Authority, participate in the default footprint or satisfy the Workflow-required bounded search. Budget exhaustion returns an explicitly incomplete result. `context inspect` reports one file's registration, Role, read metadata, default reasons, explicit backlinks, stable-key conflicts and optional route explanation without writing files.
 
-Version 0.10.1 adds only the bounded `context create` write. It publishes one Role-specific TODO-only Markdown scaffold below `project_context/**`, labels it unregistered, refuses unsafe paths and existing/concurrently appearing targets, and reports the unchanged default footprint. It never edits `context.toml`, never creates durable product or architecture facts, and has no combined register or force-overwrite option. Replace every TODO with real owner facts before separately registering the file; a placeholder scaffold intentionally fails registered-Context recoverability. `register` and `move` remain unavailable until their lossless transaction and recovery Gates are implemented.
+Version 0.10.1 adds only the bounded `context create` write. It publishes one Role-specific TODO-only Markdown scaffold below `project_context/**`, labels it unregistered, refuses unsafe paths and existing/concurrently appearing targets, and reports the unchanged default footprint. It never edits `context.toml`, never creates durable product or architecture facts, and has no combined register or force-overwrite option. Replace every TODO with real owner facts before separately registering the file; a placeholder scaffold intentionally fails registered-Context recoverability.
+
+Later 0.10.x mutation commands are dry-run-first. `context register` accepts one existing, recoverable, unregistered file, emits only canonical `default`/`on-demand` policy values and appends one parser-validated `[[context]]` block without rewriting untouched TOML. `context move` accepts one uniquely registered Context/Area owner, patches that owner plus structured `default_children`, rebases explicit CommonMark links inside all Context Markdown, reports exact prose/code/config references without changing them, and refuses apply while its bounded repository scan is incomplete or unresolved. A missing target directory is part of the recoverable plan.
+
+Applied registration and move share current-byte/file-identity CAS, synchronized same-directory temporaries, one logical no-replace journal published as immutable digest-linked generations, a fully validated candidate-tree overlay, deterministic commit order, live after-state validation and `context transaction status|rollback|complete`. Recovery accepts only exact journal-owned partial temporaries and refuses external conflicts or unowned links; an active Long-Task binding must use its existing Authority Revision/rebinding flow. This is deterministic crash recovery, not a claim of filesystem-wide multi-file atomicity. There is no `--force` or implicit whole-Manifest normalization path.
 
 These Context commands use classified exits: `0` completed, `2` arguments, `3` blocking Catalog, `4` incomplete scan budget, `5` I/O/path safety and `6` internal; ordinary route ambiguity and unresolved paths remain completed diagnostic results.
 

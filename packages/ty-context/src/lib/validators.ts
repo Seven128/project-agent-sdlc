@@ -355,6 +355,43 @@ function validateContextFile(
   assertRoleRecoverability(projectRoot, file, content, role, errors);
 }
 
+export function validateContextContentForRole(
+  projectRoot: string,
+  file: string,
+  content: string,
+  role: ContextRole,
+): string[] {
+  const errors: string[] = [];
+  validateContextFile(projectRoot, file, content, role, errors);
+  return errors;
+}
+
+export function validateContextRegistrationContent(
+  projectRoot: string,
+  file: string,
+  content: string,
+  role: ContextRole,
+  readPolicy: string,
+): string[] {
+  const errors = validateContextContentForRole(
+    projectRoot,
+    file,
+    content,
+    role,
+  );
+  const frontMatter = parseFrontMatter(content);
+  const frontMatterRole = frontMatterContextRole(frontMatter, file, errors);
+  if (frontMatterRole && frontMatterRole !== role)
+    errors.push(
+      `${file} front matter context_role ${frontMatterRole} does not match requested manifest role ${role}`,
+    );
+  if (frontMatter.read_policy && frontMatter.read_policy !== readPolicy)
+    errors.push(
+      `${file} front matter read_policy ${frontMatter.read_policy} does not match requested manifest read_policy ${readPolicy}`,
+    );
+  return errors;
+}
+
 function assertSections(
   file: string,
   content: string,

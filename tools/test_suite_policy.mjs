@@ -376,6 +376,7 @@ export const LONG_TASK_ISOLATED_TEST_FILES = Object.freeze([
   "long-task-compact-authoring.test.mjs",
   "long-task-compact-semantic-carrier.test.mjs",
   "long-task-context-evolution.test.mjs",
+  "long-task-context-mutation-guard.test.mjs",
   "long-task-corrupt-state-abandon.test.mjs",
   "long-task-counterfactual-integrity.test.mjs",
   "long-task-direct-process-observer.test.mjs",
@@ -720,11 +721,11 @@ function assertIsolationPolicy() {
     throw new Error("Long-Task isolation classes must be disjoint.");
   if (
     LONG_TASK_PURE_TEST_FILES.length !== 19 ||
-    LONG_TASK_ISOLATED_TEST_FILES.length !== 58 ||
+    LONG_TASK_ISOLATED_TEST_FILES.length !== 59 ||
     LONG_TASK_EXCLUSIVE_TEST_FILES.length !== 11
   )
     throw new Error(
-      "Long-Task isolation policy changed from the reviewed 19/58/11 population; review each new file explicitly instead of parallelizing it by default.",
+      "Long-Task isolation policy changed from the reviewed 19/59/11 population; review each new file explicitly instead of parallelizing it by default.",
     );
 }
 
