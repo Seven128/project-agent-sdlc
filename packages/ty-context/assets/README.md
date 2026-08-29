@@ -575,6 +575,9 @@ outcomes:
         - fact_ref: example.result.observable
           claim_ref: semantic_fact.example.result.observable
           applicability_ref: runtime-root-success
+        - fact_ref: example.architecture.boundary
+          claim_ref: semantic_fact.example.architecture.boundary
+          applicability_ref: runtime-root-success
       proofs:
         - proof_ref: example.result.observable.runtime
           fact_ref: example.result.observable
@@ -584,6 +587,14 @@ outcomes:
           authority: machine
           check_ref: runtime
           assertion_ref: semantic-fact-ac
+        - proof_ref: example.architecture.boundary.runtime
+          fact_ref: example.architecture.boundary
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities: [semantic_fact]
+          authority: machine
+          check_ref: runtime
+          assertion_ref: architecture-semantic-fact-ac
     product:
       observable_result: What a user or system can observe
       result_applicability_refs: [runtime-root-success]
@@ -687,6 +698,14 @@ outcomes:
               evidence_capabilities: [semantic_fact]
               operator: equals
               expected: true
+            - key: architecture-semantic-fact-ac
+              criterion: The exact architecture boundary Fact passes its frozen comparison.
+              claims: [semantic_fact.example.architecture.boundary]
+              applicability_ref: runtime-root-success
+              observation: architecture_semantic_fact_result
+              evidence_capabilities: [semantic_fact]
+              operator: equals
+              expected: true
             - key: architecture-ac
               criterion: Preserve the observable module as the single state owner.
               claims: [obligation.preserve-observable-owner]
@@ -720,6 +739,7 @@ outcomes:
               requirement.observable,
               obligation.preserve-observable-owner,
               semantic_fact.example.result.observable,
+              semantic_fact.example.architecture.boundary,
             ]
           check_key: runtime
           mutation:
@@ -728,7 +748,13 @@ outcomes:
             match: "observable = true"
             replacement: "observable = false"
           expected_assertion_failures:
-            [result-ac, observable-ac, architecture-ac, semantic-fact-ac]
+            [
+              result-ac,
+              observable-ac,
+              architecture-ac,
+              semantic-fact-ac,
+              architecture-semantic-fact-ac,
+            ]
           preserved_assertions: [runtime-liveness]
         - key: make-relations-applicable
           binding_key: observable-carrier

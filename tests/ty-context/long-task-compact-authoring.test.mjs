@@ -90,6 +90,7 @@ ${fixtureExecutionTargetSourceItem()}
 
 function expandedContract() {
   const contract = deliveryContract();
+  contract.task.target_profile.completion_authority = "machine_only";
   contract.outcomes[0].product.requirements = [];
   const check = contract.outcomes[0].acceptance.checks[0];
   check.positive_assertions = check.positive_assertions.filter(
@@ -108,6 +109,7 @@ function expandedContract() {
         "obligation.implement-first",
         "obligation.architecture-first",
         "semantic_fact.fact.first.observable",
+        "semantic_fact.fact.first.architecture-boundary",
       ],
       check_key: "first-check",
       mutation: {
@@ -121,8 +123,10 @@ function expandedContract() {
         "first-obligation",
         "first-architecture",
         "first-semantic-fact",
+        "first-architecture-semantic-fact",
       ],
       preserved_assertions: ["first-liveness"],
+      allowed_fanout_assertions: [],
     },
     {
       key: "make-first-relations-applicable",
@@ -137,6 +141,7 @@ function expandedContract() {
       },
       expected_assertion_failures: ["first-relations-na"],
       preserved_assertions: ["first-liveness"],
+      allowed_fanout_assertions: [],
     },
   ];
   return contract;
@@ -144,6 +149,7 @@ function expandedContract() {
 
 function compactContract(expanded) {
   const contract = structuredClone(expanded);
+  delete contract.task.target_profile.completion_authority;
   delete contract.risk.requested_level;
   contract.risk.facts = {};
   delete contract.global.applicability;
@@ -163,6 +169,8 @@ function compactContract(expanded) {
   delete outcome.technical.forbidden_shortcuts;
   delete outcome.technical.rollback_and_recovery;
   delete outcome.acceptance.population;
+  for (const control of outcome.acceptance.counterfactual_controls)
+    delete control.allowed_fanout_assertions;
 
   const check = outcome.acceptance.checks[0];
   delete check.runner.cwd;

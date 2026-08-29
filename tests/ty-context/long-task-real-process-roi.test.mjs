@@ -708,7 +708,15 @@ test("repository process product has eight fine-grained normal/degraded facts an
     assert.equal(result.status, 0, result.stderr);
     const envelope = JSON.parse(result.stdout);
     assert.equal(envelope.schema_version, "ty-context-product-observation-v1");
-    assert.equal(Object.keys(envelope.observations).length, 14);
+    assert.equal(Object.keys(envelope.observations).length, 16);
+    assert.equal(
+      envelope.observations["fact.first.architecture-boundary"],
+      true,
+    );
+    assert.equal(
+      envelope.observations["fact.second.architecture-boundary"],
+      true,
+    );
     assert.equal(result.stdout.trim().split(/\r?\n/u).length, 1);
 
     const first = await execute(
@@ -745,8 +753,8 @@ test("repository process product has eight fine-grained normal/degraded facts an
     assert.equal(second.status, 0, second.stderr);
     const firstEnvelope = JSON.parse(first.stdout);
     const secondEnvelope = JSON.parse(second.stdout);
-    assert.equal(Object.keys(firstEnvelope.observations).length, 7);
-    assert.equal(Object.keys(secondEnvelope.observations).length, 7);
+    assert.equal(Object.keys(firstEnvelope.observations).length, 8);
+    assert.equal(Object.keys(secondEnvelope.observations).length, 8);
     assert.equal("fact.first.observable" in firstEnvelope.observations, true);
     assert.equal("fact.second.observable" in firstEnvelope.observations, false);
     assert.equal("fact.first.observable" in secondEnvelope.observations, false);

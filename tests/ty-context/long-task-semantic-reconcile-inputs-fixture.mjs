@@ -117,6 +117,7 @@ function sourceClaimDispositionIsFactBearing(sourceClaim) {
     "acceptance",
     "outcome_result",
     "global_constraint",
+    "risk_fact",
   ].includes(sourceClaim?.disposition.type);
 }
 

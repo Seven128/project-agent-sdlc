@@ -5,6 +5,7 @@ import YAML from "yaml";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { generateClaims } from "../../packages/ty-context/dist/lib/long-task-claim-definitions.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { validateDeliveryStages } from "../../packages/ty-context/dist/lib/long-task-stage-policy.js";
 import {
   createDeliveryFixture,
   deliveryContract,
@@ -231,7 +232,7 @@ test("required_proof_surfaces passes only when every layer has a compatible proo
   assert.doesNotThrow(() => parse(contract));
 });
 
-test("blocking result External Confirmation permits a Stage gate with no machine stage_gate Check", () => {
+test("effective blocking result authority permits a Stage gate with no machine stage_gate Check", () => {
   const contract = deliveryContract();
   contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
   contract.global.acceptance.external_confirmations = [
@@ -244,10 +245,43 @@ test("blocking result External Confirmation permits a Stage gate with no machine
       blocksTarget: true,
     }),
   ];
-  assert.doesNotThrow(() => parse(contract));
+  const parsed = parse(contract);
+  const confirmation = parsed.global.acceptance.external_confirmations[0];
+  const obligation = confirmation.obligations[0];
+  const sourceObligationRef = `claim:${obligation.claim_ref}:${obligation.applicability_ref}:${obligation.proof_surface}`;
+  const effectiveRow = {
+    obligation_ref: sourceObligationRef,
+    source_obligation_ref: sourceObligationRef,
+    outcome_key: "first",
+    claim_ref: obligation.claim_ref,
+    local_claim_ref: "result",
+    applicability_ref: obligation.applicability_ref,
+    fact_ref: null,
+    proof_ref: null,
+    method: obligation.method,
+    proof_surface: obligation.proof_surface,
+    required_evidence_capabilities: [...obligation.evidence_capabilities],
+    authority: "external_confirmation",
+    confirmation_ref: confirmation.key,
+    status: "external_fulfillable",
+    reason: null,
+    session_group: null,
+    target_ref: confirmation.target_ref,
+    expected_authority_ref: obligation.expected_authority_ref,
+    required_polarity: "positive",
+    completion_role: "blocking",
+    acceptance_effect: "required",
+    semantic_identity: "fixture-exact-blocking-result",
+    machine_obligation_ref: null,
+  };
+  assert.doesNotThrow(() =>
+    validateDeliveryStages(parsed, undefined, {
+      acceptance_reachability: reachabilityWithRows(parsed, [effectiveRow]),
+    }),
+  );
 });
 
-test("Stage gate omission rejects non-blocking or non-result External Confirmation", () => {
+test("Stage gate omission rejects non-blocking or non-result effective authority", () => {
   for (const mutation of ["non-blocking", "missing-result"]) {
     const contract = deliveryContract();
     contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
@@ -264,8 +298,12 @@ test("Stage gate omission rejects non-blocking or non-result External Confirmati
         blocksTarget: mutation !== "non-blocking",
       }),
     ];
+    const parsed = parse(contract);
     assert.throws(
-      () => parse(contract),
+      () =>
+        validateDeliveryStages(parsed, undefined, {
+          acceptance_reachability: reachabilityWithRows(parsed, []),
+        }),
       /stage_gate_check_required:first:first/u,
       mutation,
     );
@@ -479,6 +517,19 @@ test("Compile enforces criterion even when Authoring Preflight is skipped", asyn
 
 function parse(contract) {
   return parseDeliveryContractText(YAML.stringify(contract));
+}
+
+function reachabilityWithRows(contract, rows) {
+  return {
+    completion_authority:
+      contract.task.target_profile.completion_authority ?? "machine_only",
+    total: rows.length,
+    machine_admitted: 0,
+    external_fulfillable: rows.length,
+    unreachable: 0,
+    obligations: [...rows],
+    effective_external_routes: [...rows],
+  };
 }
 
 function exactExternalConfirmation(

@@ -34,6 +34,7 @@ import {
 import {
   commitCandidate,
   createDeliveryFixture,
+  createNonBlockingExternalFixture,
   pathExists,
   runCli,
 } from "./long-task-delivery-fixtures.mjs";
@@ -1140,7 +1141,7 @@ test("Agent spawn Hook fails closed on corrupt active state without gating unrel
 });
 
 test("Stop Hook treats non-blocking external declarations as advisory machine acceptance", async () => {
-  const fixture = await createDeliveryFixture({ externalConfirmation: true });
+  const fixture = await createNonBlockingExternalFixture();
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     assert.equal(

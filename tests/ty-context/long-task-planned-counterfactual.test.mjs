@@ -305,6 +305,7 @@ console.log(JSON.stringify({
   schema_version: "ty-context-product-observation-v1",
   observations: {
     "fact.first.observable": observed,
+    "fact.first.architecture-boundary": observed,
     [assertion("first-result")]: observed,
     [assertion("first-requirement")]: observed,
     [assertion("first-obligation")]: observed,

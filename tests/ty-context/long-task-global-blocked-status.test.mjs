@@ -9,11 +9,12 @@ import {
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { addGlobalClaim } from "./long-task-global-evidence-sensitivity-fixture.mjs";
 
 test("an unavailable machine Check is needs_work, not formal external pending", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    addBlockedGlobalCheck(fixture.contract);
+    await addBlockedGlobalCheck(fixture);
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -41,7 +42,7 @@ test("an unavailable machine Check is needs_work, not formal external pending", 
 test("a real Outcome failure outranks Global blocked_external", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    addBlockedGlobalCheck(fixture.contract);
+    await addBlockedGlobalCheck(fixture);
     for (const counterfactual of [
       ...fixture.contract.outcomes[0].acceptance.counterfactual_controls,
       ...fixture.contract.global.acceptance.counterfactual_controls,
@@ -86,71 +87,17 @@ test("a real Outcome failure outranks Global blocked_external", async () => {
   }
 });
 
-function addBlockedGlobalCheck(contract) {
-  contract.global.applicability.push({
-    key: "external-service-degradation",
-    target_ref: "fixture-app",
-    journey_role: "degradation",
-    dimensions: [{ key: "fixture-state", value: "degraded" }],
-    given_refs: ["fixture-loaded"],
-    when_refs: ["read-outcome"],
-  });
-  contract.global.technical.constraints.push({
-    key: "external-service",
-    statement: "An external service must be available.",
-    applicability_refs: ["external-service-degradation"],
-  });
-  contract.global.acceptance.checks.push({
-    ...structuredClone(contract.outcomes[0].acceptance.checks[0]),
-    key: "external-service-check",
-    journey_roles: ["degradation"],
-    execution_target: {
-      target_ref: "fixture-app",
-      entrypoint: "root",
+async function addBlockedGlobalCheck(fixture) {
+  await addGlobalClaim(fixture, { counterfactual: true });
+  const check = fixture.contract.global.acceptance.checks.find(
+    (candidate) => candidate.key === "global-state-check",
+  );
+  assert.ok(check);
+  check.environment_requirements = [
+    {
+      key: "missing-service-token",
+      kind: "env_var",
+      target: "TY_CONTEXT_MISSING_GLOBAL_ENV",
     },
-    proof_surface: "runtime_behavior",
-    positive_assertions: [
-      {
-        key: "external-service-proof",
-        criterion: "The external service constraint is observable.",
-        claims: ["constraint.external-service"],
-        applicability_ref: "external-service-degradation",
-        observation: "result",
-        evidence_capabilities: ["target_runtime", "presence"],
-        operator: "equals",
-        expected: true,
-      },
-      {
-        key: "external-service-liveness",
-        criterion: "The product target remains live.",
-        claims: [],
-        observation: "target_live",
-        evidence_capabilities: ["target_runtime"],
-        operator: "equals",
-        expected: true,
-      },
-    ],
-    negative_assertions: [],
-    environment_requirements: [
-      {
-        key: "missing-service-token",
-        kind: "env_var",
-        target: "TY_CONTEXT_MISSING_GLOBAL_ENV",
-      },
-    ],
-  });
-  contract.global.acceptance.counterfactual_controls.push({
-    key: "external-service-semantic-witness",
-    binding_ref: "first.state-first",
-    claims: ["constraint.external-service"],
-    check_key: "external-service-check",
-    mutation: {
-      type: "replace_json_value",
-      path: "src/state.json",
-      pointer: "/first",
-      value: false,
-    },
-    expected_assertion_failures: ["external-service-proof"],
-    preserved_assertions: ["external-service-liveness"],
-  });
+  ];
 }

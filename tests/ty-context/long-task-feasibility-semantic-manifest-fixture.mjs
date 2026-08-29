@@ -159,10 +159,13 @@ function bindSourceInputToFact(manifest, identity) {
     `feasibility Source Fragment missing: ${identity.sourceItemRef}`,
   );
   for (const sourceInput of sourceInputs) {
-    sourceInput.disposition = "fact_bearing";
+    sourceInput.disposition =
+      sourceInput.kind === "source_item" ? "non_ui_material" : "fact_bearing";
     sourceInput.fact_refs = [identity.factKey];
     sourceInput.rationale =
-      "The exact feasibility decision Source and its fragments own one independent delivery-semantic Fact.";
+      sourceInput.kind === "source_item"
+        ? "This exact material Source item owns one independent delivery-semantic feasibility Fact."
+        : "This exact feasibility Source fragment owns one independent delivery-semantic Fact.";
   }
   for (const fact of manifest.facts) {
     fact.source_item_refs = fact.source_item_refs.filter(

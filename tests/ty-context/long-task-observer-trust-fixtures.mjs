@@ -7,12 +7,12 @@ import {
   commitCandidate,
   createDeliveryFixture,
   parseCliJson,
-  refreshFixtureSemanticManifest,
   runCli,
   synchronizeFixtureExecutionTargetSource,
   writeContract,
-  writeFixtureSourceAndOracle,
 } from "./long-task-delivery-fixtures.mjs";
+import { writeFixtureSourceAndOracle } from "./long-task-semantic-oracle-fixture.mjs";
+import { refreshFixtureSemanticManifest } from "./long-task-semantic-refresh-fixture.mjs";
 import { fixtureSemanticManifest } from "./long-task-semantic-manifest-fixture.mjs";
 import { loadSemanticFactManifest } from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";

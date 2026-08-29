@@ -90,6 +90,10 @@ export function assertControlledIncidentCatalog(catalog) {
     "second",
     "selected_design",
   ]);
+  const expectedOverlapClaimRefs = {
+    "backend-persistence-identity": "second.result",
+    "cli-provider-identity": "second.result",
+  };
   for (const key of ["backend-persistence-identity", "cli-provider-identity"]) {
     const scenario = scenarioByKey(catalog, key);
     assert.match(scenario.paraphrase, /establish/u);
@@ -99,7 +103,7 @@ export function assertControlledIncidentCatalog(catalog) {
     );
     assert.equal(
       scenario.wrong_contract_projection.machine_external_overlap_claim_ref,
-      "second.semantic_fact.fact.second.observable",
+      expectedOverlapClaimRefs[key],
     );
   }
 }
@@ -316,6 +320,11 @@ export async function applyScenarioSourceAndContract(fixture, scenario) {
   let source = await readFile(sourcePath, "utf8");
   for (const [key, statement] of Object.entries(scenario.source))
     source = replaceSourceItemText(source, key, statement);
+  const externalSource = fixture.contract.source_claims.find(
+    (claim) => claim.key === "fixture-external",
+  );
+  if (externalSource?.disposition?.type === "claim")
+    source = replaceSourceItemKind(source, "fixture-external", "requirement");
   await writeFile(sourcePath, source);
 
   fixture.contract.task.title = `${scenario.key} controlled replay`;
@@ -391,12 +400,42 @@ export async function assertCompileAttackMatrix(fixture, scenario) {
 
   const overlap = structuredClone(legal);
   overlap.task.target_profile.completion_authority = "declared_authorities";
+  const overlapOutcome = overlap.outcomes[1];
+  const machineCheck = overlapOutcome.acceptance.checks[0];
+  const machineAssertion = machineCheck.positive_assertions.find((assertion) =>
+    assertion.claims.includes("result"),
+  );
+  const machineLiveness = machineCheck.positive_assertions.find(
+    (assertion) => assertion.key === "second-liveness",
+  );
+  assert.ok(machineAssertion);
+  assert.ok(machineLiveness);
+  const externalCheck = {
+    ...structuredClone(machineCheck),
+    key: "second-machine-overlap-external-check",
+    proof_surface: "data_state",
+    positive_assertions: [
+      {
+        ...structuredClone(machineAssertion),
+        key: "second-machine-overlap-external-assertion",
+        evidence_capabilities: [
+          "data_state",
+          "design_conformance",
+          "target_runtime",
+          "visual_render",
+        ],
+      },
+      structuredClone(machineLiveness),
+    ],
+    negative_assertions: [],
+  };
+  overlapOutcome.acceptance.checks.push(externalCheck);
   const identity = {
     externalKeyId: "fixture-owner-2026",
     externalPublicKeyRef: FIXTURE_EXTERNAL_PUBLIC_KEY_REF,
   };
   const confirmation = externalDeclaration(
-    overlap.outcomes[1].acceptance.checks[0],
+    externalCheck,
     identity,
     {
       key: "fixture-machine-overlap-external",
@@ -406,12 +445,14 @@ export async function assertCompileAttackMatrix(fixture, scenario) {
         scenario.wrong_contract_projection.machine_external_overlap_claim_ref,
       obligationKey: "overlap-second-machine-obligation",
       applicabilityRef: "second-root-success",
-      factRef: "fact.second.observable",
-      proofRef: "proof.second.observable.exact",
-      capabilities: ["semantic_fact"],
+      factRef: null,
+      proofRef: null,
+      proofSurface: "data_state",
+      capabilities: ["target_runtime"],
       resultKind: "actual",
     },
   );
+  confirmation.scenario.given[0].key = "machine-overlap-different-given";
   overlap.global.acceptance.external_confirmations = [confirmation];
   await writeContract(fixture.workdir, overlap);
   await expectCompileRejection(fixture, [
@@ -527,6 +568,18 @@ function replaceSourceItemText(source, key, statement) {
   );
   assert.match(source, pattern, `missing marked Source item ${key}`);
   return source.replace(pattern, `$1${statement}$2`);
+}
+
+function replaceSourceItemKind(source, key, kind) {
+  const pattern = new RegExp(
+    `<!-- ty-source-item:start key=${escapeRegExp(key)}\\b[^>]*-->`,
+    "u",
+  );
+  const marker = source.match(pattern)?.[0];
+  assert.ok(marker, `missing marked Source item ${key}`);
+  const updated = marker.replace(/\bkind=[^\s>]+/u, `kind=${kind}`);
+  assert.notEqual(updated, marker, `missing Source item kind ${key}`);
+  return source.replace(marker, updated);
 }
 
 async function restoreLegalContract(fixture, legal) {

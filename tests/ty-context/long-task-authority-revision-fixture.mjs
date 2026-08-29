@@ -81,6 +81,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
         "obligation.implement-first",
         "obligation.architecture-first",
         "semantic_fact.fact.first.observable",
+        "semantic_fact.fact.first.architecture-boundary",
       ],
       check_key: check.key,
       mutation: {
@@ -95,6 +96,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
         "first-obligation",
         "first-architecture",
         "first-semantic-fact",
+        "first-architecture-semantic-fact",
       ],
       preserved_assertions: ["first-liveness"],
     },
@@ -107,6 +109,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
         "obligation.implement-first",
         "obligation.architecture-first",
         "semantic_fact.fact.first.observable",
+        "semantic_fact.fact.first.architecture-boundary",
       ],
       check_key: check.key,
       mutation: {
@@ -121,6 +124,7 @@ export async function prepareAuthorityRevisionFixture(fixture) {
         "first-obligation",
         "first-architecture",
         "first-semantic-fact",
+        "first-architecture-semantic-fact",
       ],
       preserved_assertions: ["first-liveness"],
     },

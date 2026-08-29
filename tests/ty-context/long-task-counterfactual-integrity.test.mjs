@@ -550,6 +550,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
           "obligation.implement-first",
           "obligation.architecture-first",
           "semantic_fact.fact.first.observable",
+          "semantic_fact.fact.first.architecture-boundary",
         ],
         check_key: check.key,
         mutation: {
@@ -564,6 +565,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
           "first-obligation",
           "first-architecture",
           "first-semantic-fact",
+          "first-architecture-semantic-fact",
         ],
         preserved_assertions: ["first-liveness"],
       },
@@ -627,6 +629,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
       "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
+      "assertion_value_mismatch",
     ]);
     assert.deepEqual(relationArtifactFinding.actual.finding_codes.sort(), [
       "artifact_missing",
@@ -655,6 +658,7 @@ test("Counterfactual accepts only the exact designated Assertion failure", async
     );
     assert.equal(findings.length, 1);
     assert.deepEqual(findings[0].actual.finding_codes.sort(), [
+      "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
       "assertion_value_mismatch",
@@ -965,6 +969,7 @@ const observed = state.first === true;
 const assertion = (key) => "assertion.first.first-check." + key;
 const observations = {
   "fact.first.observable": observed,
+  "fact.first.architecture-boundary": observed,
   [assertion("first-result")]: observed,
   [assertion("first-requirement")]: observed,
   [assertion("first-obligation")]: observed,

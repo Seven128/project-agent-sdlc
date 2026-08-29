@@ -25,14 +25,8 @@ import {
 } from "./long-task-semantic-manifest-fixture.mjs";
 import { writeFixtureSourceAndOracle } from "./long-task-semantic-oracle-fixture.mjs";
 import {
-  authoringTemplateSemanticManifest,
-  publicExampleSemanticManifest,
-  releaseTarballSemanticManifest,
-} from "./long-task-semantic-variant-fixture.mjs";
-import {
   digestCanonical,
   refreshFixtureSemanticManifest,
-  semanticManifestIdentity,
 } from "./long-task-semantic-refresh-fixture.mjs";
 import { synchronizeFixtureSemanticManifest } from "./long-task-semantic-sync-fixture.mjs";
 import {
@@ -52,15 +46,7 @@ import {
   packageAdmittedFixtureSemanticManifest,
 } from "./long-task-package-machine-fixture.mjs";
 
-export {
-  fixtureSemanticManifest,
-  writeFixtureSourceAndOracle,
-  authoringTemplateSemanticManifest,
-  publicExampleSemanticManifest,
-  releaseTarballSemanticManifest,
-  refreshFixtureSemanticManifest,
-  semanticManifestIdentity,
-};
+export { fixtureSemanticManifest };
 
 const exec = promisify(execFile);
 export const FIXTURE_EXTERNAL_PUBLIC_KEY_REF =
@@ -270,6 +256,22 @@ export async function createDeliveryFixture(options = {}) {
     synchronizeSemanticManifest: Boolean(options.externalConfirmation),
   });
   return { root, workdir, contract };
+}
+
+export async function createNonBlockingExternalFixture(options = {}) {
+  const fixture = await createDeliveryFixture(options);
+  fixture.contract.global.acceptance.external_confirmations = [
+    {
+      key: "fixture-external",
+      description: "Confirm the fixture in external delivery.",
+      owner: "release-owner",
+      kind: "field_validation",
+      impact_claims: ["first.result"],
+      blocks_target: false,
+    },
+  ];
+  await writeContract(fixture.workdir, fixture.contract);
+  return fixture;
 }
 
 export async function prepareDeliveryFixtureSeed() {

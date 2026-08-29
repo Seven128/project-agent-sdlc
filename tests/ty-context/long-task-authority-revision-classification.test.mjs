@@ -5,12 +5,18 @@ import test from "node:test";
 import { buildAuthorityRevisionDecisionBrief } from "../../packages/ty-context/dist/lib/long-task-authority-revision-brief.js";
 import {
   createDeliveryFixture,
+  commitCandidate,
   fixtureArchitectureSourceItem,
   fixtureExecutionTargetSourceItem,
   runCli,
   runCliFailure,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { externalFixture } from "./long-task-external-confirmation-fixture.mjs";
+import {
+  FIXTURE_EXTERNAL_FACT_KEY,
+  FIXTURE_EXTERNAL_PROOF_KEY,
+} from "./long-task-semantic-manifest-fixture.mjs";
 
 test("[critical:protected-revision-classification] semantic or proof changes are previewed but never candidate-executed", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
@@ -130,17 +136,19 @@ test("[critical:protected-revision-classification] semantic or proof changes are
 test("additive verification dependencies remain automatic and are summarized", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    await runCli(fixture.root, ["enable", "long-task"]);
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-
     await writeFile(
       path.join(fixture.root, "tests", "extra.mjs"),
       "export const extraProofDependency = true;\n",
     );
+    await commitCandidate(fixture.root);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     fixture.contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
       "tests/extra.mjs",
     );
-    await writeContract(fixture.workdir, fixture.contract);
+    await writeContract(fixture.workdir, fixture.contract, {
+      synchronizeSemanticManifest: false,
+    });
     const revised = await runCli(fixture.root, [
       "long-task",
       "compile",
@@ -258,10 +266,8 @@ test("narrowing Counterfactual allowed fan-out preserves authority coverage", as
 });
 
 test("protected summaries enumerate removed Source and external-confirmation keys", async () => {
-  const fixture = await createDeliveryFixture({ externalConfirmation: true });
+  const fixture = await externalFixture();
   try {
-    await runCli(fixture.root, ["enable", "long-task"]);
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     await writeFile(
       path.join(fixture.root, "source.md"),
       `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
@@ -281,6 +287,16 @@ ${fixtureExecutionTargetSourceItem()}
       (claim) => claim.key !== "fixture-external",
     );
     fixture.contract.global.acceptance.external_confirmations = [];
+    for (const outcome of fixture.contract.outcomes) {
+      outcome.semantic_fact_bindings.facts =
+        outcome.semantic_fact_bindings.facts.filter(
+          (binding) => binding.fact_ref !== FIXTURE_EXTERNAL_FACT_KEY,
+        );
+      outcome.semantic_fact_bindings.proofs =
+        outcome.semantic_fact_bindings.proofs.filter(
+          (binding) => binding.proof_ref !== FIXTURE_EXTERNAL_PROOF_KEY,
+        );
+    }
     await writeContract(fixture.workdir, fixture.contract);
 
     const pending = await runCliFailure(fixture.root, [

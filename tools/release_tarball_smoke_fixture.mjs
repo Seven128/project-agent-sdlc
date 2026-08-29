@@ -3,10 +3,10 @@ import { chmod, copyFile, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import YAML from "yaml";
 import {
-  releaseTarballSemanticManifest,
   refreshFixtureSemanticManifest,
   semanticManifestIdentity,
-} from "../tests/ty-context/long-task-delivery-fixtures.mjs";
+} from "../tests/ty-context/long-task-semantic-refresh-fixture.mjs";
+import { releaseTarballSemanticManifest } from "../tests/ty-context/long-task-semantic-variant-fixture.mjs";
 import {
   admitPackageExactFixtureSemanticManifest,
   fixtureProductRootArgv,
@@ -38,22 +38,48 @@ export async function writeReleaseTarballLongTaskFixture(root) {
   );
   if (!architectureInput)
     throw new Error("release_tarball_architecture_input_missing");
+  const architectureFragmentInput = semanticManifest.inputs.find(
+    (input) =>
+      input.kind === "source_fragment" &&
+      input.basis_refs.includes("packaged-architecture"),
+  );
+  if (!architectureFragmentInput)
+    throw new Error("release_tarball_architecture_fragment_input_missing");
   const executionTargetInputKey = "input.packaged-execution-target";
+  const executionTargetFragmentInputKey =
+    "input.fragment.packaged-execution-target.1";
+  const executionTargetSha256 = createHash("sha256")
+    .update(executionTargetStatement)
+    .digest("hex");
   semanticManifest.scope.source_item_refs.push("packaged-execution-target");
   semanticManifest.inputs.push({
     ...structuredClone(architectureInput),
     key: executionTargetInputKey,
     source_ref: "packaged-execution-target",
-    sha256: createHash("sha256").update(executionTargetStatement).digest("hex"),
+    sha256: executionTargetSha256,
     basis_refs: ["packaged-execution-target"],
     rationale:
       "This marked Source item contributes to the fixture's exact non-UI Fact universe.",
   });
-  for (const fact of semanticManifest.facts) {
+  semanticManifest.inputs.push({
+    ...structuredClone(architectureFragmentInput),
+    key: executionTargetFragmentInputKey,
+    source_ref: `packaged-execution-target#fragment:1:${executionTargetSha256.slice(0, 16)}`,
+    sha256: executionTargetSha256,
+    disposition: "supporting_basis",
+    basis_refs: ["packaged-execution-target"],
+    rationale:
+      "The complete execution-target Source Fragment projects to the same exact architecture Fact.",
+  });
+  for (const fact of semanticManifest.facts.filter((candidate) =>
+    architectureInput.fact_refs.includes(candidate.key),
+  )) {
     if (!fact.source_item_refs.includes("packaged-execution-target"))
       fact.source_item_refs.push("packaged-execution-target");
     if (!fact.provenance.basis_refs.includes(executionTargetInputKey))
       fact.provenance.basis_refs.push(executionTargetInputKey);
+    if (!fact.provenance.basis_refs.includes(executionTargetFragmentInputKey))
+      fact.provenance.basis_refs.push(executionTargetFragmentInputKey);
   }
   const verificationContextRef = "project_context/areas/main/verification.md";
   const verificationContext = await readFile(
@@ -132,6 +158,7 @@ console.log(JSON.stringify({
   schema_version: "ty-context-product-observation-v1",
   observations: {
     "installed.result.observable": ready,
+    "installed.architecture.boundary": ready,
     [assertion("installed-result")]: ready,
     [assertion("installed-obligation")]: ready,
     [assertion("installed-architecture")]: ready,
@@ -209,6 +236,9 @@ outcomes:
         - fact_ref: installed.result.observable
           claim_ref: semantic_fact.installed.result.observable
           applicability_ref: installed-root-success
+        - fact_ref: installed.architecture.boundary
+          claim_ref: semantic_fact.installed.architecture.boundary
+          applicability_ref: installed-root-success
       proofs:
         - proof_ref: installed.result.observable.runtime
           fact_ref: installed.result.observable
@@ -218,6 +248,14 @@ outcomes:
           authority: machine
           check_ref: installed-check
           assertion_ref: installed-semantic-fact
+        - proof_ref: installed.architecture.boundary.runtime
+          fact_ref: installed.architecture.boundary
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities: [semantic_fact]
+          authority: machine
+          check_ref: installed-check
+          assertion_ref: installed-architecture-semantic-fact
     product:
       observable_result: Installed CLI verifies current behavior.
       result_applicability_refs: [installed-root-success]
@@ -309,6 +347,14 @@ outcomes:
               evidence_capabilities: [target_runtime]
               operator: equals
               expected: true
+            - key: installed-architecture-semantic-fact
+              criterion: The exact packaged architecture boundary Fact passes its frozen comparison.
+              claims: [semantic_fact.installed.architecture.boundary]
+              applicability_ref: installed-root-success
+              observation: architecture_semantic_fact_result
+              evidence_capabilities: [semantic_fact]
+              operator: equals
+              expected: true
             - key: installed-liveness
               criterion: The installed runtime remains live under semantic mutation.
               claims: []
@@ -328,14 +374,14 @@ outcomes:
       counterfactual_controls:
         - key: replace-state-semantics
           binding_key: state
-          claims: [result, obligation.packaged-verifier, obligation.architecture, semantic_fact.installed.result.observable]
+          claims: [result, obligation.packaged-verifier, obligation.architecture, semantic_fact.installed.result.observable, semantic_fact.installed.architecture.boundary]
           check_key: installed-check
           mutation:
             type: replace_json_value
             path: src/state.json
             pointer: /ready
             value: false
-          expected_assertion_failures: [installed-result, installed-obligation, installed-architecture, installed-semantic-fact]
+          expected_assertion_failures: [installed-result, installed-obligation, installed-architecture, installed-semantic-fact, installed-architecture-semantic-fact]
           preserved_assertions: [installed-liveness]
         - key: make-relations-applicable
           binding_key: state

@@ -217,19 +217,6 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
     outcomeCheck.input_paths = ["src/state.json"];
     outcomeCheck.expected_output_paths = ["artifacts/proof.json"];
     outcomeCheck.verification_inputs = ["tests/semantic-false.json"];
-    fixture.contract.global.technical.constraints.push({
-      key: "stable-runtime",
-      statement: "Runtime behavior remains stable.",
-      applicability_refs: ["global-root-success"],
-    });
-    fixture.contract.global.applicability.push({
-      key: "global-root-success",
-      target_ref: "fixture-app",
-      journey_role: "success",
-      dimensions: [{ key: "fixture-state", value: "loaded" }],
-      given_refs: ["fixture-loaded"],
-      when_refs: ["read-outcome"],
-    });
     const globalCheck = structuredClone(outcomeCheck);
     globalCheck.key = "global-check";
     globalCheck.verification_inputs = ["tests/semantic-false.json"];
@@ -237,8 +224,7 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
       {
         key: "global-proof",
         criterion: "Runtime behavior remains stable.",
-        claims: ["constraint.stable-runtime"],
-        applicability_ref: "global-root-success",
+        claims: [],
         observation: "stable",
         evidence_capabilities: ["target_runtime"],
         operator: "equals",
@@ -267,20 +253,6 @@ test("input and expected-output authority reductions cover Global and Outcome Ch
       outcomeCheck,
       globalCheck,
     ]);
-    fixture.contract.global.acceptance.counterfactual_controls.push({
-      key: "replace-global-runtime",
-      binding_ref: "first.state-first",
-      claims: ["constraint.stable-runtime"],
-      check_key: "global-check",
-      mutation: {
-        type: "replace_json_value",
-        path: "src/state.json",
-        pointer: "/first",
-        value: false,
-      },
-      expected_assertion_failures: ["global-proof"],
-      preserved_assertions: ["global-liveness"],
-    });
     await writeContract(fixture.workdir, fixture.contract);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

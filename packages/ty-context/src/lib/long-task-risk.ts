@@ -6,11 +6,12 @@ import type {
   EffectiveRiskLevel,
   RiskFactName,
 } from "./long-task-delivery-types.js";
+import { machineAuthorizedAssertionExists } from "./long-task-acceptance-reachability-helpers.js";
 import {
-  machineAuthorizedAssertionExists,
+  outcomePopulationSemanticProofFullyEffectivelyExternallyBlocked,
   outcomeResultFullyEffectivelyExternallyBlocked,
-  outcomeUiProofFullyEffectivelyExternallyBlocked,
-} from "./long-task-acceptance-reachability-helpers.js";
+} from "./long-task-effective-external-takeover.js";
+import { outcomeUiProofFullyEffectivelyExternallyBlocked } from "./long-task-effective-external-ui-takeover.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 export interface RiskDecisionV2 {
@@ -266,10 +267,10 @@ function validateStrict(
       errors.push(`strict_rollback_and_recovery_required:${outcome.key}`);
     if (facts.has("full_population_operation")) {
       if (
-        !hasMachineSurfaceProof(
+        !strictPopulationCoverageProofSatisfied(
           outcome,
           compiledOutcome,
-          "population_coverage",
+          reachability,
           useCompiledAuthority,
         )
       )
@@ -299,6 +300,27 @@ function validateStrict(
         `strict_critical_path_observable_proof_required:${outcome.key}`,
       );
   }
+}
+
+function strictPopulationCoverageProofSatisfied(
+  outcome: DeliveryOutcomeV2,
+  compiledOutcome: CompiledOutcomeV2 | undefined,
+  reachability: AcceptanceReachabilityV1 | null | undefined,
+  useCompiledAuthority: boolean,
+): boolean {
+  return (
+    hasMachineSurfaceProof(
+      outcome,
+      compiledOutcome,
+      "population_coverage",
+      useCompiledAuthority,
+    ) ||
+    (useCompiledAuthority &&
+      outcomePopulationSemanticProofFullyEffectivelyExternallyBlocked(
+        outcome,
+        reachability,
+      ))
+  );
 }
 
 function hasMachineSurfaceProof(

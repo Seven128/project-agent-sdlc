@@ -324,6 +324,7 @@ test("preflight rejects missing package scripts and UI outcomes without browser 
   const fixture = await createDeliveryFixture();
   try {
     const check = fixture.contract.outcomes[0].acceptance.checks[0];
+    const machineRunner = structuredClone(check.runner);
     check.runner.type = "package_script";
     check.runner.target = "missing";
     await writeContract(fixture.workdir, fixture.contract);
@@ -333,8 +334,7 @@ test("preflight rejects missing package scripts and UI outcomes without browser 
       }),
       /package_script_not_found/,
     );
-    check.runner.type = "node_oracle";
-    check.runner.target = "tests/oracle.mjs";
+    check.runner = machineRunner;
     fixture.contract.outcomes[0].product.owner_surfaces = ["web/settings"];
     await writeContract(fixture.workdir, fixture.contract);
     await assert.rejects(
@@ -352,7 +352,15 @@ test("Long-Task Compile refuses to machine-close strict design methods without p
   const fixture = await createDeliveryFixture();
   try {
     await attachDesignResourceHandoff(fixture);
-    await writeContract(fixture.workdir, fixture.contract);
+    const designPreflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    await writeContract(fixture.workdir, fixture.contract, {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([
+        designPreflight,
+      ]),
+    });
     const target =
       fixture.contract.outcomes[0].product.surface_bindings[0]
         .design_targets[0];
@@ -922,22 +930,19 @@ test("Long-Task derives an authorized planned owner from existing bindings", asy
             obligation.judgment_basis === undefined,
         ),
     );
-    const designClaimJudgment = designConfirmation.obligations.find(
+    const designClaimActual = designConfirmation.obligations.find(
       (obligation) =>
         obligation.claim_ref === "first.requirement.design-handoff" &&
         obligation.fact_ref === null &&
         obligation.proof_ref === null,
     );
-    assert.equal(designClaimJudgment?.result_kind, "judgment");
-    assert.deepEqual(
+    assert.equal(designClaimActual?.result_kind, "actual");
+    assert.equal(designClaimActual?.judgment_basis, undefined);
+    assert.equal(
       fixture.contract.source_claims.find(
         (claim) => claim.key === DESIGN_SOURCE_ITEM_KEY,
       ).judgment_basis,
-      {
-        kind: "expert_assessment",
-        claim_ref: "first.requirement.design-handoff",
-        applicability_refs: ["first-root-success"],
-      },
+      undefined,
     );
 
     const judgmentLaundering = structuredClone(fixture.contract);
@@ -3364,6 +3369,15 @@ function attachClonedFeasibilityTarget(
     mapping,
   );
   const outcome = fixtureState.fixture.contract.outcomes[0];
+  if (fixtureState.semanticIdentity)
+    configureExactTargetBlockingConfirmation(fixtureState.fixture.contract, {
+      key: "confirm-card-owner",
+      description: fixtureState.authority.normalizedText,
+      semanticIdentities: [fixtureState.semanticIdentity],
+      targetKeys: outcome.product.surface_bindings.flatMap((surface) =>
+        surface.design_targets.map((target) => target.key),
+      ),
+    });
   const secondaryTarget =
     outcome.product.surface_bindings[0].design_targets.find(
       (target) => target.key === "secondary-default",

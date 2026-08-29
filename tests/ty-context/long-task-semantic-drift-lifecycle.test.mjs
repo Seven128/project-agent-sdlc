@@ -53,6 +53,10 @@ test("read-only Product Conformance is required only for weak, complex deliverie
       local_claim_ref: "result",
       applicability_ref: outcome.product.result_applicability_refs[0],
       target_ref: "fixture-app",
+      fact_ref: null,
+      proof_ref: null,
+      proof_surface: "runtime_behavior",
+      source_obligation_ref: `claim:${outcome.key}.result:${outcome.product.result_applicability_refs[0]}:runtime_behavior`,
       authority: "external_confirmation",
       status: "external_fulfillable",
       completion_role: "blocking",
@@ -92,9 +96,7 @@ test("read-only Product Conformance is required only for weak, complex deliverie
 test("an advisory raw global Check cannot supply Machine conformance after Freeze", () => {
   const contract = deliveryContract({ twoOutcomes: true });
   contract.risk.facts.weak_observability = ["first"];
-  const advisory = structuredClone(
-    contract.outcomes[0].acceptance.checks[0],
-  );
+  const advisory = structuredClone(contract.outcomes[0].acceptance.checks[0]);
   advisory.key = "advisory-conformance";
   advisory.journey_roles = ["conformance"];
   advisory.runner.effect = "read_only";
@@ -135,6 +137,10 @@ test("partial result applicability takeover cannot waive Machine conformance", (
     target_ref: outcome.applicability.find(
       (profile) => profile.key === applicabilityRef,
     ).target_ref,
+    fact_ref: null,
+    proof_ref: null,
+    proof_surface: "runtime_behavior",
+    source_obligation_ref: `claim:${outcome.key}.result:${applicabilityRef}:runtime_behavior`,
     authority: "external_confirmation",
     status: "external_fulfillable",
     completion_role: "blocking",
@@ -405,8 +411,13 @@ function compiledCheck(contract, declared, outcomeKey) {
     known_execution_targets: contract.task.execution_targets,
     completion_role: "semantic",
     observation_authorities: assertions
-      .filter((assertion) => assertion.claims.length > 0)
+      .filter(
+        (assertion) =>
+          assertion.claims.length === 1 && assertion.applicability_ref,
+      )
       .map((assertion) => ({
+        obligation_ref: `claim:${outcomeKey ? `${outcomeKey}.${assertion.claims[0]}` : `GLOBAL.${assertion.claims[0]}`}:${assertion.applicability_ref}:${check.proof_surface}`,
+        fact_ref: null,
         assertion_ref: assertion.key,
         claim_refs: assertion.claims,
         target_ref: check.execution_target.target_ref,

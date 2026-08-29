@@ -19,6 +19,7 @@ for (const outcome of selectedOutcomes) {
   const assertion = (key) => `assertion.${outcome}.${outcome}-check.${key}`;
 
   observations[`fact.${outcome}.observable`] = observable;
+  observations[`fact.${outcome}.architecture-boundary`] = observable;
   observations[assertion(`${outcome}-result`)] = observable;
   observations[assertion(`${outcome}-requirement`)] = observable;
   observations[assertion(`${outcome}-obligation`)] = observable;

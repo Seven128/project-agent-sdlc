@@ -438,6 +438,95 @@ test("all exact result applicabilities may be taken over by blocking External ro
   );
 });
 
+test("strict Population accepts only the exact blocking External Semantic Fact proof", () => {
+  const contract = deliveryContract();
+  const outcome = contract.outcomes[0];
+  const factBinding = outcome.semantic_fact_bindings.facts.find(
+    (binding) => binding.fact_ref === "fact.first.observable",
+  );
+  const proofBinding = outcome.semantic_fact_bindings.proofs.find(
+    (binding) => binding.fact_ref === factBinding?.fact_ref,
+  );
+  assert.ok(factBinding);
+  assert.ok(proofBinding);
+  Object.assign(proofBinding, {
+    method: "population_set_equality",
+    proof_surface: "population_coverage",
+    evidence_capabilities: ["semantic_fact", "population_coverage"],
+    authority: "external_confirmation",
+    confirmation_ref: "population-confirmation",
+  });
+  delete proofBinding.check_ref;
+  delete proofBinding.assertion_ref;
+  outcome.acceptance.population = {
+    check_key: "first-check",
+    universe_binding_key: "state-first",
+    claims: [factBinding.claim_ref],
+    observations: {
+      universe_ids: "population.universe_ids",
+      eligible_ids: "population.eligible_ids",
+      observed_ids: "population.observed_ids",
+      excluded_items: "population.excluded_items",
+    },
+    exclusion_rules: [],
+  };
+  contract.risk.facts.full_population_operation = ["first"];
+  const profile = outcome.applicability.find(
+    (candidate) => candidate.key === factBinding.applicability_ref,
+  );
+  assert.ok(profile);
+  const route = {
+    obligation_ref: proofBinding.proof_ref,
+    source_obligation_ref: proofBinding.proof_ref,
+    outcome_key: outcome.key,
+    claim_ref: `${outcome.key}.${factBinding.claim_ref}`,
+    local_claim_ref: factBinding.claim_ref,
+    applicability_ref: factBinding.applicability_ref,
+    target_ref: profile.target_ref,
+    fact_ref: factBinding.fact_ref,
+    proof_ref: proofBinding.proof_ref,
+    method: proofBinding.method,
+    proof_surface: proofBinding.proof_surface,
+    required_evidence_capabilities: [...proofBinding.evidence_capabilities],
+    authority: "external_confirmation",
+    confirmation_ref: proofBinding.confirmation_ref,
+    status: "external_fulfillable",
+    completion_role: "blocking",
+    acceptance_effect: "required",
+  };
+  const compiledOutcomes = [
+    compiledOutcome(outcome, [
+      compiledCheck(contract, outcome.acceptance.checks[0], outcome.key, [
+        "first-result",
+      ]),
+    ]),
+  ];
+  const validate = (effectiveExternalRoutes) =>
+    validateRiskProof(
+      contract,
+      classifyLongTaskRisk(contract),
+      { effective_external_routes: effectiveExternalRoutes },
+      compiledOutcomes,
+    );
+
+  assert.doesNotThrow(() => validate([route]));
+  assert.throws(
+    () =>
+      validate([
+        { ...route, completion_role: "advisory", acceptance_effect: "none" },
+      ]),
+    /strict_population_coverage_proof_required:first/u,
+  );
+  assert.throws(
+    () => validate([route, structuredClone(route)]),
+    /strict_population_coverage_proof_required:first/u,
+  );
+  assert.throws(
+    () => validate([{ ...route, target_ref: "different-target" }]),
+    /strict_population_coverage_proof_required:first/u,
+  );
+});
+
 test("UI External takeover requires every exact control Claim obligation", () => {
   const contract = deliveryContract();
   const outcome = contract.outcomes[0];

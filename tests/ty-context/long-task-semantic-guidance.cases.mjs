@@ -1,12 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import {
-  validateSemanticFactManifestPolicy,
-} from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
-import {
-  fixtureSemanticManifest,
-  refreshFixtureSemanticManifest,
-} from "./long-task-delivery-fixtures.mjs";
+import { validateSemanticFactManifestPolicy } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
+import { fixtureSemanticManifest } from "./long-task-delivery-fixtures.mjs";
+import { refreshFixtureSemanticManifest } from "./long-task-semantic-refresh-fixture.mjs";
 import {
   addFixtureCustomConditionAxis,
   digestValue,
@@ -196,7 +192,8 @@ test("custom applicable family, property and condition axis extend rather than b
       disposition: "required",
       refs: ["remove-first-state"],
       basis_refs: ["fixture-architecture"],
-      rationale: "The custom production carrier must remain sensitivity-tested.",
+      rationale:
+        "The custom production carrier must remain sensitivity-tested.",
     },
   };
   manifest.family_dispositions.push(family);

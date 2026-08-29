@@ -4,6 +4,7 @@ import path from "node:path";
 import test from "node:test";
 import { loadActiveLongTaskAuthority } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
+  commitCandidate,
   createDeliveryFixture,
   runCli,
   writeContract,
@@ -12,15 +13,15 @@ import {
 test("[critical:revision-diagnosis-isolation] scope-only candidates stay stateless, coalesce before Compile, and auto-adopt with evidence invalidation", async () => {
   const fixture = await createDeliveryFixture();
   try {
-    await runCli(fixture.root, ["enable", "long-task"]);
-    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-    await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
-    await runCli(fixture.root, ["long-task", "final-gate", fixture.workdir]);
-
     await writeFile(
       path.join(fixture.root, "tests", "extra.mjs"),
       "export const extraProofDependency = true;\n",
     );
+    await commitCandidate(fixture.root);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
+    await runCli(fixture.root, ["long-task", "final-gate", fixture.workdir]);
     const activeBefore = (await loadActiveLongTaskAuthority(fixture.root))
       .authority;
     assert.ok(activeBefore);
@@ -37,7 +38,9 @@ test("[critical:revision-diagnosis-isolation] scope-only candidates stay statele
     candidate.outcomes[0].acceptance.checks[0].verification_inputs.push(
       "tests/extra.mjs",
     );
-    await writeContract(fixture.workdir, candidate);
+    await writeContract(fixture.workdir, candidate, {
+      synchronizeSemanticManifest: false,
+    });
 
     const diagnosis = await runCli(fixture.root, [
       "long-task",
@@ -105,7 +108,9 @@ test("[critical:revision-diagnosis-isolation] scope-only candidates stay statele
 
     candidate.outcomes[0].product.owner.path_globs.push("config/**");
     candidate.outcomes[0].technical.expected_change_paths.push("config/**");
-    await writeContract(fixture.workdir, candidate);
+    await writeContract(fixture.workdir, candidate, {
+      synchronizeSemanticManifest: false,
+    });
     const revisedDiagnosis = await runCli(fixture.root, [
       "long-task",
       "diagnose-revision",

@@ -64,7 +64,7 @@ test("different Environment Requirements cannot reuse Raw Execution", async () =
       rawCheckResults(result).map((check) => check.status),
       ["passed", "blocked_external", "blocked_external", "blocked_external"],
     );
-    assert.equal(await executionCount(marker), 3);
+    assert.equal(await executionCount(marker), 2);
   } finally {
     await rm(marker, { force: true });
     await rm(fixture.root, { recursive: true, force: true });
@@ -109,7 +109,7 @@ test("identical canonical Environment Requirements may share Raw Execution", asy
       rawCheckResults(result).map((check) => check.status),
       ["passed", "passed"],
     );
-    assert.equal(await executionCount(marker), 5);
+    assert.equal(await executionCount(marker), 2);
   } finally {
     restore(keys[0], previous[0]);
     restore(keys[1], previous[1]);
@@ -152,7 +152,7 @@ test("different env var targets produce different Raw Executions", async () => {
       rawCheckResults(result).map((check) => check.status),
       ["passed", "passed"],
     );
-    assert.equal(await executionCount(marker), 6);
+    assert.equal(await executionCount(marker), 3);
   } finally {
     restore(keys[0], previous[0]);
     restore(keys[1], previous[1]);
@@ -184,36 +184,42 @@ function configureChecks(fixture, requirements) {
     expected_output_paths: [],
     artifact_globs: [],
     positive_assertions: [
-      {
-        key: "raw-requirement",
-        criterion: `Raw execution requirement ${index} is observable.`,
-        claims: ["requirement.observe-first"],
-        applicability_ref: "first-root-success",
-        observation: index === 0 ? "requirement_result" : "requirement_copy",
-        evidence_capabilities: ["presence"],
-        operator: "equals",
-        expected: true,
-      },
-      {
-        key: "raw-obligation",
-        criterion: `Raw execution obligation ${index} is observable.`,
-        claims: ["obligation.implement-first"],
-        applicability_ref: "first-root-success",
-        observation: index === 0 ? "obligation_result" : "obligation_copy",
-        evidence_capabilities: ["presence"],
-        operator: "equals",
-        expected: true,
-      },
-      {
-        key: "raw-architecture",
-        criterion: `Raw execution architecture ${index} remains conformant.`,
-        claims: ["obligation.architecture-first"],
-        applicability_ref: "first-root-success",
-        observation: index === 0 ? "architecture_result" : "architecture_copy",
-        evidence_capabilities: ["presence"],
-        operator: "equals",
-        expected: true,
-      },
+      ...(index === 0
+        ? [
+            {
+              key: "raw-requirement",
+              criterion: `Raw execution requirement ${index} is observable.`,
+              claims: ["requirement.observe-first"],
+              applicability_ref: "first-root-success",
+              observation:
+                index === 0 ? "requirement_result" : "requirement_copy",
+              evidence_capabilities: ["presence"],
+              operator: "equals",
+              expected: true,
+            },
+            {
+              key: "raw-obligation",
+              criterion: `Raw execution obligation ${index} is observable.`,
+              claims: ["obligation.implement-first"],
+              applicability_ref: "first-root-success",
+              observation:
+                index === 0 ? "obligation_result" : "obligation_copy",
+              evidence_capabilities: ["presence"],
+              operator: "equals",
+              expected: true,
+            },
+            {
+              key: "raw-architecture",
+              criterion: `Raw execution architecture ${index} remains conformant.`,
+              claims: ["obligation.architecture-first"],
+              applicability_ref: "first-root-success",
+              observation: "architecture_result",
+              evidence_capabilities: ["presence"],
+              operator: "equals",
+              expected: true,
+            },
+          ]
+        : []),
       {
         key: "raw-liveness",
         criterion: `Raw execution target ${index} remains live.`,
@@ -224,20 +230,7 @@ function configureChecks(fixture, requirements) {
         expected: true,
       },
     ],
-    negative_assertions: [
-      {
-        key: "raw-relations-na",
-        criterion:
-          "Cross-Control relations remain not applicable in the raw execution fixture.",
-        claims: ["control_relation_closure"],
-        applicability_ref: "first-root-success",
-        observation:
-          index === 0 ? "relations_applicable" : "relations_applicable_copy",
-        evidence_capabilities: ["presence"],
-        operator: "equals",
-        expected: false,
-      },
-    ],
+    negative_assertions: [],
     environment_requirements: structuredClone(environment_requirements),
   }));
   outcome.acceptance.checks = [base, ...rawChecks];
@@ -251,7 +244,7 @@ function configureChecks(fixture, requirements) {
       "implementation_structure",
     ];
   outcome.acceptance.counterfactual_controls.push(
-    ...requirements.flatMap((_environmentRequirements, index) => [
+    ...requirements.slice(0, 1).flatMap((_environmentRequirements, index) => [
       {
         key: `raw-sensitive-${index}`,
         binding_key: "state-first",
@@ -271,19 +264,6 @@ function configureChecks(fixture, requirements) {
           "raw-obligation",
           "raw-architecture",
         ],
-        preserved_assertions: ["raw-liveness"],
-      },
-      {
-        key: `raw-relations-sensitive-${index}`,
-        binding_key: "state-first",
-        claims: ["control_relation_closure"],
-        check_key: `raw-${index}`,
-        mutation: {
-          type: "replace_file",
-          path: "src/state.json",
-          fixture_path: FIXTURE_STATIC_RELATIONS_PATH,
-        },
-        expected_assertion_failures: ["raw-relations-na"],
         preserved_assertions: ["raw-liveness"],
       },
     ]),

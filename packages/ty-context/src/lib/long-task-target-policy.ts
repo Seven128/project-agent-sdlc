@@ -1,9 +1,9 @@
 import type { CompiledClaimsV2 } from "./long-task-claims.js";
+import { machineAuthorizedAssertions } from "./long-task-acceptance-reachability-helpers.js";
 import {
-  machineAuthorizedAssertions,
   resultApplicabilityEffectivelyExternallyBlocked,
   resultApplicabilityProfiles,
-} from "./long-task-acceptance-reachability-helpers.js";
+} from "./long-task-effective-external-takeover.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 import type {
   CompiledOutcomeV2,

@@ -128,7 +128,7 @@
         "omitted_source_item_ref": "second-observable",
         "weak_assertion_ref": "second-result",
         "weak_evidence_capability": "actual_provenance",
-        "machine_external_overlap_claim_ref": "second.semantic_fact.fact.second.observable"
+        "machine_external_overlap_claim_ref": "second.result"
       }
     },
     {
@@ -150,7 +150,7 @@
         "omitted_source_item_ref": "second-observable",
         "weak_assertion_ref": "second-result",
         "weak_evidence_capability": "actual_provenance",
-        "machine_external_overlap_claim_ref": "second.requirement.observe-second"
+        "machine_external_overlap_claim_ref": "second.result"
       }
     }
   ]

@@ -270,12 +270,12 @@ function configureAssertions(contract) {
       ["degraded-fallback-visible", ["result"]],
       ["audit-event-emitted", ["requirement.observe-second"]],
       ["retry-budget-bounded", ["obligation.implement-second"]],
-      ["health-live", ["obligation.implement-second"]],
+      ["health-live", []],
     ],
   };
   for (const outcome of contract.outcomes) {
     const check = outcome.acceptance.checks[0];
-    const semantic = check.positive_assertions.find((assertion) =>
+    const semantics = check.positive_assertions.filter((assertion) =>
       assertion.key.endsWith("semantic-fact"),
     );
     const liveness = check.positive_assertions.find((assertion) =>
@@ -284,7 +284,11 @@ function configureAssertions(contract) {
     const relations = check.negative_assertions.find((assertion) =>
       assertion.key.endsWith("relations-na"),
     );
-    if (!semantic || !liveness || !relations)
+    if (
+      semantics.length !== outcome.semantic_fact_bindings.proofs.length ||
+      !liveness ||
+      !relations
+    )
       throw new Error(
         `real_process_roi_fixture_assertions_missing:${outcome.key}`,
       );
@@ -293,13 +297,15 @@ function configureAssertions(contract) {
         key,
         criterion: `The product root directly emits the ${key} fact.`,
         claims,
-        applicability_ref: `${outcome.key}-root-success`,
+        ...(claims.length > 0
+          ? { applicability_ref: `${outcome.key}-root-success` }
+          : {}),
         observation: `roi_${key.replaceAll("-", "_")}`,
         evidence_capabilities: ["target_runtime"],
         operator: "equals",
         expected: true,
       })),
-      semantic,
+      ...semantics,
       liveness,
     ];
     check.negative_assertions = [relations];
@@ -326,6 +332,7 @@ function configureCounterfactuals(contract) {
               "obligation.architecture-first",
               "control_relation_closure",
               "semantic_fact.fact.first.observable",
+              "semantic_fact.fact.first.architecture-boundary",
             ]
           : [
               "result",
@@ -333,6 +340,7 @@ function configureCounterfactuals(contract) {
               "obligation.implement-second",
               "control_relation_closure",
               "semantic_fact.fact.second.observable",
+              "semantic_fact.fact.second.architecture-boundary",
             ],
         mutation: {
           type: "replace_json_value",
@@ -347,6 +355,7 @@ function configureCounterfactuals(contract) {
               "inventory-nonnegative",
               "checkout-enabled",
               "first-semantic-fact",
+              "first-architecture-semantic-fact",
               "first-relations-na",
             ]
           : [
@@ -355,6 +364,7 @@ function configureCounterfactuals(contract) {
               "retry-budget-bounded",
               "health-live",
               "second-semantic-fact",
+              "second-architecture-semantic-fact",
               "second-relations-na",
             ],
         preserved_assertions: first ? ["first-liveness"] : ["second-liveness"],

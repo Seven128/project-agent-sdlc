@@ -98,6 +98,7 @@ const relationApplicable = state[key + "_relations_applicable"] === true;
 const assertion = (assertionKey) => "assertion." + key + "." + key + "-check." + assertionKey;
 const observations = {
   ["fact." + key + ".observable"]: observed,
+  ["fact." + key + ".architecture-boundary"]: observed,
   [assertion(key + "-result")]: observed,
   [assertion(key + "-obligation")]: observed,
   [assertion(key + "-liveness")]: true,

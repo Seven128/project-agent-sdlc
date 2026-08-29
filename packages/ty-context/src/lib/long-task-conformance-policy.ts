@@ -3,10 +3,8 @@ import type {
   DeliveryContractV2,
   EffectiveRiskLevel,
 } from "./long-task-delivery-types.js";
-import {
-  allOutcomeResultsFullyEffectivelyExternallyBlocked,
-  machineAuthorizedAssertionExists,
-} from "./long-task-acceptance-reachability-helpers.js";
+import { machineAuthorizedAssertionExists } from "./long-task-acceptance-reachability-helpers.js";
+import { allOutcomeResultsFullyEffectivelyExternallyBlocked } from "./long-task-effective-external-takeover.js";
 import type { AcceptanceReachabilityV1 } from "./long-task-acceptance-reachability-types.js";
 
 type Reporter = (message: string) => void;

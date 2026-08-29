@@ -12,9 +12,22 @@ test("every Delivery Contract authority structure has a complete field policy re
   const check = outcome.acceptance.checks[0];
   const runtimeShapes = {
     task: contract.task,
-    source_claim: contract.source_claims[0],
+    source_claim: {
+      ...contract.source_claims[0],
+      judgment_basis: {
+        kind: "authorization",
+        claim_ref: "first.requirement.observe-first",
+        applicability_refs: ["first-root-success"],
+      },
+    },
     risk: contract.risk,
-    global: contract.global,
+    global: {
+      ...contract.global,
+      semantic_fact_bindings: {
+        manifest_ref: contract.semantic_fact_manifest.key,
+        obligations: [],
+      },
+    },
     global_product: contract.global.product,
     global_technical: contract.global.technical,
     global_acceptance: contract.global.acceptance,

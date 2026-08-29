@@ -17,20 +17,19 @@ import { authoringRevisionPreview } from "../../packages/ty-context/dist/lib/lon
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
-import { sha256Hex } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   activeAuthorityLockPath,
   activeRecordPath,
   runtimePath,
 } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
-  authoringTemplateSemanticManifest,
   createDeliveryFixture,
   runCli,
   runCliFailure,
-  semanticManifestIdentity,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { authoringTemplateSemanticManifest } from "./long-task-semantic-variant-fixture.mjs";
+import { semanticManifestIdentity } from "./long-task-semantic-refresh-fixture.mjs";
 import {
   admitPackageExactFixtureSemanticManifest,
   fixtureProductRootArgv,
@@ -356,7 +355,6 @@ test("init template runs through Preflight, Compile and package-observed Final G
   const fixture = await createDeliveryFixture();
   try {
     const contract = parseDeliveryContractText(compactLongTaskTemplate());
-    const semanticManifestSource = authoringTemplateSemanticManifest();
     const executionTarget = contract.task.execution_targets[0];
     const check = contract.outcomes[0].acceptance.checks[0];
     const rootArgv = fixtureProductRootArgv(
@@ -367,25 +365,9 @@ test("init template runs through Preflight, Compile and package-observed Final G
     executionTarget.root_argv = rootArgv;
     const executionTargetStatement =
       executionTargetSourceStatement(executionTarget);
-    semanticManifestSource.scope.source_item_refs.push(
-      "replace-execution-target",
-    );
-    semanticManifestSource.inputs.push({
-      key: "input.replace-execution-target",
-      kind: "source_item",
-      source_ref: "replace-execution-target",
-      sha256: sha256Hex(executionTargetStatement),
-      disposition: "non_ui_material",
-      fact_refs: ["replace.result.observable"],
-      basis_refs: ["replace-execution-target"],
-      rationale:
-        "The Source-backed process root and complete argv are inventoried as runtime authority rather than a separate product Fact.",
+    const semanticManifestSource = authoringTemplateSemanticManifest({
+      executionTarget,
     });
-    addSemanticSourceItemLineage(
-      semanticManifestSource,
-      "replace-execution-target",
-      "input.replace-execution-target",
-    );
     const semanticManifest = admitPackageExactFixtureSemanticManifest(
       semanticManifestSource,
     );
@@ -452,7 +434,7 @@ test("init template runs through Preflight, Compile and package-observed Final G
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-oracle.mjs"),
-      `import { readFile } from "node:fs/promises";\nlet text = "";\ntry { text = await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8"); } catch {}\nconst result = text.includes("IMPLEMENTED_STATE") && !text.includes("PLANNED_BLOCKED");\nconst relationsApplicable = text.includes("CROSS_CONTROL_RELATIONS_APPLY");\nconst assertion = (key) => "assertion.replace-outcome.replace-check." + key;\nconsole.log(JSON.stringify({schema_version:"ty-context-product-observation-v1",observations:{"replace.result.observable":result,[assertion("replace-result")]:result,[assertion("replace-requirement")]:result,[assertion("replace-architecture")]:result,[assertion("replace-liveness")]:true,[assertion("replace-relations-na")]:relationsApplicable}}));\n`,
+      `import { readFile } from "node:fs/promises";\nlet text = "";\ntry { text = await readFile(new URL("../src/replace-me.ts", import.meta.url), "utf8"); } catch {}\nconst result = text.includes("IMPLEMENTED_STATE") && !text.includes("PLANNED_BLOCKED");\nconst relationsApplicable = text.includes("CROSS_CONTROL_RELATIONS_APPLY");\nconst assertion = (key) => "assertion.replace-outcome.replace-check." + key;\nconsole.log(JSON.stringify({schema_version:"ty-context-product-observation-v1",observations:{"replace.result.observable":result,"replace.architecture.boundary":result,[assertion("replace-result")]:result,[assertion("replace-requirement")]:result,[assertion("replace-architecture")]:result,[assertion("replace-liveness")]:true,[assertion("replace-relations-na")]:relationsApplicable}}));\n`,
     );
     await writeFile(
       path.join(fixture.root, "tests", "replace-semantic-failure.ts"),
@@ -564,29 +546,4 @@ async function git(cwd, args) {
 
 function lineCount(value) {
   return value.trimEnd().split(/\r?\n/u).length;
-}
-
-function addSemanticSourceItemLineage(manifest, sourceItemRef, inputRef) {
-  for (const collection of [
-    "family_dispositions",
-    "subjects",
-    "relations",
-    "populations",
-    "axis_dispositions",
-    "condition_rules",
-    "conditions",
-    "condition_exclusions",
-    "property_dispositions",
-    "fact_cells",
-    "facts",
-  ])
-    for (const row of manifest[collection] ?? [])
-      if (
-        Array.isArray(row.source_item_refs) &&
-        !row.source_item_refs.includes(sourceItemRef)
-      )
-        row.source_item_refs.push(sourceItemRef);
-  for (const fact of manifest.facts)
-    if (!fact.provenance.basis_refs.includes(inputRef))
-      fact.provenance.basis_refs.push(inputRef);
 }

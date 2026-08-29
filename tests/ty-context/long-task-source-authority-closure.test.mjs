@@ -20,6 +20,7 @@ import {
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import {
+  addFixtureDomainSemanticFact,
   digestValue,
   mutateFixtureSemanticManifest,
 } from "./long-task-semantic-fact-test-support.mjs";
@@ -278,6 +279,13 @@ ${fixtureExecutionTargetSourceItem()}
         };
       }
       await writeContract(fixture.workdir, fixture.contract);
+      if (scenario === "non_goal")
+        await addGlobalConstraintSemanticFact(fixture, {
+          sourceItemRef: "first-observable",
+          constraintKey: "no-legacy",
+          claimRef: "non_goal.no-legacy",
+          requiredPolarity: "negative",
+        });
       await assert.doesNotReject(
         compileDeliveryContract(fixture.workdir, fixture.root, {
           require_completion_gate: false,
@@ -624,6 +632,17 @@ test("Source Acceptance may prove a precisely Source-backed Requirement", async 
       },
     ]);
     await writeContract(fixture.workdir, fixture.contract);
+    await addFixtureDomainSemanticFact(fixture, {
+      sourceItemRef: "first-acceptance",
+      factKey: "fact.first.acceptance-scenario",
+      proofKey: "proof.first.acceptance-scenario.exact",
+      propertyKey: "property.first-acceptance-scenario",
+      cellKey: "cell.first.acceptance-scenario",
+      assertionKey: "first-acceptance-scenario-semantic-fact",
+      criterion:
+        "The exact acceptance Source has an independent acceptance-domain Semantic Fact.",
+      observation: "first_acceptance_scenario_semantic_fact_result",
+    });
     const preflight = await preflightDeliveryContract(
       fixture.workdir,
       fixture.root,
@@ -709,7 +728,7 @@ test("Source-backed Global modal constraints still require a delivery-semantic F
     });
     await assertPreflightAndCompileReject(
       fixture,
-      "semantic_anchor_supporting_only_forbidden",
+      "global_semantic_fact_bindings_required",
       "A Source-backed Global Claim must not replace its delivery-semantic Fact.",
     );
   } finally {
@@ -877,16 +896,34 @@ async function configureGlobalSourceAcceptance(
     },
   ]);
   await writeContract(fixture.workdir, fixture.contract);
-  if (sourceBacked && semanticFactBacked)
+  await addFixtureDomainSemanticFact(fixture, {
+    sourceItemRef: "global-acceptance",
+    factKey: "fact.first.global-acceptance",
+    proofKey: "proof.first.global-acceptance.exact",
+    propertyKey: "property.first-global-acceptance",
+    cellKey: "cell.first.global-acceptance",
+    assertionKey: "first-global-acceptance-semantic-fact",
+    criterion:
+      "The Global acceptance Source has an independent acceptance-domain Semantic Fact.",
+    observation: "first_global_acceptance_semantic_fact_result",
+  });
+  if (sourceBacked)
     await addGlobalConstraintSemanticFact(fixture, {
       sourceItemRef: "global-constraint",
       constraintKey: "no-legacy",
+      bindGlobal: semanticFactBacked,
     });
 }
 
 async function addGlobalConstraintSemanticFact(
   fixture,
-  { sourceItemRef, constraintKey },
+  {
+    sourceItemRef,
+    constraintKey,
+    claimRef = `constraint.${constraintKey}`,
+    requiredPolarity = "positive",
+    bindGlobal = true,
+  },
 ) {
   const outcome = fixture.contract.outcomes[0];
   const check = outcome.acceptance.checks[0];
@@ -898,7 +935,7 @@ async function addGlobalConstraintSemanticFact(
   const propertyKey = `property.global.${constraintKey}`;
   const cellKey = `cell.global.${constraintKey}`;
   const assertionKey = `first-global-${constraintKey}-semantic-fact`;
-  const claimRef = `semantic_fact.${factKey}`;
+  const semanticClaimRef = `semantic_fact.${factKey}`;
   const sensitivity = outcome.acceptance.counterfactual_controls.find(
     (candidate) => candidate.key === "remove-first-state",
   );
@@ -908,7 +945,7 @@ async function addGlobalConstraintSemanticFact(
     key: assertionKey,
     criterion:
       "The global no-legacy policy has an independent Source-backed Semantic Fact.",
-    claims: [claimRef],
+    claims: [semanticClaimRef],
     applicability_ref: applicabilityRef,
     observation: "global_no_legacy_semantic_fact_result",
     evidence_capabilities: ["semantic_fact"],
@@ -917,7 +954,7 @@ async function addGlobalConstraintSemanticFact(
   });
   outcome.semantic_fact_bindings.facts.push({
     fact_ref: factKey,
-    claim_ref: claimRef,
+    claim_ref: semanticClaimRef,
     applicability_ref: applicabilityRef,
   });
   outcome.semantic_fact_bindings.proofs.push({
@@ -930,19 +967,31 @@ async function addGlobalConstraintSemanticFact(
     check_ref: check.key,
     assertion_ref: assertionKey,
   });
-  sensitivity.claims.push(claimRef);
+  sensitivity.claims.push(semanticClaimRef);
   sensitivity.expected_assertion_failures.push(assertionKey);
 
   await mutateFixtureSemanticManifest(fixture, (manifest) => {
     const sourceInput = manifest.inputs.find(
       (input) =>
-        input.kind === "source_item" &&
-        input.source_ref === sourceItemRef,
+        input.kind === "source_item" && input.source_ref === sourceItemRef,
     );
     assert.ok(sourceInput);
     sourceInput.fact_refs = [factKey];
     sourceInput.rationale =
       "The Global technical constraint owns one independent technical-domain Semantic Fact.";
+    const fragmentInputs = manifest.inputs.filter(
+      (input) =>
+        (input.kind === "source_fragment" ||
+          input.kind === "semantic_anchor") &&
+        input.basis_refs.includes(sourceItemRef),
+    );
+    assert.ok(fragmentInputs.length > 0);
+    for (const input of fragmentInputs) {
+      input.fact_refs = [factKey];
+      input.disposition = "fact_bearing";
+      input.rationale =
+        "This complete Source Fragment projects to its exact same-domain Global Semantic Fact.";
+    }
     for (const fact of manifest.facts) {
       fact.source_item_refs = fact.source_item_refs.filter(
         (ref) => ref !== sourceItemRef,
@@ -1040,7 +1089,10 @@ async function addGlobalConstraintSemanticFact(
       provenance: {
         kind: "direct",
         authority_ref: sourceItemRef,
-        basis_refs: [sourceItemRef],
+        basis_refs: [
+          sourceItemRef,
+          ...fragmentInputs.map((input) => input.key),
+        ],
         derivation: null,
       },
       source_item_refs: [sourceItemRef],
@@ -1080,6 +1132,28 @@ async function addGlobalConstraintSemanticFact(
       },
     });
   });
+  if (!bindGlobal) {
+    await writeContract(fixture.workdir, fixture.contract);
+    return;
+  }
+  const globalApplicabilityRef = ensureGlobalApplicability(fixture.contract);
+  const localApplicability = outcome.applicability[0];
+  fixture.contract.global.semantic_fact_bindings = {
+    manifest_ref: fixture.contract.semantic_fact_manifest.key,
+    obligations: [
+      {
+        claim_ref: claimRef,
+        applicability_ref: globalApplicabilityRef,
+        target_ref: localApplicability.target_ref,
+        outcome_ref: outcome.key,
+        fact_ref: factKey,
+        proof_ref: proofKey,
+        method: "exact_value",
+        required_polarity: requiredPolarity,
+      },
+    ],
+  };
+  await writeContract(fixture.workdir, fixture.contract);
 }
 
 function acceptanceSource(contract) {
@@ -1110,7 +1184,7 @@ async function assertPreflightAndCompileReject(fixture, code, message = code) {
         item.message.includes(`:${code}:`) ||
         item.message.endsWith(`:${code}`),
     ),
-    `${message}: missing Preflight diagnostic ${code}`,
+    `${message}: missing Preflight diagnostic ${code}: ${JSON.stringify(preflight.diagnostics)}`,
   );
   await assert.rejects(
     compileDeliveryContract(fixture.workdir, fixture.root, {

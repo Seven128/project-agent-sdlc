@@ -8,10 +8,12 @@ import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long
 import { scanMaterialTextInput } from "../../packages/ty-context/dist/lib/long-task-source-fragments.js";
 import {
   createDeliveryFixture,
-  refreshFixtureSemanticManifest,
-  semanticManifestIdentity,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import {
+  refreshFixtureSemanticManifest,
+  semanticManifestIdentity,
+} from "./long-task-semantic-refresh-fixture.mjs";
 import {
   addFixtureCustomConditionAxis,
   mutateFixtureSemanticManifest,

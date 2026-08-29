@@ -1,10 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { compileAcceptanceReachability } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability.js";
-import {
-  exactExternalClaimActualObligationRefsByAssertion,
-  resultApplicabilityEffectivelyExternallyBlocked,
-} from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability-helpers.js";
+import { exactExternalClaimActualObligationRefsByAssertion } from "../../packages/ty-context/dist/lib/long-task-acceptance-reachability-helpers.js";
+import { resultApplicabilityEffectivelyExternallyBlocked } from "../../packages/ty-context/dist/lib/long-task-effective-external-takeover.js";
 import { compiledAcceptanceAuthorityHash } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { compileProductClaimCoverage } from "../../packages/ty-context/dist/lib/long-task-claims.js";
 import { deriveRelevantExternalInputIdentity } from "../../packages/ty-context/dist/lib/long-task-external-confirmation-plan.js";
@@ -882,8 +880,7 @@ test("Design Fact External row cannot take over an ordinary Result applicability
 
   const ordinaryRow = {
     ...structuredClone(designRow),
-    obligation_ref:
-      "claim:first.result:first-root-success:runtime_behavior",
+    obligation_ref: "claim:first.result:first-root-success:runtime_behavior",
     source_obligation_ref:
       "claim:first.result:first-root-success:runtime_behavior",
     fact_ref: null,

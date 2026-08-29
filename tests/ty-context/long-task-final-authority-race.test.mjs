@@ -498,7 +498,11 @@ test(
       await writeFile(signal.release, "release\n");
 
       const final = await finalProcess;
-      assert.equal(final.exitCode, 0, final.stderr);
+      assert.equal(
+        final.exitCode,
+        0,
+        [final.stderr, final.stdout].filter(Boolean).join("\n"),
+      );
       assert.equal(
         parseCliJson(final.stdout).workflow_status,
         "machine_accepted",
@@ -755,6 +759,7 @@ console.log(JSON.stringify({
   schema_version: "ty-context-product-observation-v1",
   observations: {
     "fact.first.observable": observed,
+    "fact.first.architecture-boundary": observed,
     [assertion("first-result")]: observed,
     [assertion("first-requirement")]: observed,
     [assertion("first-obligation")]: observed,

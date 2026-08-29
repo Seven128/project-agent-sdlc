@@ -10,7 +10,7 @@ import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
-import { refreshFixtureSemanticManifest } from "./long-task-delivery-fixtures.mjs";
+import { refreshFixtureSemanticManifest } from "./long-task-semantic-refresh-fixture.mjs";
 import { packageAdmittedFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
 
 const SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF =
@@ -18,6 +18,11 @@ const SYNTHETIC_EXTERNAL_PUBLIC_KEY_REF =
 
 export function deterministicCompactSemanticManifest(factCount = 64) {
   const manifest = packageAdmittedFixtureSemanticManifest();
+  const baseFactCount = manifest.facts.length;
+  if (factCount < baseFactCount)
+    throw new Error(
+      `synthetic_compact_fixture_fact_count_too_small:${factCount}:${baseFactCount}`,
+    );
   const originalFact = manifest.facts[0];
   const originalSubject = manifest.subjects.find(
     (item) => item.key === originalFact.unit_ref,
@@ -26,14 +31,11 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
     (item) => item.key === originalFact.cell_ref,
   );
   const originalProof = manifest.proof_obligations[0];
-  const property = manifest.property_dispositions.find(
-    (item) => item.key === originalFact.property_ref,
-  );
-  const exactFacts = [];
+  const exactFacts = structuredClone(manifest.facts);
   const subjects = [];
   const cells = [];
   const proofs = [];
-  for (let index = 0; index < factCount; index += 1) {
+  for (let index = 0; index < factCount - baseFactCount; index += 1) {
     const suffix = String(index).padStart(4, "0");
     const factKey = `fact.synthetic.${suffix}`;
     const subjectKey = `subject.synthetic.${suffix}`;
@@ -57,15 +59,21 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
         ...structuredClone(originalFact.expected),
         locator: {
           ...structuredClone(originalFact.expected.locator),
-          value: `/facts/${index}/expected/value`,
+          value: `/facts/${baseFactCount + index}/expected/value`,
         },
       },
     });
+  }
+  manifest.subjects.push(...subjects);
+  manifest.fact_cells.push(...cells);
+  manifest.facts = exactFacts;
+  for (const [index, fact] of exactFacts.entries()) {
+    const suffix = String(index).padStart(4, "0");
     proofs.push(
-      proofFor(originalProof, factKey, suffix, "exact_value", proofs.length),
+      proofFor(originalProof, fact.key, suffix, "exact_value", proofs.length),
       proofFor(
         originalProof,
-        factKey,
+        fact.key,
         suffix,
         "custom.snapshot_digest",
         proofs.length + 1,
@@ -73,14 +81,11 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
       ),
     );
   }
-  manifest.subjects = manifest.subjects.filter(
-    (item) => item.key !== originalSubject.key,
-  );
-  manifest.subjects.push(...subjects);
-  manifest.fact_cells = cells;
-  manifest.facts = exactFacts;
   manifest.proof_obligations = proofs;
-  const subjectKeys = subjects.map((item) => item.key);
+  const subjectKeys = [
+    originalSubject.key,
+    ...subjects.map((item) => item.key),
+  ];
   for (const disposition of manifest.property_dispositions) {
     if (disposition.family_ref !== originalFact.family_ref) continue;
     for (const field of [
@@ -92,7 +97,10 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
       if (disposition[field].includes(originalSubject.key))
         disposition[field] = subjectKeys;
   }
-  property.required_methods = ["exact_value", "custom.snapshot_digest"];
+  const factPropertyRefs = new Set(exactFacts.map((fact) => fact.property_ref));
+  for (const disposition of manifest.property_dispositions)
+    if (factPropertyRefs.has(disposition.key))
+      disposition.required_methods = ["exact_value", "custom.snapshot_digest"];
   manifest.oracles[0].capabilities = ["exact_value"];
   manifest.oracles.push({
     key: "oracle.synthetic-snapshot-audit",
@@ -104,7 +112,12 @@ export function deterministicCompactSemanticManifest(factCount = 64) {
   });
   for (const input of manifest.inputs)
     if (input.fact_refs.includes(originalFact.key))
-      input.fact_refs = exactFacts.map((item) => item.key);
+      input.fact_refs = [
+        originalFact.key,
+        ...exactFacts
+          .filter((item) => item.key.startsWith("fact.synthetic."))
+          .map((item) => item.key),
+      ];
   return refreshFixtureSemanticManifest(manifest);
 }
 
@@ -243,8 +256,15 @@ export function projectSyntheticCompactContract(contract, manifest) {
     facts: factBindings,
     proofs: proofBindings,
   };
+  const replacedSemanticAssertionKeys = new Set(
+    check.positive_assertions
+      .filter((assertion) =>
+        assertion.claims.some((claim) => claim.startsWith("semantic_fact.")),
+      )
+      .map((assertion) => assertion.key),
+  );
   check.positive_assertions = check.positive_assertions.filter(
-    (assertion) => assertion.key !== "first-semantic-fact",
+    (assertion) => !replacedSemanticAssertionKeys.has(assertion.key),
   );
   check.positive_assertions.push(
     ...manifest.proof_obligations
@@ -271,7 +291,7 @@ export function projectSyntheticCompactContract(contract, manifest) {
   ];
   counterfactual.expected_assertion_failures = [
     ...counterfactual.expected_assertion_failures.filter(
-      (key) => key !== "first-semantic-fact",
+      (key) => !replacedSemanticAssertionKeys.has(key),
     ),
     ...manifest.proof_obligations
       .filter((proof) => proof.authority === "machine")

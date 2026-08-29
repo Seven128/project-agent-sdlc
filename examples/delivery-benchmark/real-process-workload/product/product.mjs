@@ -55,6 +55,7 @@ const observations = {};
 
 if (scope === "first" || scope === "all") {
   observations["fact.first.observable"] = firstAggregate(facts);
+  observations["fact.first.architecture-boundary"] = firstAggregate(facts);
   addAssertion(
     observations,
     "first",
@@ -90,6 +91,7 @@ if (scope === "first" || scope === "all") {
 
 if (scope === "second" || scope === "all") {
   observations["fact.second.observable"] = secondAggregate(facts);
+  observations["fact.second.architecture-boundary"] = secondAggregate(facts);
   addAssertion(
     observations,
     "second",

@@ -5,11 +5,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 import { fixtureExactComparisonResultIdentity } from "./long-task-exact-comparison-fixture.mjs";
+import { writeContract } from "./long-task-delivery-fixtures.mjs";
 import {
   refreshFixtureSemanticManifest,
   semanticManifestIdentity,
-  writeContract,
-} from "./long-task-delivery-fixtures.mjs";
+} from "./long-task-semantic-refresh-fixture.mjs";
 
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
 

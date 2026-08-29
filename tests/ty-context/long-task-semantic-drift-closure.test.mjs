@@ -690,13 +690,20 @@ test("multi-Outcome Stage Gates validate cross-surface records but require an ad
   contract.outcomes[1].stage = "first";
   contract.outcomes[0].acceptance.checks[0].journey_roles = ["success"];
 
-  assert.throws(
-    () => parse(contract),
-    /stage_gate_cross_surface_consistency_required/u,
+  assert.ok(
+    deliveryContractStructureDiagnostics(contract).some((diagnostic) =>
+      diagnostic.includes("stage_gate_cross_surface_consistency_required"),
+    ),
   );
   const gateCheck = contract.outcomes[1].acceptance.checks[0];
   gateCheck.positive_assertions[0].evidence_capabilities.push(
     "cross_surface_consistency",
+  );
+  assert.equal(
+    deliveryContractStructureDiagnostics(contract).some((diagnostic) =>
+      diagnostic.includes("stage_gate_cross_surface_consistency_required"),
+    ),
+    false,
   );
   assert.doesNotThrow(() => parse(contract));
 

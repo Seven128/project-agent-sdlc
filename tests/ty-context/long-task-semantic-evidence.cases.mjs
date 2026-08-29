@@ -6,10 +6,8 @@ import {
   validateDistinctSemanticFactEvidence,
   validateSemanticFactEvidence,
 } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-evidence.js";
-import {
-  fixtureSemanticManifest,
-  semanticManifestIdentity,
-} from "./long-task-delivery-fixtures.mjs";
+import { fixtureSemanticManifest } from "./long-task-delivery-fixtures.mjs";
+import { semanticManifestIdentity } from "./long-task-semantic-refresh-fixture.mjs";
 import { refreshComparisonIdentity } from "./long-task-semantic-fact-test-support.mjs";
 
 test("runtime evidence is attributable per Fact and cannot reuse or rewrite frozen authority", () => {

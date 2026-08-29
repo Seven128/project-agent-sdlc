@@ -85,6 +85,7 @@ outcomes:
         - fact_ref: replace.result.observable
           claim_ref: semantic_fact.replace.result.observable
           applicability_ref: root-success
+        - {fact_ref: replace.architecture.boundary, claim_ref: semantic_fact.replace.architecture.boundary, applicability_ref: root-success}
       proofs:
         - proof_ref: replace.result.observable.runtime
           fact_ref: replace.result.observable
@@ -94,6 +95,14 @@ outcomes:
           authority: machine
           check_ref: replace-check
           assertion_ref: replace-semantic-fact
+        - proof_ref: replace.architecture.boundary.runtime
+          fact_ref: replace.architecture.boundary
+          method: exact_value
+          proof_surface: runtime_behavior
+          evidence_capabilities: [semantic_fact]
+          authority: machine
+          check_ref: replace-check
+          assertion_ref: replace-architecture-semantic-fact
     product:
       observable_result: Describe what a user or system can observe.
       result_applicability_refs: [root-success]
@@ -159,6 +168,14 @@ outcomes:
               evidence_capabilities: [semantic_fact]
               operator: equals
               expected: true
+            - key: replace-architecture-semantic-fact
+              criterion: The exact Source-indexed architecture Fact passes its frozen comparison on the current target.
+              claims: [semantic_fact.replace.architecture.boundary]
+              applicability_ref: root-success
+              observation: semantic_fact_replace_architecture_boundary
+              evidence_capabilities: [semantic_fact]
+              operator: equals
+              expected: true
             - key: replace-requirement
               criterion: The atomic Source requirement is observable.
               claims: [requirement.replace-requirement]
@@ -194,14 +211,14 @@ outcomes:
       counterfactual_controls:
         - key: replace-semantic-carrier
           binding_key: replace-carrier
-          claims: [result, requirement.replace-requirement, obligation.architecture, semantic_fact.replace.result.observable]
+          claims: [result, requirement.replace-requirement, obligation.architecture, semantic_fact.replace.result.observable, semantic_fact.replace.architecture.boundary]
           check_key: replace-check
           mutation:
             type: replace_text
             path: src/replace-me.ts
             match: IMPLEMENTED_STATE
             replacement: SEMANTIC_FAILURE_STATE
-          expected_assertion_failures: [replace-result, replace-requirement, replace-architecture, replace-semantic-fact]
+          expected_assertion_failures: [replace-result, replace-requirement, replace-architecture, replace-semantic-fact, replace-architecture-semantic-fact]
           preserved_assertions: [replace-liveness]
         - key: replace-relation-applicability
           binding_key: replace-carrier

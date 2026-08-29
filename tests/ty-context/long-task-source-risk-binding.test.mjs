@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
@@ -14,6 +14,7 @@ import {
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
 import { expectDecision } from "./long-task-semantic-authority-revision-fixture.mjs";
+import { addFixtureDomainSemanticFact } from "./long-task-semantic-fact-test-support.mjs";
 
 test("Risk Source marker binds one exact Fact/Affected Outcome pair", async () => {
   const fixture = await createDeliveryFixture();
@@ -183,12 +184,20 @@ test("changing Risk marker Fact/Outcome changes frozen Source and Risk Authority
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     delete fixture.contract.risk.facts.critical_user_path;
-    await configureRiskSource(
-      fixture,
-      "weak_observability",
-      "first",
+    fixture.contract.risk.facts.weak_observability = ["first"];
+    fixture.contract.source_claims[0] = riskSourceClaim(
       "weak_observability:first",
     );
+    const sourcePath = path.join(fixture.root, "source.md");
+    const source = await readFile(sourcePath, "utf8");
+    await writeFile(
+      sourcePath,
+      source.replace(
+        "key=risk-source kind=risk_fact fact=critical_user_path outcome=first",
+        "key=risk-source kind=risk_fact fact=weak_observability outcome=first",
+      ),
+    );
+    await writeContract(fixture.workdir, fixture.contract);
     const pending = await expectDecision(fixture, {
       field: "source_files_changed",
       includes: "source.md",
@@ -224,6 +233,25 @@ ${sourceHeading("Fixture source", "fixture-source-heading")}
 ${fixtureExecutionTargetSourceItem()}
 `,
   );
+  await writeContract(fixture.workdir, fixture.contract);
+  const semanticFactKey = "fact.first.risk-source";
+  if (
+    dispositionRef === `${markerFact}:${markerOutcome}` &&
+    !fixture.contract.outcomes[0].semantic_fact_bindings.facts.some(
+      (binding) => binding.fact_ref === semanticFactKey,
+    )
+  )
+    await addFixtureDomainSemanticFact(fixture, {
+      sourceItemRef: "risk-source",
+      factKey: semanticFactKey,
+      proofKey: "proof.first.risk-source.exact",
+      propertyKey: "property.first-risk-source",
+      cellKey: "cell.first.risk-source",
+      assertionKey: "first-risk-source-semantic-fact",
+      criterion:
+        "The exact Risk Source marker has an independent risk-domain Semantic Fact.",
+      observation: "first_risk_source_semantic_fact_result",
+    });
   await writeContract(fixture.workdir, fixture.contract);
 }
 

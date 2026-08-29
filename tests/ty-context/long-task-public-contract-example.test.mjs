@@ -16,12 +16,12 @@ import YAML from "yaml";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
 import {
   createDeliveryFixture,
-  publicExampleSemanticManifest,
   runCli,
   runCliFailure,
-  semanticManifestIdentity,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
+import { semanticManifestIdentity } from "./long-task-semantic-refresh-fixture.mjs";
+import { publicExampleSemanticManifest } from "./long-task-semantic-variant-fixture.mjs";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { executionTargetSourceStatement } from "../../packages/ty-context/dist/lib/long-task-source-target-index.js";
 import { admitPackageExactFixtureSemanticManifest } from "./long-task-package-machine-fixture.mjs";
@@ -92,6 +92,7 @@ console.log(JSON.stringify({
   schema_version: "ty-context-product-observation-v1",
   observations: {
     "example.result.observable": result,
+    "example.architecture.boundary": result,
     [assertion("result-ac")]: result,
     [assertion("observable-ac")]: result,
     [assertion("architecture-ac")]: result,

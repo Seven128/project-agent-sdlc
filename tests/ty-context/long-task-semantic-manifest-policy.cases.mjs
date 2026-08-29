@@ -5,10 +5,8 @@ import {
   semanticFactCollectionIdentity,
   validateSemanticFactManifestPolicy,
 } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
-import {
-  fixtureSemanticManifest,
-  refreshFixtureSemanticManifest,
-} from "./long-task-delivery-fixtures.mjs";
+import { fixtureSemanticManifest } from "./long-task-delivery-fixtures.mjs";
+import { refreshFixtureSemanticManifest } from "./long-task-semantic-refresh-fixture.mjs";
 
 test("[critical:non-ui-semantic-fact-closure] semantic Fact manifest closes every standard identity and rejects omission or aggregation", () => {
   assert.doesNotThrow(() =>

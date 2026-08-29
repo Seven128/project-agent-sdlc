@@ -16,6 +16,7 @@ import {
   expectDecision,
   prepareSemanticAuthority,
 } from "./long-task-semantic-authority-revision-fixture.mjs";
+import { addGlobalClaim } from "./long-task-global-evidence-sensitivity-fixture.mjs";
 
 test("Source authority is locked by first compile even before verify", async () => {
   const fixture = await createDeliveryFixture();
@@ -139,6 +140,7 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
   const structureOraclePath = "tests/authority-structure-oracle.mjs";
   try {
     prepareSemanticAuthority(fixture.contract);
+    await addGlobalClaim(fixture, { counterfactual: true });
     await writeFile(
       path.join(fixture.root, ...structureOraclePath.split("/")),
       await readFile(
@@ -188,9 +190,7 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
           contract.outcomes[0].product.requirements[0].required_proof_surfaces =
             ["implementation_structure"];
           for (const obligation of contract.outcomes[0].technical.obligations)
-            obligation.required_proof_surfaces = [
-              "implementation_structure",
-            ];
+            obligation.required_proof_surfaces = ["implementation_structure"];
           const outcome = contract.outcomes[0];
           const base = outcome.acceptance.checks[0];
           const structural = structuredClone(base);
@@ -240,8 +240,7 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
               );
               control.expected_assertion_failures =
                 control.expected_assertion_failures.filter(
-                  (assertionKey) =>
-                    !structuralAssertionKeys.has(assertionKey),
+                  (assertionKey) => !structuralAssertionKeys.has(assertionKey),
                 );
             }
           const liveness = structural.positive_assertions.find(
@@ -284,18 +283,10 @@ test("Product, Global, Source Claim, and acceptance meaning changes require an e
         candidate.source_claims[0].statement = statement;
         await writeFile(
           sourceFile,
-          `<!-- ty-source-background:start key=fixture-heading reason=markdown-structure -->
-<a id="fixture-source"></a>
-<!-- ty-source-background:end -->
-
-<!-- ty-source-item:start key=first-observable kind=requirement -->
-${statement}
-<!-- ty-source-item:end -->
-
-${fixtureArchitectureSourceItem()}
-
-${fixtureExecutionTargetSourceItem()}
-`,
+          sourceBaseline.replace(
+            /(<!-- ty-source-item:start key=first-observable\b[^>]*-->\r?\n)[\s\S]*?(\r?\n<!-- ty-source-item:end -->)/u,
+            `$1${statement}$2`,
+          ),
         );
       }
       await writeContract(fixture.workdir, candidate);
@@ -308,14 +299,25 @@ ${fixtureExecutionTargetSourceItem()}
     }
 
     const globalCandidate = structuredClone(contractBaseline);
-    globalCandidate.global.technical.constraints[0].statement =
-      "A rewritten global constraint.";
+    const globalStatement = "A rewritten global constraint.";
+    globalCandidate.global.technical.constraints[0].statement = globalStatement;
+    globalCandidate.source_claims.find(
+      (claim) => claim.key === "global-state-source",
+    ).statement = globalStatement;
+    await writeFile(
+      sourceFile,
+      sourceBaseline.replace(
+        /(<!-- ty-source-item:start key=global-state-source\b[^>]*-->\r?\n)[\s\S]*?(\r?\n<!-- ty-source-item:end -->)/u,
+        `$1${globalStatement}$2`,
+      ),
+    );
     await writeContract(fixture.workdir, globalCandidate);
     await expectDecision(fixture, {
       field: "global_semantics_changed",
-      includes: "global.technical.constraints.stable-runtime",
+      includes: "global.technical.constraints.global-state",
       reason: "global_semantics_changed",
     });
+    await writeFile(sourceFile, sourceBaseline);
 
     const addedClaim = structuredClone(contractBaseline);
     addedClaim.outcomes[0].technical.obligations.push({

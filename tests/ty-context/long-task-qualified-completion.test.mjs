@@ -14,6 +14,7 @@ import {
 import {
   commitCandidate,
   createDeliveryFixture,
+  createNonBlockingExternalFixture,
   pathExists,
   runCli,
   runCliFailure,
@@ -32,7 +33,7 @@ const externalConfirmations = [
 ];
 
 test("non-blocking external declarations remain advisory across Final/status/resume", async () => {
-  const fixture = await createDeliveryFixture({ externalConfirmation: true });
+  const fixture = await createNonBlockingExternalFixture();
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -199,7 +200,7 @@ test("Final Gate never overlaps workspace write-tree with current Git status", a
 });
 
 test("stale Final Receipt loses accepted projection but retains declarations", async () => {
-  const fixture = await createDeliveryFixture({ externalConfirmation: true });
+  const fixture = await createNonBlockingExternalFixture();
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -268,7 +269,7 @@ test("historical v3 Receipt without Finalization Identity stays audit-readable b
 });
 
 test("stop-check treats non-blocking confirmation as advisory", async () => {
-  const fixture = await createDeliveryFixture({ externalConfirmation: true });
+  const fixture = await createNonBlockingExternalFixture();
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
@@ -295,7 +296,7 @@ test("stop-check treats non-blocking confirmation as advisory", async () => {
 });
 
 test("close emits machine_accepted when only advisory confirmation exists", async () => {
-  const fixture = await createDeliveryFixture({ externalConfirmation: true });
+  const fixture = await createNonBlockingExternalFixture();
   try {
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

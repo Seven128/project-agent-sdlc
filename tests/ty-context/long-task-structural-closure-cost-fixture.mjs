@@ -41,7 +41,8 @@ export function structuralContractFixture(manifest) {
     })),
   };
   check.positive_assertions = check.positive_assertions.filter(
-    (assertion) => assertion.key !== "first-semantic-fact",
+    (assertion) =>
+      !assertion.claims.some((claim) => claim.startsWith("semantic_fact.")),
   );
   check.positive_assertions.push(
     ...manifest.proof_obligations.map((proof, index) => ({
