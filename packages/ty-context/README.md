@@ -200,7 +200,18 @@ Use this tarball path for source-preview testing, private review or package deve
 
 The default read path is `project_context/global.md`, `project_context/architecture.md`, `project_context/context.toml`, the default area root, then minimum graph-relevant role Context.
 
-Only near-universal recovery facts should use `read_policy = "default"`; specialized detail should be task-triggered `on-demand`. `ty-context doctor` reports the deterministic default Context footprint, soft-budget overages, byte-identical default files and `DESIGN.md` authority status as advisory maintenance signals, not a new gate. Genuine near-universal recovery facts take precedence over the byte heuristic and must not be omitted, obscured or misclassified merely to fit it.
+Only near-universal recovery facts should use `read_policy = "default"`; specialized detail should be task-triggered `on-demand`. `ty-context doctor` retains the deterministic default-footprint report and adds advisory statistics for every registered and unregistered Context Markdown file: default/on-demand/legacy/unregistered bytes, largest on-demand file, file size, line length, trigger fan-out, explicit local Markdown links and opt-in stable-key declarations. `doctor --strict` is default-off and must be adopted explicitly. Genuine recovery facts take precedence over size or line heuristics.
+
+Schema v4 preserves all five existing policies. Only `default` is directly selected; a registered `default_children` target is selected transitively regardless of its own policy. Version 0.10 warns about `always`, `optional` and `never-default` but does not reinterpret or migrate them.
+
+Explicit `ty-context upgrade` separately converts provably simple pre-v4 `[[context_units]]` tables with a bounded byte patch: it renames the table, removes only retired `id`/`area` fields and preserves untouched bytes/EOL. Complex structures or current/legacy path conflicts are `manual_required`; ordinary `sync` does not migrate them.
+
+```bash
+ty-context route --task "change the weather map contract" --path apps/client/src/map.ts --explain
+ty-context context inspect project_context/areas/main/weather.md --task "change the weather map contract"
+```
+
+The experimental `route` command performs a stateless, deterministic literal scan of all eligible `project_context/**`, including labelled unregistered files. It has versioned JSON, fixed budgets and explicit incomplete results, but it establishes no Authority, changes no default selection and does not replace the Workflow-required bounded search. `context inspect` reports ownership/read metadata, default reasons, explicit backlinks, declared-key conflicts and optional route reasons. Both are read-only; Context writes are not part of 0.10. Their classified exits are `0` complete, `2` arguments, `3` blocking Catalog, `4` incomplete budget, `5` I/O/path safety and `6` internal; ordinary ambiguity/unresolved output remains exit `0`.
 
 ### Bounded Context discovery
 

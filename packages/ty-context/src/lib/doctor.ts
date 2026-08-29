@@ -12,6 +12,8 @@ import { inspectDesignAuthority } from "./design-md.js";
 import { harnessConfigPath, harnessRoot } from "./harness-root.js";
 import { pathExists } from "./fs.js";
 import { unsupportedSchemaMessage } from "./schema-guard.js";
+import { inspectContextCatalogHealth } from "./context-doctor/context-doctor.js";
+import type { ContextDoctorOptions } from "./context-doctor/context-doctor-types.js";
 
 const require = createRequire(import.meta.url);
 const packageMetadata = require("../../package.json") as { version?: string };
@@ -22,7 +24,10 @@ export interface DoctorReport {
   errors: string[];
 }
 
-export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
+export async function runDoctor(
+  projectRoot: string,
+  options: ContextDoctorOptions = {},
+): Promise<DoctorReport> {
   const report: DoctorReport = { info: [], warnings: [], errors: [] };
   const root = await harnessRoot(projectRoot);
   const relativeConfigPath = await harnessConfigPath(projectRoot);
@@ -88,6 +93,20 @@ export async function runDoctor(projectRoot: string): Promise<DoctorReport> {
   } catch (error) {
     report.warnings.push(
       `default Context footprint unavailable: ${error instanceof Error ? error.message : String(error)}`,
+    );
+  }
+
+  try {
+    const contextHealth = await inspectContextCatalogHealth(
+      projectRoot,
+      options,
+    );
+    report.info.push(...contextHealth.info);
+    report.warnings.push(...contextHealth.warnings);
+    report.errors.push(...contextHealth.errors);
+  } catch (error) {
+    report.warnings.push(
+      `all-Context diagnostics unavailable: ${error instanceof Error ? error.message : String(error)}`,
     );
   }
 

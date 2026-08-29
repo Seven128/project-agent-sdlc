@@ -26,6 +26,7 @@ import { legacySdlcHarnessMigration } from "./legacy-sdlc-migration.js";
 import { modularityCapabilityWaiverMigration } from "./modularity-capability-migration.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
 import { semanticDriftMigrationFields } from "./long-task-semantic-drift-migration.js";
+import { contextUnitsMigration } from "./context-units-migration.js";
 
 export type UpgradePlanItemStatus =
   "safe_pending" | "manual_required" | "blocked";
@@ -182,6 +183,7 @@ export const migrations: Migration[] = [
     apply: migrateLegacyModulesToAreas,
     verify: verifyNoop,
   },
+  contextUnitsMigration,
   {
     id: "context-manifest-baseline",
     introducedIn: "0.2.0",

@@ -2,6 +2,13 @@
 
 Schema migrations for Harness config and managed file layout belong here.
 
+Version 0.10.0 includes `context-units-to-context`. Explicit `upgrade` applies
+only when every retired `[[context_units]]` table is a provably simple
+single-line TOML table. It renames the table and removes only retired `id` and
+`area` fields while preserving all untouched bytes and the existing EOL.
+Complex/mixed-EOL input, unknown legacy fields and current/legacy path
+conflicts are `manual_required`; ordinary `sync` never runs this migration.
+
 Version 0.6.0 includes `long-task-v1-retirement`. It safely removes the
 retired repo-local Hook, reports a legacy active projection as
 `manual_required`, and deliberately does not import V1 progress or receipts

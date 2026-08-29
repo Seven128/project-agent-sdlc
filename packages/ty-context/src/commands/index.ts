@@ -13,6 +13,8 @@ import { packageSource } from "./package-source.js";
 import { sync } from "./sync.js";
 import { upgrade } from "./upgrade.js";
 import { validate } from "./validate.js";
+import { route } from "./route.js";
+import { context } from "./context.js";
 import { assertHarnessProfileEnabled } from "../lib/profiles.js";
 
 export type CommandHandler = (args: string[]) => Promise<void> | void;
@@ -25,6 +27,8 @@ export const commands: Record<string, CommandHandler> = {
   sync,
   upgrade,
   doctor,
+  route,
+  context,
   "check-modularity": checkModularity,
   "export-context": exportContext,
   validate,
@@ -49,7 +53,10 @@ export function help(): void {
   sync                 Refresh managed assets; does not run migrations
   upgrade [--check] [--json]
                        Run safe migrations, sync managed assets and doctor
-  doctor               Diagnose project configuration and drift
+  doctor [--strict]    Diagnose project configuration and all Context files; new findings are advisory
+  route --task <text>  Experimentally route to read-only Context candidates
+  context inspect <path>
+                       Inspect one Context owner, references and optional route explanation
   check-modularity --touched|--file <path>|--base <ref> [--limit 300] [--fail-on-warning]
                        Warn when selected handwritten source files exceed a line-count limit
   export-context --full|--code|--all|--source-pack|--code-index|--task-context

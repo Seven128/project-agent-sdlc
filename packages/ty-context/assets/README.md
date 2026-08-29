@@ -216,7 +216,20 @@ minimum graph-relevant area/role Context
 
 Only near-universal recovery facts should use `read_policy = "default"`; specialized architecture, contract, deployment and historical detail should be task-triggered `on-demand` Context. Before deciding `Context Delta`, the Agent also runs one bounded text search over `project_context/**` using a small set of high-signal task terms such as explicit area/module names and API/schema/state/security/verification/deployment language. Matching files are merged with manifest candidates and filtered by semantic relevance. This is not a vector or persistent retrieval system and creates no index, cache, registry, search state or authority.
 
-`ty-context doctor` reports the deterministic default read footprint, per-file/total soft-budget overages, byte-identical default files and `DESIGN.md` authority status. These are advisory maintenance signals, not a new validation gate or workflow state. If genuine near-universal recovery facts exceed a byte heuristic, preserve the facts and accept the warning; never omit, obscure or misclassify required Context merely to fit the budget.
+`ty-context doctor` keeps the deterministic default-footprint report and also inspects every Context Markdown file, including unregistered files. It reports default/on-demand/legacy/unregistered byte distribution, the largest on-demand file, per-file size and maximum line length, trigger fan-out, explicit local Markdown-link integrity, and duplicate opt-in declarations such as `<!-- ty-context-declare Fact-ID: OBS-001 -->`. New findings are advisory by default; `--strict` is an explicit project choice and is never added to CI implicitly. Genuine recovery facts take precedence over byte and line heuristics.
+
+Schema v4 continues to accept `default`, `on-demand`, `always`, `optional` and `never-default`. Only `default` enters the default set directly; every registered node referenced through `default_children` enters transitively regardless of policy. Version 0.10 warns about the three legacy values without reinterpreting or automatically migrating them. In particular, `always -> default` can expand the footprint, while `never-default` plus an incoming default-child edge remains current-compatible but contradictory migration input that must be resolved explicitly.
+
+The separate explicit `ty-context upgrade` path can convert the retired pre-v4 `[[context_units]]` table name when every legacy table has a provably simple single-line representation. It renames the table, removes only retired `id`/`area` fields and preserves every untouched byte and line ending. Complex or mixed-format TOML and current/legacy path conflicts become `manual_required`; ordinary `sync` never performs this migration.
+
+Two read-only maintenance commands share the same Manifest interpretation as validation and Doctor:
+
+```bash
+ty-context route --task "change the weather map contract" --path apps/client/src/map.ts --explain
+ty-context context inspect project_context/areas/main/weather.md --task "change the weather map contract"
+```
+
+`route` is an experimental, stateless literal candidate diagnostic over all eligible `project_context/**`, including clearly labelled unregistered files. Its versioned JSON, fixed scan budgets, stable ordering, explanations and byte costs do not establish Authority, participate in the default footprint or satisfy the Workflow-required bounded search. Budget exhaustion returns an explicitly incomplete result. `context inspect` reports one file's registration, Role, read metadata, default reasons, explicit backlinks, stable-key conflicts and optional route explanation without writing files. Version 0.10 exposes no Context mutation command. Both new commands use classified exits: `0` completed, `2` arguments, `3` blocking Catalog, `4` incomplete scan budget, `5` I/O/path safety and `6` internal; ordinary ambiguity and unresolved paths remain completed diagnostic results.
 
 Typical roles are area/domain, contract, foundation, decision-rationale, implementation-index, verification and deployment. Context owns durable intended boundaries; code owns current implementation; tests, CI, browser/runtime evidence and people own behavior and product acceptance.
 

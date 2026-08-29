@@ -14,7 +14,12 @@
 # widen to any relevant area/shared Context when task dependencies require it.
 # This optional sparse mirror adds no workspace schema or read/edit ACL. Use
 # project-owned scope checks for task-local intended/supporting changed paths.
-# `ty-context doctor` reports the deterministic default read footprint and exact duplicates.
+# Schema v4 also accepts legacy always/optional/never-default values without
+# reinterpreting them. Doctor warns, but migration is explicit: only default is
+# directly selected and every registered default_children target is selected.
+# `ty-context doctor` reports default and all-Context advisory diagnostics.
+# Experimental `ty-context route` is read-only and does not replace the
+# Workflow-required bounded Context search.
 # When migrating deep files under project_context/areas/**, refine obvious
 # contract/foundation/subdomain/verification/deployment/implementation-index/
 # decision-rationale/archive files into [[context]] entries instead of keeping

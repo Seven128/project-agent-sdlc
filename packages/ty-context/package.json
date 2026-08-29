@@ -73,6 +73,7 @@
   "dependencies": {
     "@google/design.md": "0.4.0",
     "impeccable": "^3.6.0",
+    "mdast-util-from-markdown": "^2.0.3",
     "re2js": "2.8.6",
     "smol-toml": "1.8.0",
     "yaml": "^2.9.0"

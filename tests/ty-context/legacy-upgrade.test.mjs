@@ -42,6 +42,14 @@ try {
   assert.ok(report.some((line) => line.startsWith("migrations changed=")));
   assert.ok(report.some((line) => line.includes("manual_required=0 blocked=0")));
   assert.ok(report.some((line) => line.startsWith("sync changed=")));
+  const migratedManifest = await readFile(
+    path.join(safeRoot, "project_context/context.toml"),
+    "utf8",
+  );
+  assert.match(migratedManifest, /\[\[context\]\]/u);
+  assert.doesNotMatch(migratedManifest, /\[\[context_units\]\]/u);
+  assert.doesNotMatch(migratedManifest, /^id = "main-verification"$/mu);
+  assert.doesNotMatch(migratedManifest, /^area = "main"$/mu);
 
   const migratedPackage = JSON.parse(await readFile(path.join(safeRoot, "package.json"), "utf8"));
   assert.equal(migratedPackage.tyContext.harnessFolderName, ".codex");

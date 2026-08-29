@@ -135,6 +135,8 @@ try {
   run("npm", ["init", "-y"], demoDir);
   run("npm", ["install", "--save-dev", "--ignore-scripts", "--no-audit", "--no-fund", "--prefer-offline", tarballPath], demoDir);
   run("npx", ["--no-install", "ty-context", "init"], demoDir);
+  run("npx", ["--no-install", "ty-context", "route", "--task", "inspect project context", "--term", "Project Goal", "--format", "json"], demoDir);
+  run("npx", ["--no-install", "ty-context", "context", "inspect", "project_context/global.md", "--format", "json"], demoDir);
   run("npx", ["--no-install", "ty-context", "validate-context"], demoDir);
 
   const expectedFiles = [

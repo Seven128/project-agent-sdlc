@@ -125,7 +125,20 @@ manifest/trigger 命中的少量 area/role Context
 
 这次搜索只补充语义判断，不会把所有关键词命中都当成 Authority，也不会创建向量/持久索引、缓存、Registry、search state 或第二权威。它仍可能漏掉完全不同的同义词或间接依赖，因此每个实现需求仍要执行 Architecture Deliberation 与收尾 Conformance。
 
-`ty-context doctor` 会报告确定性的默认 Context 文件/字节规模、单文件与总量软预算超限、字节完全相同的默认文件，以及 `DESIGN.md` 权威状态。这些只是维护提示，不是新验证 Gate 或运行时状态。如果真实的近乎通用恢复事实超过字节启发式预算，应保留事实并接受 warning；绝不能为了满足预算而遗漏、过度压缩或错误分类必需 Context。
+`ty-context doctor` 保留确定性的默认 footprint 报告，并检查全部 Context Markdown（包括未登记文件）。它会报告 default/on-demand/legacy/unregistered 的文件与字节分布、最大的 on-demand 文件、逐文件大小和最大行长、trigger fan-out、显式本地 Markdown 链接完整性，以及 `<!-- ty-context-declare Fact-ID: OBS-001 -->` 这类显式声明的重复 owner。新增发现默认都是 advisory；`--strict` 必须由项目显式采用，工具不会自行把它加入 CI。真实恢复事实始终优先于字节或行长启发式阈值。
+
+Schema v4 继续接受 `default`、`on-demand`、`always`、`optional` 和 `never-default`。只有 `default` 会因自身策略直接进入默认集合；任何由 `default_children` 引用的已登记节点都会递归进入，不受自身 policy 影响。0.10 只为三个 legacy 值提供 warning，不重新解释或自动迁移。尤其是 `always -> default` 可能扩大 footprint，而 `never-default` 与入向 default-child 边在当前版本仍兼容执行、但属于未来迁移必须显式消除的矛盾输入。
+
+独立的显式 `ty-context upgrade` 可以迁移 v4 之前的旧 `[[context_units]]` 表名，但只处理每个旧表都能证明为简单单行字段的情况。它只重命名表、删除已废弃的 `id`/`area` 字段，并保留所有未触碰字节和原始换行；复杂或混合格式 TOML、当前/旧路径冲突都会变成 `manual_required`。普通 `sync` 永不执行该迁移。
+
+验证、Doctor 与下面两个只读维护命令共用同一套 Manifest 解释：
+
+```bash
+ty-context route --task "修改天气地图契约" --path apps/client/src/map.ts --explain
+ty-context context inspect project_context/areas/main/weather.md --task "修改天气地图契约"
+```
+
+`route` 是实验性、无状态的字面量候选诊断，会扫描全部符合条件的 `project_context/**`，并明确标记未登记文件。其版本化 JSON、固定扫描预算、稳定顺序、选择原因与字节成本不建立 Authority、不参与默认 footprint，也不能替代 Workflow 仍然必需的 bounded search；预算超限会显式返回不完整结果。`context inspect` 只读报告单个文件的登记状态、Role、读取元数据、默认选择原因、显式反向引用、稳定 key 冲突和可选路由解释。0.10 不提供 Context 写入命令。两个新命令使用统一退出码：`0` 完成，`2` 参数错误，`3` Catalog 阻断错误，`4` 扫描预算导致结果不完整，`5` I/O 或路径安全错误，`6` 内部错误；普通 ambiguous/unresolved 仍是已完成的诊断结果。
 
 Context 负责耐久的意图和边界，代码负责当前实现，测试/CI/浏览器或运行时证据/人工负责行为与产品验收。
 
