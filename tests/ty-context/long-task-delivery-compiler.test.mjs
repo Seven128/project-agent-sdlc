@@ -8,12 +8,17 @@ import { pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import YAML from "yaml";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
+import { inspectDesignAuthorityClosure } from "../../packages/ty-context/dist/lib/design-authority-closure.js";
+import { projectDesignAuthorityTokens } from "../../packages/ty-context/dist/lib/design-authority-tokens.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { validateDeliveryContractStructure } from "../../packages/ty-context/dist/lib/long-task-delivery-validation.js";
 import { deliveryCompileFreshness } from "../../packages/ty-context/dist/lib/long-task-freshness.js";
 import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
-import { createLongTaskDesignHandoffConsumer } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
+import {
+  createLongTaskDesignHandoffConsumer,
+  validateProjectDesignAuthoritySet,
+} from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
 import { compileSourceInventory } from "../../packages/ty-context/dist/lib/long-task-source-inventory.js";
 import { projectDesignOwnedSemanticFacts } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-input-closure.js";
 import { npxCliPath } from "../../packages/ty-context/dist/lib/long-task-runner-files.js";
@@ -552,6 +557,99 @@ test("Long-Task consumes target handoffs in either order and rejects missing, ex
     assert.throws(
       () => duplicateSource.finish(),
       /design_resource_handoff_set_source_item_duplicate:/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task binds the complete project Design Authority closure and detects child drift", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const authority = await writeLongTaskDesignAuthorityBundle(fixture.root);
+    const handoff = await attachDesignResourceHandoff(fixture);
+    handoff.project_design_authority = {
+      kind: "repository-closure",
+      ...authority.identity,
+    };
+    await writeDesignResourceHandoff(fixture.root, handoff);
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    configureExactTargetBlockingConfirmation(fixture.contract, {
+      key: "confirm-authority-closure-fixture",
+    });
+    await writeContract(fixture.workdir, fixture.contract, {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+    });
+
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      { require_completion_gate: false },
+    );
+    assert.deepEqual(compiled.project_design_authority, authority.identity);
+    const check = compiled.outcomes[0].acceptance.checks[0];
+    for (const memberPath of authority.member_paths)
+      assert.equal(
+        check.protected_authority_paths.includes(memberPath),
+        true,
+        memberPath,
+      );
+    assert.equal(
+      (await deliveryCompileFreshness(compiled)).includes(
+        "project_design_authority_changed_after_compile",
+      ),
+      false,
+    );
+
+    await writeFile(
+      path.join(fixture.root, "design_system", "components", "card.md"),
+      "# Card\n\nChanged without revising the handoff.\n",
+      "utf8",
+    );
+    const changedAuthority = await inspectDesignAuthorityClosure(fixture.root);
+    assert.ok(changedAuthority.identity);
+    const manifestPath = path.join(
+      fixture.root,
+      "design_system",
+      "authority.manifest.json",
+    );
+    const manifest = JSON.parse(await readFile(manifestPath, "utf8"));
+    manifest.closure_digest = changedAuthority.identity.closure_digest;
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    assert.equal(
+      (await deliveryCompileFreshness(compiled)).includes(
+        "project_design_authority_changed_after_compile",
+      ),
+      true,
+    );
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /project_design_authority:identity_mismatch:closure_digest/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("Long-Task rejects conflicting project Design Authority identities across handoffs", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await attachDesignResourceHandoff(fixture);
+    const primary = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    const secondary = structuredClone(primary);
+    secondary.project_design_authority_resolution.identity.closure_digest =
+      `sha256:${"f".repeat(64)}`;
+    assert.throws(
+      () => validateProjectDesignAuthoritySet([primary, secondary]),
+      /project_design_authority_identity_conflict/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -3497,6 +3595,67 @@ async function cachedPlaywrightCandidates(cache) {
 
 function sha256Text(value) {
   return createHash("sha256").update(value).digest("hex");
+}
+
+async function writeLongTaskDesignAuthorityBundle(repository) {
+  const design = `---
+version: "long-task-revision"
+name: "Long-Task Bundle"
+description: "A complete project Design Authority fixture."
+colors:
+  primary: "#123456"
+spacing:
+  sm: 8px
+---
+
+# Project Design Authority
+
+See [Card](design_system/components/card.md).
+`;
+  const component = "# Card\n\nThe durable component owner.\n";
+  await mkdir(path.join(repository, "design_system", "components"), {
+    recursive: true,
+  });
+  await writeFile(path.join(repository, "DESIGN.md"), design, "utf8");
+  await writeFile(
+    path.join(repository, "design_system", "components", "card.md"),
+    component,
+    "utf8",
+  );
+  const tokens = projectDesignAuthorityTokens(design);
+  assert.equal(tokens.success, true);
+  await writeFile(
+    path.join(repository, "design_system", "tokens.json"),
+    tokens.content,
+    "utf8",
+  );
+  const manifestPath = path.join(
+    repository,
+    "design_system",
+    "authority.manifest.json",
+  );
+  const manifest = {
+    schema_version: 1,
+    entry: "DESIGN.md",
+    authority_files: [
+      { path: "design_system/components/card.md", kind: "component" },
+    ],
+    generated_files: [
+      {
+        path: "design_system/tokens.json",
+        source: "DESIGN.md#frontmatter.tokens",
+      },
+    ],
+    closure_digest: `sha256:${"0".repeat(64)}`,
+  };
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  const unclaimed = await inspectDesignAuthorityClosure(repository);
+  assert.ok(unclaimed.identity, JSON.stringify(unclaimed.diagnostics));
+  manifest.closure_digest = unclaimed.identity.closure_digest;
+  await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  const current = await inspectDesignAuthorityClosure(repository);
+  assert.equal(current.status, "valid", JSON.stringify(current.diagnostics));
+  return current;
 }
 
 function designFactExpectation(handoff, proof) {

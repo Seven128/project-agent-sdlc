@@ -125,6 +125,7 @@ export async function writeDesignResourceHandoffFixture(
   mutate,
   options = {},
 ) {
+  await ensureFixtureDesignAuthority(root);
   await mkdir(path.join(root, "design"), { recursive: true });
   const bundle = createFixtureBundle();
   bundle.handoff = structuredClone(bundle.handoff);
@@ -158,6 +159,18 @@ export async function writeDesignResourceHandoffFixture(
     manifest: bundle.manifest,
     resource: bundle.resource,
   };
+}
+
+async function ensureFixtureDesignAuthority(root) {
+  try {
+    await writeFile(
+      path.join(root, "DESIGN.md"),
+      "# Fixture Design Authority\n\nLegacy single-file test authority.\n",
+      { encoding: "utf8", flag: "wx" },
+    );
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+  }
 }
 
 export async function writeDesignResourceHandoff(root, handoff, options = {}) {
@@ -232,6 +245,13 @@ export function manifestBackedDesignResourceHandoff(handoff) {
     intent: handoff.intent,
     scope: structuredClone(handoff.scope),
     provenance: structuredClone(handoff.provenance),
+    ...(handoff.project_design_authority
+      ? {
+          project_design_authority: structuredClone(
+            handoff.project_design_authority,
+          ),
+        }
+      : {}),
     ...(handoff.technical_feasibility_inputs
       ? {
           technical_feasibility_inputs: structuredClone(

@@ -80,6 +80,29 @@ export type {
   DesignResourceSymbolicProofObligationV2,
 } from "./lib/design-resource-symbolic-fact-types.js";
 export type {
+  DesignAuthorityClosureMember,
+  DesignAuthorityClosureSnapshot,
+  DesignAuthorityDiagnostic,
+  DesignAuthorityGeneratedFile,
+  DesignAuthorityIdentityV1,
+  DesignAuthorityInspection,
+  DesignAuthorityKind,
+  DesignAuthorityManifestFile,
+  DesignAuthorityManifestV1,
+} from "./lib/design-authority-types.js";
+export type {
+  DesignAuthorityConsistentAssessmentV1,
+  DesignAuthorityCrossTaskVarianceV1,
+  DesignAuthorityDeltaAssessmentKind,
+  DesignAuthorityDeltaAssessmentV1,
+  DesignAuthorityDeltaCandidateV1,
+  DesignAuthorityDeltaChangeV1,
+  DesignAuthorityDeltaChangesV1,
+  DesignAuthorityDeltaEvidenceV1,
+  DesignAuthorityDeltaValidationV1,
+  DesignAuthorityTaskOnlyVarianceV1,
+} from "./lib/design-authority-delta-types.js";
+export type {
   DesignResourceSymbolicSourceIrCertificateScopeV1,
   DesignResourceSymbolicSourceIrRegionV1,
   DesignResourceSymbolicSourceIrV1,

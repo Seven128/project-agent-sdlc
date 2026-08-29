@@ -11,6 +11,11 @@ import type {
   DesignResourceAuthorityIdentity,
   DesignResourceRecoveryCheckpoint,
 } from "./design-resource-recovery-types.js";
+import {
+  inspectDesignAuthorityClosure,
+  loadCurrentDesignAuthorityClosure,
+} from "./design-authority-closure.js";
+import { DESIGN_AUTHORITY_ENTRY_PATH } from "./design-authority-types.js";
 
 export async function loadCurrentDesignResourceRecoveryCheckpoint(
   repository: string,
@@ -57,7 +62,28 @@ export async function validateDesignResourceRepositoryAuthority(
   repository: string,
   authority: DesignResourceAuthorityIdentity,
 ): Promise<void> {
+  if (authority.kind === "repository-closure") {
+    const current = await loadCurrentDesignAuthorityClosure(repository);
+    for (const field of [
+      "format_version",
+      "entry_path",
+      "manifest_path",
+      "closure_digest",
+      "revision",
+    ] as const)
+      if (current.identity[field] !== authority[field])
+        invalid(
+          `design_authority_closure_mismatch:${field}:${String(authority[field])}:${String(current.identity[field])}`,
+        );
+    return;
+  }
   if (authority.kind !== "repository-file") return;
+  if (authority.locator !== DESIGN_AUTHORITY_ENTRY_PATH)
+    invalid(`legacy_design_authority_locator:${authority.locator}`);
+  const inspection = await inspectDesignAuthorityClosure(repository);
+  if (inspection.status !== "valid") invalid("legacy_design_authority_invalid");
+  if (inspection.mode !== "legacy")
+    invalid("legacy_design_authority_bundle_not_allowed");
   const snapshot = await readRecoveryRepositoryFile(
     repository,
     authority.locator,

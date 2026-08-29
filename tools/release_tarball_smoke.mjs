@@ -49,6 +49,82 @@ try {
     ],
     root,
   );
+  const designAuthority = JSON.parse(
+    run(
+      "npx",
+      [
+        "--no-install",
+        "ty-context",
+        "design-authority",
+        "inspect",
+        "--format",
+        "json",
+      ],
+      root,
+    ).stdout,
+  );
+  if (
+    designAuthority.status !== "valid" ||
+    !designAuthority.identity?.closure_digest
+  )
+    throw new Error(
+      "tarball Design Authority inspection did not return a valid closure identity",
+    );
+  JSON.parse(
+    run(
+      "npx",
+      [
+        "--no-install",
+        "ty-context",
+        "design-authority",
+        "tokens",
+        "--from-entry",
+      ],
+      root,
+    ).stdout,
+  );
+  const assessmentPath = path.join(root, "authority-delta-assessment.json");
+  await writeFile(
+    assessmentPath,
+    `${JSON.stringify(
+      {
+        schema_version: "design-authority-delta-assessment-v1",
+        assessment: "consistent_with_current_authority",
+        based_on: designAuthority.identity,
+        evidence: {
+          tokens: ["color.primary"],
+          components: [],
+          rules: [],
+        },
+        observed_variances: [],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  const assessment = JSON.parse(
+    run(
+      "npx",
+      [
+        "--no-install",
+        "ty-context",
+        "design-resource",
+        "authority-delta",
+        "validate",
+        path.basename(assessmentPath),
+        "--json",
+      ],
+      root,
+    ).stdout,
+  );
+  if (
+    assessment.authority_current !== true ||
+    assessment.write_performed !== false
+  )
+    throw new Error(
+      "tarball Authority Delta Assessment was not validated read-only",
+    );
   run(
     "npx",
     [
@@ -130,7 +206,7 @@ try {
 
   console.log(
     portableOnly
-      ? `Tarball smoke passed: ${path.basename(tarball)}; portable init, doctor, route, create, inspect, validate-context and contents accepted.`
+      ? `Tarball smoke passed: ${path.basename(tarball)}; portable init, doctor, route, create, inspect, Design Authority, read-only Authority Delta Assessment, validate-context and contents accepted.`
       : `Tarball smoke passed: ${path.basename(tarball)}; portable checks plus long-task-delivery-v2 compile and Live Final Gate accepted.`,
   );
   await rm(root, { recursive: true, force: true });
@@ -169,11 +245,13 @@ async function assertTarballContents(directory) {
       throw new Error(`tarball contains retired runtime asset: ${found}`);
   }
   for (const required of [
+    "dist/schemas/design-authority-delta-assessment-v1.schema.json",
     "dist/schemas/design-resource-symbolic-noninterference-artifact-v2.schema.json",
     "dist/schemas/design-resource-symbolic-source-ir-v1.schema.json",
     "dist/schemas/long-task-external-confirmation-record-v1.schema.json",
     "dist/schemas/long-task-delivery-v2/long-task-delivery-v2.schema.json",
     "dist/lib/long-task-delivery-compiler.js",
+    "dist/lib/design-authority-closure.js",
     "dist/lib/long-task-claims.js",
     "dist/long-task-hook.js",
     "dist/lib/migrations.js",
@@ -181,6 +259,7 @@ async function assertTarballContents(directory) {
     "assets/skills/design-resource-authoring/references/resource-selection.md",
     "assets/skills/design-resource-authoring/references/open-design-provider.md",
     "assets/skills/design-resource-authoring/references/downstream-handoff.md",
+    "assets/skills/design-resource-authoring/references/authority-delta-assessment.md",
     "assets/skills/design-resource-authoring/references/formal-selected-web-app-handoff.md",
     "assets/agents/long-task-implementation.toml",
     "assets/skills/long-task-workflow/SKILL.md",
@@ -234,4 +313,5 @@ function run(command, args, cwd) {
         `${command} ${args.join(" ")} failed\n${result.stdout}\n${result.stderr}`,
       )
     );
+  return result;
 }

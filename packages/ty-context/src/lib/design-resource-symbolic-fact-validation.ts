@@ -18,6 +18,7 @@ import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import { sha256Hex } from "./strict-codec.js";
 import { createV2ImplementationFeasibilityTargetModel } from "./design-resource-implementation-feasibility-model.js";
 import { readAndValidateDesignResourceImplementationFeasibility } from "./design-resource-implementation-feasibility-validation.js";
+import { resolveDesignAuthorityHandoffBinding } from "./design-authority-binding.js";
 
 export {
   designResourceSymbolicCertificateKey,
@@ -35,6 +36,11 @@ export async function preflightParsedDesignResourceSymbolicHandoff(
   parsed: ParsedDesignResourceHandoffV2,
 ): Promise<DesignResourceHandoffPreflightV2> {
   const { handoff } = parsed;
+  const authorityResolution = await resolveDesignAuthorityHandoffBinding({
+    repository,
+    style_dependency: handoff.scope.style_dependency,
+    binding: handoff.project_design_authority,
+  });
   validateHandoffIdentities(handoff);
   if (handoff.targets.length !== 1)
     invalid("v2_one_target_required", String(handoff.targets.length));
@@ -112,14 +118,19 @@ export async function preflightParsedDesignResourceSymbolicHandoff(
     ...parsed,
     preflight_schema_version: "design-resource-handoff-preflight-v2",
     status: "ready",
+    project_design_authority_resolution: authorityResolution,
     manifest,
     resource_hashes: resourceHashes,
     technical_feasibility_documents: feasibility.map((item) => item.document),
     technical_feasibility_identities: feasibility.map((item) => item.identity),
-    limitations:
-      target.source_profile.kind !== "reference" && !feasibility.length
+    limitations: [
+      ...(authorityResolution.compatibility_derived
+        ? ["project Design Authority identity derived from legacy DESIGN.md"]
+        : []),
+      ...(target.source_profile.kind !== "reference" && !feasibility.length
         ? ["technical feasibility not declared"]
-        : [],
+        : []),
+    ],
     rule_projections: validated.ruleProjections,
     metrics: validated.metrics,
   };

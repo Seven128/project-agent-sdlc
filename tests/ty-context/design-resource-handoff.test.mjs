@@ -184,6 +184,7 @@ test("one strict handoff preflight closes all eight dimensions and serves the CL
     assert.equal(result.status, "ready");
     assert.deepEqual(result.technical_feasibility_identities, []);
     assert.deepEqual(result.limitations, [
+      "project Design Authority identity derived from legacy DESIGN.md",
       "technical feasibility not declared",
     ]);
     assert.equal(result.counts.subjects, result.handoff.subjects.length);

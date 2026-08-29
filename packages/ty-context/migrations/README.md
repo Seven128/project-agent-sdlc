@@ -2,7 +2,7 @@
 
 Schema migrations for Harness config and managed file layout belong here.
 
-Later 0.10.x adds opt-in, dry-run-first `context register`, `context move` and
+The completed 0.10.x line adds opt-in, dry-run-first `context register`, `context move` and
 `context transaction status|rollback|complete`. They do not migrate existing
 projects or reinterpret legacy policies. Register losslessly appends one
 recoverable Context node. Move preserves one registered Context/Area owner,
@@ -21,6 +21,16 @@ destinations are refused rather than overwritten. Replace every TODO with
 durable owner facts before a separate registration step; the unchanged
 scaffold intentionally does not satisfy registered-Context recoverability.
 This is a new opt-in command and requires no consumer migration.
+
+Version 0.11.0 adds an opt-in sparse Design Authority bundle. Existing projects
+with only root `DESIGN.md` remain valid one-file closures and are not rewritten.
+Creating `design_system/authority.manifest.json`, generated
+`design_system/tokens.json` or subordinate owners is an explicit DSA
+adoption/revision action, not an upgrade migration. Once a manifest exists,
+DRA recovery/handoff and Long-Task bindings use the complete entry plus closure
+digest; a raw-file-only legacy binding fails closed and must be regenerated or
+rebound. Upgrade never infers Token values, owner splits, candidate selection,
+adoption or a human revision.
 
 Version 0.10.0 includes `context-units-to-context`. Explicit `upgrade` applies
 only when every retired `[[context_units]]` table is a provably simple

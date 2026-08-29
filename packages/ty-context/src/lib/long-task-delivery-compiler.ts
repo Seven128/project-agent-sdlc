@@ -222,6 +222,7 @@ export async function compileDeliveryContract(
     source_hashes: sourceHashes,
     source_items: sourceItems,
     context_snapshot: normalizeContextAuthoritySnapshot(context),
+    project_design_authority: validation.project_design_authority,
     verifier_identity: verifier,
     effective_risk: risk.effective_level,
     risk_reasons: risk.reasons,

@@ -7,6 +7,7 @@ import {
 } from "./design-resource-handoff-shape-primitives.js";
 import type { DesignResourceHandoffV2 } from "./design-resource-symbolic-fact-types.js";
 import { parseDesignResourceTechnicalFeasibilityInputs } from "./design-resource-implementation-feasibility-shape.js";
+import { parseDesignAuthorityHandoffBinding } from "./design-authority-binding.js";
 import {
   array,
   literal,
@@ -39,7 +40,7 @@ export function parseDesignResourceSymbolicHandoffShape(
       "coverage",
       "proposal",
     ],
-    ["technical_feasibility_inputs"],
+    ["technical_feasibility_inputs", "project_design_authority"],
   );
   return {
     schema_version: literal(
@@ -59,6 +60,14 @@ export function parseDesignResourceSymbolicHandoffShape(
     ),
     scope: parseScope(root.scope, label),
     provenance: parseProvenance(root.provenance, label),
+    ...(root.project_design_authority === undefined
+      ? {}
+      : {
+          project_design_authority: parseDesignAuthorityHandoffBinding(
+            root.project_design_authority,
+            `${label}.project_design_authority`,
+          ),
+        }),
     technical_feasibility_inputs: parseDesignResourceTechnicalFeasibilityInputs(
       root.technical_feasibility_inputs ?? [],
       `${label}.technical_feasibility_inputs`,

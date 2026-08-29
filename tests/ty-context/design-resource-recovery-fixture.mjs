@@ -9,6 +9,10 @@ import {
   canonicalValueJson,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
+import {
+  inspectDesignAuthorityClosure,
+  loadCurrentDesignAuthorityClosure,
+} from "../../packages/ty-context/dist/lib/design-authority-closure.js";
 
 const exec = promisify(execFile);
 
@@ -88,6 +92,50 @@ export async function createRecoveryFixture(options = {}) {
     writeFile(path.join(root, designLocator), designBytes),
     writeFile(path.join(root, ...resourceLocator.split("/")), resourceBytes),
   ]);
+  let designAuthority = {
+    kind: "repository-file",
+    locator: designLocator,
+    raw_byte_digest: sha256(designBytes),
+  };
+  if (options.authorityMode === "closure-bundle") {
+    await mkdir(path.join(root, "design_system/components"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(root, "design_system/components/sheet.md"),
+      "# Sheet\n\nThe sheet owns reusable drag behavior.\n",
+      "utf8",
+    );
+    const manifestPath = path.join(
+      root,
+      "design_system/authority.manifest.json",
+    );
+    const manifest = {
+      schema_version: 1,
+      entry: "DESIGN.md",
+      authority_files: [
+        { path: "design_system/components/sheet.md", kind: "component" },
+      ],
+      generated_files: [],
+      closure_digest: `sha256:${"0".repeat(64)}`,
+    };
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    const provisional = await inspectDesignAuthorityClosure(root);
+    if (!provisional.identity)
+      throw new Error(JSON.stringify(provisional.diagnostics));
+    manifest.closure_digest = provisional.identity.closure_digest;
+    await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+  }
+  if (
+    options.authorityMode === "closure-legacy" ||
+    options.authorityMode === "closure-bundle"
+  ) {
+    const closure = await loadCurrentDesignAuthorityClosure(root);
+    designAuthority = {
+      kind: "repository-closure",
+      ...closure.identity,
+    };
+  }
   const patch = {
     schema_version: "design-resource-exact-patch-v4",
     operations: [
@@ -300,11 +348,7 @@ export async function createRecoveryFixture(options = {}) {
       blast_radius: [{ key: "page.other" }],
       inactive_delta_leakage: [{ delta_id: "delta.admin", reason: "rejected" }],
     },
-    design_authority: {
-      kind: "repository-file",
-      locator: designLocator,
-      raw_byte_digest: sha256(designBytes),
-    },
+    design_authority: designAuthority,
     provider: {
       project: {
         key: "provider.project",

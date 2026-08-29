@@ -23,6 +23,10 @@ import type {
   DesignResourceImplementationFeasibilityV1,
   DesignResourceTechnicalFeasibilityInputV1,
 } from "./design-resource-implementation-feasibility-types.js";
+import type {
+  DesignAuthorityHandoffBinding,
+  DesignAuthorityHandoffResolution,
+} from "./design-authority-types.js";
 
 export const DESIGN_RESOURCE_DIMENSIONS = [
   "surface_flow",
@@ -138,6 +142,7 @@ export interface DesignResourceHandoffV1 {
     model: string;
     design_system_id: string;
   };
+  project_design_authority?: DesignAuthorityHandoffBinding;
   technical_feasibility_inputs: DesignResourceTechnicalFeasibilityInputV1[];
   resources: DesignResourceHandoffResourceV1[];
   axis_dispositions: DesignResourceAxisDispositionV1[];
@@ -339,6 +344,7 @@ export interface ParsedDesignResourceHandoffV1 {
 export interface DesignResourceHandoffPreflightV1 extends ParsedDesignResourceHandoffV1 {
   schema_version: "design-resource-handoff-preflight-v1";
   status: "ready";
+  project_design_authority_resolution: DesignAuthorityHandoffResolution;
   resource_hashes: Record<string, string>;
   technical_feasibility_documents: DesignResourceImplementationFeasibilityV1[];
   technical_feasibility_identities: DesignResourceImplementationFeasibilityIdentityV1[];

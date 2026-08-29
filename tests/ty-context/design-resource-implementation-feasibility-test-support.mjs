@@ -14,6 +14,8 @@ const repo = path.resolve(
 );
 
 export const cli = path.join(repo, "packages", "ty-context", "dist", "cli.js");
+export const LEGACY_DESIGN_AUTHORITY_LIMITATION =
+  "project Design Authority identity derived from legacy DESIGN.md";
 
 export async function withV1Mutation(mutate, action) {
   await withRoot(async (root) => {

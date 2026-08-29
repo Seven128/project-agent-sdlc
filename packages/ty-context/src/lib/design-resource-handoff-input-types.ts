@@ -10,6 +10,7 @@ export type DesignResourceHandoffManifestBackedV1 = Pick<
   | "intent"
   | "scope"
   | "provenance"
+  | "project_design_authority"
   | "technical_feasibility_inputs"
   | "resources"
   | "targets"

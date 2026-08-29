@@ -8,6 +8,7 @@ import type {
   DesignResourceWritebackInput,
 } from "./design-resource-recovery-patch-types.js";
 import type { SourceItemKind } from "./long-task-source-authority-types.js";
+import type { DesignAuthorityIdentityV1 } from "./design-authority-types.js";
 
 export type DesignResourceDecisionOrigin =
   | "user-direct"
@@ -107,6 +108,7 @@ export interface DesignResourceDelta {
 }
 
 export type DesignResourceAuthorityIdentity =
+  | ({ kind: "repository-closure" } & DesignAuthorityIdentityV1)
   | {
       kind: "repository-file" | "external-immutable";
       locator: string;

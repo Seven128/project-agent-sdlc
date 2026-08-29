@@ -29,6 +29,7 @@ import type { SemanticFactExpectationV2 } from "./semantic-fact-types.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
 import type { WorkspaceManifestV2 } from "./long-task-workspace-runtime-types.js";
 import type { JsonPointerExactObservation } from "./long-task-json-pointer-observation.js";
+import type { DesignAuthorityIdentityV1 } from "./design-authority-types.js";
 
 export interface FrozenRunnerV2 extends DeliveryRunnerV2 {
   executable: string;
@@ -131,6 +132,7 @@ export interface CompiledCheckV2 extends Omit<DeliveryCheckV2, "runner"> {
   design_conformance_targets: CompiledDesignTargetV2[];
   semantic_fact_expectations: SemanticFactExpectationV2[];
   observation_authorities: CompiledObservationAuthorityV2[];
+  protected_authority_paths?: string[];
   process_runtime_closure: CompiledProcessRuntimeClosureV2 | null;
   completion_role: "semantic" | "diagnostic";
   expected_authority_refs: Record<string, string>;
@@ -224,6 +226,7 @@ export interface CompiledDeliveryContractV2 {
   source_hashes: Record<string, string>;
   source_items: CompiledSourceItemV2[];
   context_snapshot: ContextAuthoritySnapshotV2;
+  project_design_authority?: DesignAuthorityIdentityV1 | null;
   verifier_identity: VerifierIdentityV2;
   effective_risk: EffectiveRiskLevel;
   risk_reasons: string[];

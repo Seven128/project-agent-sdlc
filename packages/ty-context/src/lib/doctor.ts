@@ -9,6 +9,7 @@ import {
 } from "./context-default-footprint.js";
 import { readConfig } from "./config.js";
 import { inspectDesignAuthority } from "./design-md.js";
+import { inspectDesignAuthorityClosure } from "./design-authority-closure.js";
 import { harnessConfigPath, harnessRoot } from "./harness-root.js";
 import { pathExists } from "./fs.js";
 import { unsupportedSchemaMessage } from "./schema-guard.js";
@@ -141,6 +142,24 @@ export async function runDoctor(
       }
     }
   }
+  const authorityClosure = await inspectDesignAuthorityClosure(projectRoot);
+  if (authorityClosure.status === "valid" && authorityClosure.identity) {
+    report.info.push(
+      `design authority closure: ${authorityClosure.mode}, ${authorityClosure.members.length} member(s), ${authorityClosure.identity.closure_digest}`,
+    );
+  } else if (authorityClosure.status === "invalid") {
+    for (const diagnostic of authorityClosure.diagnostics) {
+      const detail = `design authority closure ${diagnostic.code}${diagnostic.path ? ` (${diagnostic.path})` : ""}: ${diagnostic.detail}`;
+      if (diagnostic.severity === "error") report.errors.push(detail);
+      else report.warnings.push(detail);
+    }
+  }
+  if (authorityClosure.status === "valid")
+    for (const diagnostic of authorityClosure.diagnostics)
+      if (diagnostic.severity === "warning")
+        report.warnings.push(
+          `design authority closure ${diagnostic.code}${diagnostic.path ? ` (${diagnostic.path})` : ""}: ${diagnostic.detail}`,
+        );
   report.info.push(
     "surface implementation readiness: not inferred; inspect owning Product Surface/Screen/Control Context, selected target or constraints, authored token source and project-owned verification for each material surface",
   );

@@ -284,10 +284,12 @@ ${renderUpdateInstructions(releaseUpdateMode)}
 
 - Publishes \`${packageName}@${version}\` with the synchronized package assets and CLI build.
 - Keeps the install path on the renamed package: \`${packageName}\`.
-- Adds the explicit-only \`design-system-authoring\` cold-start flow for generating, selecting and adopting Open Design systems into canonical project Design Authority.
-- Gates only style-bearing \`design-resource-authoring\` work on configured Design Authority, verifies Open Design project binding, and reconciles accepted final decisions into the initial proposal once.
+- Adds one shared Context Catalog, an experimental read-only Router over registered and unregistered Context, full advisory Doctor/inspect diagnostics, safe unregistered scaffolds and recoverable dry-run-first register/move transactions without changing Schema v4 or default-footprint behavior.
+- Adds the sparse Design Authority bundle: root \`DESIGN.md\` remains the sole entry/revision/editable-Token owner, the optional manifest owns only complete closure identity, and generated Tokens are deterministic output.
+- Extends explicit-only \`design-system-authoring\` with \`bootstrap\`, \`revise\` and \`reconcile\`; candidate selection and the later exact-diff Authority adoption confirmation remain separate decisions.
+- Gates only style-bearing \`design-resource-authoring\` work on configured Design Authority, binds formal handoffs to the complete closure and emits only a non-authoritative three-branch Authority Delta Assessment before an independently invoked DSA flow.
 - Sends revised proposals and selected resources directly into the \`long-task-workflow\` Skill's Source-bound Contract Draft loop; Source completeness and Contract mapping converge there without an internal Source-authoring stage, while \`source-plan-authoring\` remains only a retired compatibility pointer.
-- Keeps the authority boundary explicit: provider candidates and bindings are provenance, while \`DESIGN.md\`, its one authored token source and owning \`project_context/**\` remain canonical.
+- Keeps the authority boundary explicit: provider candidates and bindings are provenance, root \`DESIGN.md\` and owning \`project_context/**\` remain canonical, and neither generated Tokens nor the closure manifest become a second editable Authority.
 - Makes package updates explicit through release update modes: ${releaseUpdateModes.map((mode) => `\`${mode}\``).join(", ")}.
 
 ## Boundary

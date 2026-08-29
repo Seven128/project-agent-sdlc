@@ -10,6 +10,8 @@ Use Open Design's live structured surface. Do not assume the installed version m
 
 Never call a copied prompt or local imitation a provider result. Persistent MCP registration, plugin/auth changes and new disclosure paths require separate authorization.
 
+The package-local `@google/design.md` adapter performs deterministic lint, parse/validate, export and diff only. It is not Open Design, does not generate candidates and owns no provider authentication, polling, selection or adoption.
+
 ## Current verified MCP contract
 
 Open Design 0.15.1 exposed MCP server 0.2.0 using protocol `2025-06-18`. A live read-only smoke observed 152 concrete design-system resources through `resources/list`; `resources/read` returned their Markdown bodies. The URI families are:
@@ -96,6 +98,8 @@ The provider also exposes `POST /api/design-systems/<id>/token-contract/rebuild-
 For a new Open Design resource project, call MCP `create_project` with the adopted provider ID in `designSystem`. Immediately call `get_project` and require `designSystemId` to match.
 
 For an existing project, inspect `get_project` first. When it is missing or mismatched, prefer a new bounded project with the correct binding if MCP offers no safe update. Use a live structured provider update only after feature-detecting it and preserving project identity. Never proceed with a style-bearing run while silently bound to another system.
+
+In DSA `reconcile` mode, send only the current Authority material needed for the proposed Token/component/pattern/motion/platform delta, the user-promoted non-authoritative assessment, immutable constraints, affected platforms, supporting resources and representative scenarios. Provider output remains a system candidate. It cannot emit an effective `selected`, `adopted` or `authority_updated` decision.
 
 ## Failure semantics
 

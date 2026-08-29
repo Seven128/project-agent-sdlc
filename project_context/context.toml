@@ -78,3 +78,9 @@ id = "delivery-benchmark"
 root = "examples/delivery-benchmark"
 context = "project_context/areas/delivery-benchmark.md"
 kind = "benchmark"
+
+[[context]]
+path = "project_context/areas/harness-package/contracts/design-authority-bundle.md"
+role = "contract"
+read_policy = "on-demand"
+triggers = ["design authority bundle", "authority manifest", "authority closure digest", "design authority identity", "Token authority", "authority delta assessment", "DSA adoption"]

@@ -11,6 +11,16 @@ export {
 export { evaluateContractBoundary } from "./lib/long-task-boundary-check.js";
 export { publishDesignResourceHandoffBundle } from "./lib/design-resource-handoff-bundle.js";
 export { preflightDesignResourceHandoff } from "./lib/design-resource-handoff-validation.js";
+export {
+  inspectDesignAuthorityClosure,
+  loadCurrentDesignAuthorityClosure,
+} from "./lib/design-authority-closure.js";
+export {
+  projectDesignAuthorityTokens,
+  projectDesignAuthorityTokensFromEntry,
+} from "./lib/design-authority-tokens.js";
+export { parseDesignAuthorityDeltaAssessment } from "./lib/design-authority-delta-codec.js";
+export { validateDesignAuthorityDeltaAssessmentCurrent } from "./lib/design-authority-delta-validation.js";
 export { symbolicDenotation } from "./lib/symbolic-denotation-public.js";
 export {
   classifyLongTaskRisk,

@@ -4,6 +4,7 @@ import { compositeCampaign } from "./composite-campaign.js";
 import { longTask } from "./long-task.js";
 import { deliverySet } from "./delivery-set.js";
 import { designResource } from "./design-resource.js";
+import { designAuthority } from "./design-authority.js";
 import { doctor } from "./doctor.js";
 import { exportContext } from "./export-context.js";
 import { enable } from "./enable.js";
@@ -38,6 +39,7 @@ export const commands: Record<string, CommandHandler> = {
   "validate-harness": (args) => validate(["validate-harness", ...args]),
   "long-task": (args) => withLongTaskProfile(args, longTask),
   "design-resource": designResource,
+  "design-authority": designAuthority,
   "delivery-set": deliverySet,
   "composite-long-task": compositeLongTask,
   "composite-campaign": compositeCampaign,
@@ -73,7 +75,9 @@ export function help(): void {
                        Enforce touched handwritten source file modularity
   validate-harness     Run validate-context and validate-code-modularity
   design-resource <subcommand>
-                       Validate handoffs or operate explicit DRA recovery
+                       Validate handoffs, Authority assessments, or explicit DRA recovery
+  design-authority inspect|tokens
+                       Inspect the complete authority closure or project Tokens; read-only
   long-task <subcommand>
                        Manage one Canonical Delivery Contract in the current workspace
   delivery-set <subcommand>

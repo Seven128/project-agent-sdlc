@@ -14,6 +14,7 @@ import {
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
 import {
+  LEGACY_DESIGN_AUTHORITY_LIMITATION,
   cli,
   withRoot,
   withV1Mutation,
@@ -140,7 +141,7 @@ test("reference targets may truthfully omit or carry reference-only feasibility"
       root,
       DESIGN_HANDOFF_PATH,
     );
-    assert.deepEqual(result.limitations, []);
+    assert.deepEqual(result.limitations, [LEGACY_DESIGN_AUTHORITY_LIMITATION]);
   });
 
   await withRoot(async (root) => {
@@ -165,7 +166,7 @@ test("reference targets may truthfully omit or carry reference-only feasibility"
       root,
       DESIGN_HANDOFF_PATH,
     );
-    assert.deepEqual(result.limitations, []);
+    assert.deepEqual(result.limitations, [LEGACY_DESIGN_AUTHORITY_LIMITATION]);
     assert.equal(
       result.technical_feasibility_documents[0].realization_mode,
       "reference",

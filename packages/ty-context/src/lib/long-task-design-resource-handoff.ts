@@ -79,8 +79,26 @@ export async function validateLongTaskDesignResourceHandoffs(
     preflights.push(preflight);
     consumer.consume(preflight);
   }
+  validateProjectDesignAuthoritySet(preflights);
   consumer.finish();
   return preflights;
+}
+
+export function validateProjectDesignAuthoritySet(
+  preflights: LongTaskDesignHandoffPreflight[],
+): void {
+  let expected: string | null = null;
+  for (const preflight of preflights) {
+    const identity = preflight.project_design_authority_resolution.identity;
+    if (!identity) continue;
+    const canonical = JSON.stringify(identity);
+    if (expected === null) expected = canonical;
+    else if (expected !== canonical)
+      invalid(
+        "project_design_authority_identity_conflict",
+        `${JSON.parse(expected).closure_digest}:${identity.closure_digest}`,
+      );
+  }
 }
 
 export function createLongTaskDesignHandoffConsumer(

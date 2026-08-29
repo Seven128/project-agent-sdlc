@@ -11,6 +11,8 @@ import { captureVerifierIdentity } from "./long-task-verifier-identity.js";
 import { verifierAuthorityDiff } from "./long-task-verifier-authority.js";
 import { parseDeliveryContractBundle } from "./long-task-delivery-parser.js";
 import { assertProtectedRepositoryFile } from "./repository-path-safety.js";
+import { inspectDesignAuthorityClosure } from "./design-authority-closure.js";
+import type { DesignAuthorityIdentityV1 } from "./design-authority-types.js";
 
 export interface ProtectedAuthorityInputsSnapshotV1 {
   schema_version: "long-task-protected-authority-inputs-v1";
@@ -23,6 +25,7 @@ export interface ProtectedAuthorityInputsSnapshotV1 {
     files: string[];
     file_sha256: Record<string, string>;
   };
+  project_design_authority: DesignAuthorityIdentityV1 | null;
   runner_frozen_files: Record<string, Record<string, string>>;
   verification_inputs: Record<string, Record<string, string>>;
   verifier_identity: VerifierIdentityV2;
@@ -96,6 +99,7 @@ export async function captureProtectedAuthorityInputsIdentity(
     verificationInputs,
     verifierIdentity,
     externalPublicKeys,
+    projectDesignAuthority,
   ] = await Promise.all([
     hashFiles(Object.keys(compiled.contract_files), "protected_contract"),
     hashFiles(Object.keys(compiled.source_hashes), "protected_source"),
@@ -117,6 +121,7 @@ export async function captureProtectedAuthorityInputsIdentity(
       compiled.verifier_identity.hook_sha256 !== "not-required",
     ),
     captureExternalPublicKeyIdentities(compiled, hashRepositoryFile),
+    captureCurrentProjectDesignAuthority(compiled),
   ]);
   const rawContractSha256 =
     contractFiles[compiled.contract_file] ??
@@ -135,6 +140,7 @@ export async function captureProtectedAuthorityInputsIdentity(
       files: context.files,
       file_sha256: contextFiles,
     },
+    project_design_authority: projectDesignAuthority,
     runner_frozen_files: runnerFrozenFiles,
     verification_inputs: verificationInputs,
     verifier_identity: verifierIdentity,
@@ -150,6 +156,17 @@ export async function deliveryCompileFreshness(
   compiled: CompiledDeliveryContractV2,
 ): Promise<string[]> {
   const findings: string[] = [];
+  if (compiled.project_design_authority)
+    try {
+      const current = await captureCurrentProjectDesignAuthority(compiled);
+      if (
+        canonicalValueJson(current) !==
+        canonicalValueJson(compiled.project_design_authority)
+      )
+        findings.push("project_design_authority_changed_after_compile");
+    } catch {
+      findings.push("project_design_authority_changed_after_compile");
+    }
   try {
     const currentContract = await parseDeliveryContractBundle(
       compiled.workdir,
@@ -241,6 +258,18 @@ export async function deliveryCompileFreshness(
         findings,
       );
   return [...new Set(findings)].sort();
+}
+
+async function captureCurrentProjectDesignAuthority(
+  compiled: CompiledDeliveryContractV2,
+): Promise<DesignAuthorityIdentityV1 | null> {
+  if (!compiled.project_design_authority) return null;
+  const inspection = await inspectDesignAuthorityClosure(
+    compiled.repository_root,
+  );
+  if (inspection.status !== "valid" || !inspection.identity)
+    throw new Error("project_design_authority_invalid");
+  return inspection.identity;
 }
 
 export async function assertVerifierAuthorityCurrent(

@@ -162,12 +162,18 @@ export async function runDeliveryChecks(
   includeCounterfactuals: boolean,
   finalGate = false,
 ): Promise<DeliveryRunV2> {
+  const completeChecks = allCompiledChecks(compiled);
   const observationAuthorityPaths = [
-    compiled.contract_file,
-    ...Object.keys(compiled.contract_files),
-    ...Object.keys(compiled.source_hashes),
-    ...compiled.context_snapshot.files,
-  ];
+    ...new Set([
+      compiled.contract_file,
+      ...Object.keys(compiled.contract_files),
+      ...Object.keys(compiled.source_hashes),
+      ...compiled.context_snapshot.files,
+      ...completeChecks.flatMap(
+        (check) => check.protected_authority_paths ?? [],
+      ),
+    ]),
+  ].sort((left, right) => Buffer.from(left).compare(Buffer.from(right)));
   const findings = await preRunFindings(compiled, snapshot.manifest);
   if (finalGate)
     findings.push(...finalPathFindings(compiled, snapshot.manifest));
@@ -178,7 +184,6 @@ export async function runDeliveryChecks(
       findings: findings.map((finding) => enrichFinding(compiled, finding)),
     };
 
-  const completeChecks = allCompiledChecks(compiled);
   const selectedExecutionGroups = rawExecutionGroups(checks);
   const completeExecutionGroups = selectedExecutionGroups.map((group) =>
     completeChecks.filter(

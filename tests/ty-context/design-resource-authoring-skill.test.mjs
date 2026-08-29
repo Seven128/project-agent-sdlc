@@ -72,6 +72,7 @@ test("design-resource-authoring has one exact managed/generated/package source",
     "references/resource-selection.md",
     "references/open-design-provider.md",
     "references/downstream-handoff.md",
+    "references/authority-delta-assessment.md",
     "references/implementation-feasibility.md",
     "references/recovery-and-writeback.md",
     "references/formal-selected-web-app-handoff.md",
@@ -90,6 +91,51 @@ test("design-resource-authoring has one exact managed/generated/package source",
   assert.match(metadata.description, /Open Design/iu);
   assert.match(metadata.description, /implementation handoff/iu);
   assert.match(metadata.description, /生成设计资源/u);
+});
+
+test("DRA assesses Authority deltas without invoking or adopting DSA", async () => {
+  const [skill, assessment, downstream] = await Promise.all([
+    copies("SKILL.md").then((items) => items[0]),
+    copies("references/authority-delta-assessment.md").then(
+      (items) => items[0],
+    ),
+    copies("references/downstream-handoff.md").then((items) => items[0]),
+  ]);
+
+  assert.match(
+    skill,
+    /selected task design does not update the project design system[\s\S]*non-authoritative Authority Delta Assessment[\s\S]*never invokes Design System Authoring/iu,
+  );
+  for (const value of [
+    "consistent_with_current_authority",
+    "task_local_variance",
+    "authority_delta_candidate",
+  ])
+    assert.ok(assessment.includes(`\`${value}\``), value);
+  assert.match(
+    assessment,
+    /`durability: task_only`[\s\S]*`precedent: forbidden`/iu,
+  );
+  assert.match(
+    assessment,
+    /`durability: cross_task_candidate`[\s\S]*required Screen Contract owner/iu,
+  );
+  assert.match(
+    assessment,
+    /DRA stops after producing the packet[\s\S]*explicitly invoke `\$design-system-authoring` in `reconcile` mode[\s\S]*never invokes it, selects a system candidate or adopts Authority/iu,
+  );
+  assert.match(
+    assessment,
+    /ty-context design-resource authority-delta validate <assessment\.json> --json/u,
+  );
+  assert.match(
+    assessment,
+    /After a DSA adoption[\s\S]*new complete closure identity[\s\S]*rerun affected preflight\/resource verification/iu,
+  );
+  assert.match(
+    downstream,
+    /Task-resource selection is not design-system adoption/iu,
+  );
 });
 
 test("formal Web/App authoring carries real-substrate feasibility without another authority", async () => {
@@ -364,6 +410,7 @@ test("incremental DRA review reuses existing owners without widening scope or au
     ),
   );
   assert.deepEqual(references.sort(), [
+    "authority-delta-assessment.md",
     "downstream-handoff.md",
     "formal-selected-web-app-handoff.md",
     "implementation-feasibility.md",
@@ -391,7 +438,7 @@ test("style-bearing DRA closes application dimensions before provider execution"
   const workflow = workflowMatch[1];
   assert.deepEqual(
     [...workflow.matchAll(/^(\d+)\. /gmu)].map((match) => Number(match[1])),
-    [1, 2, 3, 4, 5, 6, 7, 8, 9],
+    [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
   );
   const skillClosureAt = workflow.indexOf(
     "Before every style-bearing generation or material revision",

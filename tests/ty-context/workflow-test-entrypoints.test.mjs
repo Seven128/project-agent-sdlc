@@ -237,6 +237,15 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   assert.match(tarballSmoke, /"ty-context",\s*"route"/);
   assert.match(tarballSmoke, /"context",\s*"create"/);
   assert.match(tarballSmoke, /"ty-context",\s*"context",\s*"inspect"/);
+  assert.match(tarballSmoke, /"design-authority",\s*"inspect"/);
+  assert.match(tarballSmoke, /"design-authority",\s*"tokens"/);
+  assert.match(tarballSmoke, /"authority-delta",\s*"validate"/);
+  assert.match(
+    tarballSmoke,
+    /design-authority-delta-assessment-v1\.schema\.json/,
+  );
+  assert.match(tarballSmoke, /design-authority-closure\.js/);
+  assert.match(tarballSmoke, /authority-delta-assessment\.md/);
   assert.match(tarballSmoke, /"ty-context", "validate-context"/);
   assert.match(tarballSmoke, /"long-task", "final-gate"/);
   assert.match(tarballSmoke, /tarball contains retired runtime asset/);

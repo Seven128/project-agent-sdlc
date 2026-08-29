@@ -72,7 +72,7 @@ ty-context enable long-task
 这条路径适合既确实需要新 style-bearing 设计资源，又要求 Long-Task 机器保障/恢复/审计边界的实现交付。它组合已有能力，但不是所有 Long-Task 的前置流程：
 
 1. **只启用一次 Long-Task。** 选择工作流 Skill 前先运行 `ty-context enable long-task`。
-2. **仅在需要时建立 Design Authority。** 如果项目尚未采用 Design Authority，且本次工作属于 style-bearing 范围，显式选择 `$design-system-authoring`，生成、选择并采用规范 `DESIGN.md`、token source 和 provider binding。项目已经配置 Design Authority 时跳过这一步。
+2. **仅在需要时建立或修订 Design Authority。** 项目尚无 Authority，或选定任务设计产生了可复用系统变化时，显式选择 `$design-system-authoring` 的 `bootstrap`、`revise` 或 `reconcile` 模式。候选选择与 Authority adoption 是两个决定：Skill 展示精确项目 diff 和迁移影响后，用户还要单独明确确认 adoption。当前完整 Authority closure 已覆盖该 style-bearing 范围时跳过。
 3. **准备一份可写的初始方案。** 将项目原生的产品/技术方案放在明确路径，例如 `docs/initial-proposal.md`。它可以由用户、外部服务或显式请求的适用方案能力编写。`design-resource-authoring` 不负责初始方案 authoring，也不要求经过独立的中间 authoring 阶段。
 4. **生成并选择设计资源。** 选择 `$design-resource-authoring`，传入初始方案路径、精确开发范围和目标。正式 Web/App 工作会先读取真实技术 Source，再输出一份完成一次性回改的修订方案、选定的不可变规范资源及其 manifest/dependencies、独立 implementation-feasibility input，以及通过校验的残余 `design-resource-handoff-v1`。
 5. **启动 Single-Goal 交付。** 选择 `$long-task-workflow`，传入修订方案、已校验 handoff、implementation-feasibility input 和选定规范资源集合的精确路径。该 Skill 会建立 Source-bound Contract Draft；第一次 Compile/Authority Lock 必须在实现前无条件结束当前回合，并输出 `处理好模型更换后，请仅回复：模型切换卡点解除，继续`。普通“继续”不满足 managed prompt protocol；此前任何模型策略文字都不能跳过该边界，Harness 也不能观察下一条宿主消息或模型是否真的改变。用户恢复后，父 Goal 先识别合格的有界工作包，再判断 profile/capacity；没有用户或宿主显式禁止时，合格集合必须实际调用多个精确 `long_task_implementation`，由宿主结果进入六理由 zero-start 或 partial delegation。数量保持动态，禁止 generic 替代项；Source、Contract、Authority、架构、Context、工作包选择、集成、当前候选检查、正式验证、Final Gate、close 与 completion 始终只由父 Goal 持有。
@@ -80,7 +80,9 @@ ty-context enable long-task
 一组可以直接改写使用的调用顺序如下：
 
 ```text
-$design-system-authoring 为这个 style-bearing 范围生成、选择并采用项目设计系统；如果 DESIGN.md 已经配置，则跳过本请求。
+$design-system-authoring 为这个 style-bearing 范围 bootstrap 项目设计系统，展示候选和精确项目 diff，并停在单独 adoption 确认之前；当前完整 Authority closure 已覆盖范围时跳过。
+
+查看选定候选与精确 diff 后：明确采用 design-system candidate <candidate-id>。
 
 为 <交付范围> 在 docs/initial-proposal.md 准备一份可写、项目原生的初始方案。
 
@@ -98,7 +100,7 @@ $long-task-workflow 将 docs/initial-proposal.md、<handoff.md>、<feasibility.j
 - **交付前确实需要设计资源：** 按上面的设计优先顺序执行，再根据恢复与完成权威需求，把修订方案、已校验 handoff 和选定的不可变规范资源集合交给默认 Workflow Contract 或 `long-task-workflow`。
 - **只需要设计资源：** 在 `design-resource-authoring` 完成后结束；除非还明确选择了实现交付，否则不创建 Long-Task Contract。
 
-设计系统通常在项目冷启动时确定，但该 Skill 只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁；低保真结构、IA/流程与纯语义状态研究不受此门禁。已有计划或提案文档仍是普通 Source，但不再是推荐中间服务。
+设计系统步骤只由用户选择，`init`、`sync` 与下游 Skill 都不会自动执行。它可以 bootstrap 新 Authority、revise 现有 Authority，或 reconcile 用户提升的 DRA Authority delta candidate。`design-resource-authoring` 只对高保真、品牌化、视觉处理等 style-bearing 资源设门禁，任务资源选择绝不等于系统 adoption；低保真结构、IA/流程与纯语义状态研究不受此门禁。已有计划或提案文档仍是普通 Source，但不再是推荐中间服务。
 
 ## Minimal Context 与默认工作流
 
@@ -272,15 +274,25 @@ repository pattern 只把圆括号作为经过转义的 route-group 字面字符
 
 combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选，但 candidate/planned target 不能解锁 fidelity implementation；选定结果必须先成为真实 marked Context-reachable Source，并由 owning Context/`DESIGN.md` reference 连接，Authority Lock 后再通过 Authority Revision 采用。浏览器视觉 AC 可使用 `ui_browser` 做诊断定位，但当前 machine closure 仍是 External Confirmation；浏览器代理、独立 route 或深链接不能证明可独立失败的原生/root 旅程。资源完整性和 `visual_render` 不能替代选定目标的实现一致性。冻结 baseline 是 verifier input，生成的 actual render/diff 是当前 artifact，主观批准保持外部。这不新增 `uiux_delivery`、视觉 Claim type、resource registry、risk level、lifecycle state、Gate、必需设计目录、逐控件截图矩阵或通用像素阈值。
 
-`ty-context doctor` 保留兼容的项目级 `missing | unconfigured | configured` 状态，并增加 Design Authority Index、token source 和已分类 reference 的 advisory 信号。它明确不推断页面实现就绪；material surface 仍需 owning Screen/Control meaning、selected target/constraints 与项目自己的验证路径。
+`ty-context doctor` 保留兼容的项目级 `missing | unconfigured | configured` 状态，并增加完整 closure、Token 投影、额外文件和规范性本地链接的 advisory 诊断。结构性 bundle 错误会明确展示，但不会把视觉判断冒充机器结论。Doctor 不推断页面实现就绪；material surface 仍需 owning Screen/Control meaning、selected target/constraints 与项目自己的验证路径。
 
 静态 guidance 测试只能证明路由文案、正负分析规则、分发、投影与 canonical ownership，不能证明宿主真实激活了 Skill、Agent 遵循程度、地图设计质量、运行成本、性能或 ROI。可选 delivery-mechanism benchmark 提供固定 fresh-agent UI/UX Context/target recovery task、routing gold 和隐藏 production oracle；只有独立配对运行才可以支持 effectiveness/ROI 结论。
 
 ### 显式 Design System Authoring
 
-只有用户明确要求初始化、生成、选择、采纳、替换或修复项目设计系统/设计风格时，才使用 `design-system-authoring`。安装只让冷启动能力可用，不会自动运行。Skill 会发现 Open Design 当前真实 MCP resource/tool；若当前版本只通过 MCP 读取设计系统而没有创建 tool，则使用同一个已安装 Open Design daemon 的官方 generation/revision/accept API，不复制 provider prompt，也不把 daemon 调用冒充 MCP。
+只有用户明确要求以 `bootstrap`、`revise` 或 `reconcile` 模式建立、修订或吸收项目设计系统变化时，才使用 `design-system-authoring`。DRA 的 `authority_delta_candidate`、缺失 `DESIGN.md` 或普通 UI 工作都不会自动调用它。Skill 发现 Open Design 当前真实能力，provider 执行仍在 Skill 层；package-local `@google/design.md` adapter 只做确定性的 lint/parse/export/diff，不是生成器或 provider runtime。
 
-生成结果先是候选。必须有明确人工选择，或用户明确委托且选择标准已知，才会采纳到项目 canonical `DESIGN.md`、唯一 authored exact-value token source/generation direction，以及真正拥有 surface/interaction 耐久事实的 Context。Open Design provider ID、revision、digest 与 project binding 只是同步 provenance，不是第二权威。provider 执行成功、artifact ready、selected、authority adopted 与 `get_project.designSystemId` binding verified 会分开报告。
+根 `DESIGN.md` 是唯一 Authority 入口、人工 revision owner，也是首版 bundle 中唯一可编辑 exact-Token owner。可选稀疏 `design_system/authority.manifest.json` 只拥有排序后的 closure membership 和 `closure_digest`，不复制 revision、方向或 Token 值；`design_system/tokens.json` 是从受支持 DESIGN front matter 确定性导出的 DTCG 生成物，不能独立编辑为第二权威。只有出现真实、可复用、长期规则时才建立 component、pattern、motion 或 platform 子 owner。没有 manifest 的项目继续是兼容的单文件 closure。
+
+机器身份由入口与完整 closure digest 组成，人工 revision 只用于诊断。closure 校验会拒绝不安全/重复路径、大小写冲突、symlink/hardlink 别名、非法 UTF-8/BOM、生成 Token 漂移和不完整的规范性本地链接。即使 revision 文本没变，只要子 owner 改变，旧 DRA recovery/handoff 与 Long-Task binding 也会失效。只读检查命令为：
+
+```bash
+ty-context design-authority inspect --format json
+ty-context design-authority tokens
+ty-context design-authority tokens --from-entry
+```
+
+生成结果先是候选。必须先有明确人工选择，或用户明确委托且标准已知；看到精确项目 diff 和迁移影响后，还必须单独明确确认 adoption。adoption 更新根入口和必要的稀疏 owner，确定性重建 Tokens，发布新 closure digest，重绑受影响 DRA 资源并重跑检查。Open Design provider ID、revision、digest 与 project binding 只是同步 provenance，不是第二权威；provider 执行成功、artifact ready、selected、authority adopted 与 `get_project.designSystemId` binding verified 会分开报告。
 
 ### 可选 Design Resource Authoring
 
@@ -289,6 +301,8 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 Skill 把明确输出或开发内容当作硬 scope ceiling。局部功能只可带上定位它所需的周边上下文；再丰富的背景也不能把生成范围扩成页面其余部分或整个产品。生成 page/flow/complex control 之前，必须分别消费：controlling Product/Surface/Screen Source 中的 target user/context、client/host、页面职责、主任务结果、主工作对象/任务闭环、operation-object-feedback 以及适用的 state/recovery/accessibility 含义；`DESIGN.md` 和 selected exact-target/constraint Source 中的视觉系统及选定设计条件。非权威 task-level UI/UX analysis 只能帮助比较候选，不能提供缺失的产品或 Surface 含义；Provider 也不得从功能列表、截图、route tree、component inventory 或 analysis output 发明这些含义。面向实现 handoff 时，Skill 要覆盖范围内所有材料性的 UI/UX 含义：surface/flow 与 region 结构、视觉和内容呈现、控件结构/尺寸/变体、静态与动态状态、交互/反馈/恢复/动效、响应式/平台/输入方式、可访问性及必要资产；先扣除已有 selected Source 明确覆盖的条件，再发现 Open Design 当前 agent/model、functional skill、rendering template、design system、plugin 与 export route，并把每种候选资源说明为 `selected`、`optional`、`not-needed`、`unavailable` 或 `decision-required`。
 
 在 ceiling 内，DRA 会记录已有选定资源的覆盖、新缺口和 preservation 义务。发现 ceiling 外影响时只返回现有 `decision-required`，理由为 `scope-expansion-required`；只有用户可以扩大 ceiling。需要改变耐久 Product/Surface/Screen/Design 含义时，必须先更新真实 owner，重新读取后再恢复生成。style-bearing commission 只携带确有 Source 的 `style_application` 字段，并增加按资源 archetype 定义的 `quality_commission`：主要设计挑战、希望/避免的视觉特征、真实 copy/data、每个参考的角色，以及设计侧 shared-family reuse。它们只是任务局部 Provider 输入，不是文件、状态、分数、Authority 或 routing record。
+
+任务方向选定后，DRA 会针对精确当前 closure 做一次非权威 Authority Delta Assessment：`consistent_with_current_authority`、`task_local_variance` 或 `authority_delta_candidate`。一次性偏差必须声明 `precedent: forbidden`；需要跨任务复用的局部偏差必须进入一个明确 Screen Contract owner。系统变化只能形成纯候选数据包，DRA 到此停止，等待用户单独显式启动 DSA `reconcile`。可选严格 JSON 只用 `ty-context design-resource authority-delta validate <assessment.json> --json` 做只读校验，不能选择、adopt、写 Authority 或调用 provider。adoption 后 handoff 必须绑定新 closure，并重跑受影响 preflight/resource 检查。
 
 正式首次生成、重大设计修订和关键重新生成使用实时发现后满足工具、视觉/上下文能力、认证与数据边界的最高能力模型，以及该模型实际支持的最高 reasoning effort。排序只能依据 provider 明确的能力等级、推荐替换关系或唯一且有版本依据的 provider-local fallback；不得从价格、模型名、发布时间或列表顺序猜测。多个 eligible model 无法排序时以 `highest_performance_unverified` fail closed；provider 不可控制或不能回报实际 model/effort 时也必须保留同一限定，不能声称已执行最高档。该策略不创建 model registry、scheduler 或持久 routing state。
 
@@ -395,7 +409,7 @@ Formal collection 的 11-scenario catalog 是 scenario/source/zero policy 的唯
 
 Catalog 派生 86 次 execution 与 586 个 formal artifact：516 个 base file、30 个 compute record、10 个 State ledger 加 10 个 payload、10 个 prompt 加 10 个 Provider event。Formal fuse 为 650 files/364.625 MiB，完整 run-set fuse 为 4,379 files/974.3125 MiB。Evidence Candidate 冻结全部 code/schema/Context/test/package-version/protocol bytes；Promotion Commit 必须是其直接子提交，只新增四个 package-/TCB-external governance record，并保持 materialized-package、benchmark 与 runtime/TCB identities 不变，否则重新采集与审计。 Runtime TCB v2 绑定 clean Node launch、executable path/hash、worker/protocol、parser/transport 与 limits。Benchmark implementation identity 纳入 `npm_command_spec.mjs`、Provider protocol/worker 与有限 local-dependency closure checker；working-tree、Git object、collection 与 Promotion 路径都重算闭包并绑定实际执行源码根。
 
-真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.18 是已发布的前序版本；Package 0.9.0 是当前 Level-3 package candidate，不继承它们的 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
+真实采集当前为 `external_pending`：Starward-derived fixture 缺少获授权的原始事故 design/runtime evidence、完整 original-to-sanitized mapping 及 retention/publication authorization；本轮也没有可保留的 invocation-bound Provider usage/price material 或 State-retention Source。Synthetic control 只能证明结构，不能作为 formal-positive evidence。完成这些真实外部输入、唯一 verifier 的完整正向报告、独立审计与 owner promotion 前，能力保持 Level 3。Package 0.8.15 是历史冻结的 Evidence Candidate identity；Package 0.8.18 是已发布的前序版本；Package 0.9.0 是此前未 Promotion 的 Level-3 candidate；Package 0.11.0 是当前 Level-3 package candidate，不继承它们的 package、benchmark 或 runtime/TCB evidence。`capability_level=level_3`、`level_4_claimed=false`，没有 formal-positive 或实际 Promotion。Provider readiness 只表示本地配置、credential presence 与 clean worker launch envelope 足以发起一次有界尝试；public `independent_evidence_admitted` 只表示 packet structure/source binding，完整证据与正 ROI 仍分别由 `total_roi_supported`、`total_roi_positive` 表示。
 
 Formal collection 还会在执行前锁定一个固定 scenario catalog，覆盖十类成本和一个 controlled incident 的 exact task/gold bytes。每个 event 绑定唯一 raw output：成本 B/C 都必须命中共同 gold；事故 B 必须错误而 C 必须命中它。这样只提交时间/usage 不能制造 purpose benefit，也不会新增通用 scenario registry。
 
@@ -491,6 +505,10 @@ Outcome/Global Counterfactual 的 Binding/path 本身不是生产可达性证明
 Targeted verify、Progress、status、Receipt、external record 与 compiled cache 都不是完成权威。Final Gate 要求 clean candidate commit，从 Source 重编译 observer plan，在同一 Git-tree snapshot 上重跑全部 semantic Check，并核对全部受保护身份与逐义务外部记录。Direct-process 的内部 host attestation 还绑定 executable/root/argv equality、PID/times/exit、candidate snapshot digest、内部 execution nonce 与捕获的 stdout-envelope digest；这些 host 字段都不来自 child。nonce 不向 child 暴露，也不能单独认证产品语义。当前 Authority/observation chain 全部不变且无需阻断 external fulfillment 时可生成 `machine_accepted`；所有阻断 external rows fresh、valid、fulfilled 时生成 `delivery_accepted`；pending 为 `blocked_external`，failed/unable/invalid/stale/unreachable 为 `needs_work`。
 
 ## 兼容与迁移
+
+0.10 系列继续使用 Schema v4，保留五种 read policy 与既有 default-footprint 的精确行为。Router 仍是实验性工具，不替代 Workflow bounded search；`context create` 不登记文件，`register` 与 `move` 是显式、默认 dry-run、可恢复事务。不会自动转换 legacy policy，也不会迁移 Workspace。
+
+0.11 增加可选稀疏 Design Authority bundle，但不自动迁移既有项目。只有根 `DESIGN.md` 的项目仍是合法单文件 closure；创建 `design_system/authority.manifest.json` 必须来自显式 adoption/revision，`tokens.json` 从 DESIGN 生成而不是第二个可编辑 owner。旧 DRA handoff 只有在项目仍是真实单文件 closure 时才可省略完整身份；manifest 一旦存在，只有原始 `DESIGN.md` digest 的 binding 会 fail closed，必须按完整当前 closure 重新生成或 rebind。Upgrade 不会发明子 owner、Token 值、adoption 或 Authority revision。
 
 当前 V2 的语义保证闭包还要求 full Context、architecture-classified Source obligation、原子 applicability dimensions、显式 target/blocker capabilities、Control-relation closure、Population universe、Claim-local mutation 与 admitted observation chain。含 custom machine Oracle、不支持 method/family、wrapper root、缺失或未绑定 process argv，或缺少 admitted Counterfactual observation 的旧 V2 Contract 会收到精确人工迁移诊断；必须依据 Source 明确改成 static exact、direct-process exact 或阻断性 External Confirmation。Exact planned process root/argv/carrier 可以到 Final Gate 才存在，但 pattern 或未声明 runtime dependency 不能冒充它们。相关诊断包括 `machine_observer_not_admitted`、`unsupported_observer_requires_external_confirmation`、`custom_oracle_machine_completion_forbidden`、`static_observation_not_in_pre_run_snapshot`、`static_observation_changed_by_runner`、`process_observer_direct_root_required`、`process_observer_root_invocation_required`、`process_observer_root_argv_mismatch`、`process_root_production_binding_required`、`process_runtime_carrier_exact_path_required`、`process_runtime_input_missing`、`process_observation_input_changed_by_runner`、`legacy_target_runtime_non_authoritative`、`counterfactual_admitted_observation_required`、`counterfactual_runtime_reachability_unproven` 与 `project_submitted_verdict_disagrees_with_harness`。Upgrade 不会代选，也不会把旧 Active Authority、Progress/Receipt 当作通过证据；public result payload v3 保持兼容，但其自报证明字段不具权威。
 

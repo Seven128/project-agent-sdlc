@@ -55,10 +55,16 @@ test("design-system workflow separates provider output, selection, adoption and 
     copies("references/authority-adoption.md").then((items) => items[0]),
   ]);
   for (const expected of [
-    /candidate generation, human\/delegated selection and authority adoption distinct/iu,
-    /Project `DESIGN\.md`.*canonical/isu,
-    /one declared authored exact-value token source or generation direction/iu,
-    /explicit user\/team selection, or an explicit instruction delegating selection/iu,
+    /Bootstrap, revise or reconcile/iu,
+    /candidate generation, human\/delegated selection, and the later explicit adoption confirmation distinct/iu,
+    /Root `DESIGN\.md` is the unique Authority entry and revision owner/iu,
+    /supported front matter remains the editable exact Token authority/iu,
+    /`design_system\/tokens\.json` is deterministic generated output/iu,
+    /sparse `design_system\/authority\.manifest\.json` owns closure membership\/digest only/iu,
+    /DRA `authority_delta_candidate` is non-authoritative input[\s\S]*explicitly start `reconcile` mode/iu,
+    /Require explicit user\/team selection, or explicit delegated selection/iu,
+    /Stop for separate adoption confirmation/iu,
+    /new complete closure identity[\s\S]*Rebind affected DRA resources\/handoffs/iu,
     /provider succeeded.*artifact ready.*selected.*authority adopted.*binding verified/isu,
   ]) assert.match(skill, expected);
 
@@ -82,7 +88,15 @@ test("design-system workflow separates provider output, selection, adoption and 
   assert.match(adoption, /Single-owner writeback/iu);
   assert.match(adoption, /project_context\/\*\*/u);
   assert.match(adoption, /root `DESIGN\.md`/u);
-  assert.match(adoption, /exactly one authored exact-value token source or generation direction/iu);
+  assert.match(adoption, /sole revision and editable exact-Token owner/iu);
+  assert.match(
+    adoption,
+    /generated `tokens\.json` exactly matches deterministic projection/iu,
+  );
+  assert.match(
+    adoption,
+    /sparse manifest contains only complete closure membership\/digest/iu,
+  );
   assert.match(adoption, /provider name\/version.*design-system ID.*revision.*SHA-256/isu);
   assert.match(
     adoption,
@@ -91,10 +105,14 @@ test("design-system workflow separates provider output, selection, adoption and 
   assert.match(adoption, /Context-reachable/iu);
   assert.match(
     adoption,
-    /Never overwrite an adopted baseline[\s\S]*new immutable version\/digest/iu,
+    /Never overwrite an adopted selected-resource baseline in place[\s\S]*new immutable version\/digest/iu,
   );
   assert.match(adoption, /Project files are canonical/iu);
-  assert.match(adoption, /Provider mismatch is a synchronization problem/iu);
+  assert.match(adoption, /Provider mismatch is synchronization drift/iu);
+  assert.match(
+    provider,
+    /package-local `@google\/design\.md` adapter[\s\S]*not Open Design[\s\S]*does not generate candidates/iu,
+  );
 });
 
 test("base profile, public docs and owning Context expose the same design-system boundary", async () => {
@@ -121,8 +139,19 @@ test("base profile, public docs and owning Context expose the same design-system
   );
   assert.match(readmes, /^## Recommended Usage$/mu);
   assert.match(readmes, /^## 推荐用法$/mu);
-  assert.match(readmes, /cold start.*never auto-runs/iu);
-  assert.match(readmes, /项目冷启动.*不会自动/u);
+  assert.match(
+    readmes,
+    /missing `DESIGN\.md` or ordinary UI work never invokes it automatically/iu,
+  );
+  assert.match(readmes, /下游 Skill 都不会自动执行/u);
+  assert.match(
+    readmes,
+    /Root `DESIGN\.md` is the unique Authority entry[\s\S]*`design_system\/authority\.manifest\.json`[\s\S]*`design_system\/tokens\.json`/iu,
+  );
+  assert.match(
+    readmes,
+    /complete closure digest[\s\S]*separate explicit adoption confirmation/iu,
+  );
   assert.match(readmes, /style-bearing/iu);
   assert.match(spec, /provider metadata never becomes a second authority/iu);
 });

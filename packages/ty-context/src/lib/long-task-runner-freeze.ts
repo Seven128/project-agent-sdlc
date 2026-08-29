@@ -75,12 +75,16 @@ export async function freezeDeliveryCheck(
       `${check.key}.expected_output_paths[${index}]`,
     ),
   );
-  const protectedAuthorityFiles = protectedAuthorityPaths.map((file, index) =>
-    normalizeRepositoryFile(
-      file,
-      `${check.key}.protected_authority_paths[${index}]`,
+  const protectedAuthorityFiles = [
+    ...new Set(
+      protectedAuthorityPaths.map((file, index) =>
+        normalizeRepositoryFile(
+          file,
+          `${check.key}.protected_authority_paths[${index}]`,
+        ),
+      ),
     ),
-  );
+  ].sort((left, right) => Buffer.from(left).compare(Buffer.from(right)));
   for (const [index, pattern] of check.input_paths.entries()) {
     const normalized = assertRepositoryPattern(
       repository,
@@ -156,7 +160,7 @@ export async function freezeDeliveryCheck(
     production_owner_paths: productionOwnerPaths,
     source_backed_execution_target: sourceBackedExecutionTarget,
     workspace_manifest: baseline,
-    protected_authority_paths: protectedAuthorityPaths,
+    protected_authority_paths: protectedAuthorityFiles,
     external_design_obligation_refs: externalDesignObligationRefs,
     external_claim_obligation_refs_by_assertion:
       externalClaimObligationRefsByAssertion,
@@ -181,7 +185,7 @@ export async function freezeDeliveryCheck(
     production_bindings: productionBindings,
     production_owner_paths: productionOwnerPaths,
     source_backed_execution_target: sourceBackedExecutionTarget,
-    protected_authority_paths: protectedAuthorityPaths,
+    protected_authority_paths: protectedAuthorityFiles,
   });
   const compiled = {
     ...machineCheck,
@@ -195,6 +199,7 @@ export async function freezeDeliveryCheck(
     design_conformance_targets: designConformanceTargets,
     semantic_fact_expectations: semanticFactExpectations,
     observation_authorities: observationAuthorities,
+    protected_authority_paths: protectedAuthorityFiles,
     process_runtime_closure: processRuntimeClosure,
     completion_role: proofAdequacy.completion_role,
     expected_authority_refs: proofAdequacy.expected_authority_refs,

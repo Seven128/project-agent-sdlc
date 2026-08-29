@@ -45,6 +45,7 @@ import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import { assertDesignResourceV1HandoffCapacity } from "./design-resource-v1-capacity.js";
 import { createV1ImplementationFeasibilityTargetModel } from "./design-resource-implementation-feasibility-model.js";
 import { readAndValidateDesignResourceImplementationFeasibility } from "./design-resource-implementation-feasibility-validation.js";
+import { resolveDesignAuthorityHandoffBinding } from "./design-authority-binding.js";
 
 export async function preflightDesignResourceHandoff(
   repository: string,
@@ -90,6 +91,11 @@ export async function preflightParsedDesignResourceHandoff(
   parsed: ParsedDesignResourceHandoffInputV1,
 ): Promise<DesignResourceHandoffPreflightV1> {
   const inputHandoff = parsed.handoff;
+  const authorityResolution = await resolveDesignAuthorityHandoffBinding({
+    repository,
+    style_dependency: inputHandoff.scope.style_dependency,
+    binding: inputHandoff.project_design_authority,
+  });
   if (isManifestBacked(inputHandoff) && inputHandoff.targets.length !== 1)
     invalidDesignResourceHandoff(
       "manifest_backed_one_target_required",
@@ -134,17 +140,23 @@ export async function preflightParsedDesignResourceHandoff(
   return {
     schema_version: "design-resource-handoff-preflight-v1",
     status: "ready",
+    project_design_authority_resolution: authorityResolution,
     ...normalized,
     resource_hashes: snapshot.hashes,
     technical_feasibility_documents: feasibility.map((item) => item.document),
     technical_feasibility_identities: feasibility.map((item) => item.identity),
-    limitations: handoff.targets.some(
-      (target) =>
-        target.source_profile.kind !== "reference" &&
-        !feasibility.some((item) => item.index.target_ref === target.key),
-    )
-      ? ["technical feasibility not declared"]
-      : [],
+    limitations: [
+      ...(authorityResolution.compatibility_derived
+        ? ["project Design Authority identity derived from legacy DESIGN.md"]
+        : []),
+      ...(handoff.targets.some(
+        (target) =>
+          target.source_profile.kind !== "reference" &&
+          !feasibility.some((item) => item.index.target_ref === target.key),
+      )
+        ? ["technical feasibility not declared"]
+        : []),
+    ],
     manifest_identities: handoff.targets.map((target) => {
       const resourceRef = target.source_profile.fact_manifest_resource_ref;
       const resource = resources.get(resourceRef)!;

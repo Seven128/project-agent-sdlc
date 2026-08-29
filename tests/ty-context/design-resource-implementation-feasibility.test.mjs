@@ -20,6 +20,7 @@ import {
   writeDesignResourceHandoffFixture,
 } from "./design-resource-handoff-fixture.mjs";
 import {
+  LEGACY_DESIGN_AUTHORITY_LIMITATION,
   withRoot,
   withV1Mutation,
 } from "./design-resource-implementation-feasibility-test-support.mjs";
@@ -35,7 +36,7 @@ test("V1 feasibility is Source-bound, complete and outside canonical resources",
       root,
       DESIGN_HANDOFF_PATH,
     );
-    assert.deepEqual(result.limitations, []);
+    assert.deepEqual(result.limitations, [LEGACY_DESIGN_AUTHORITY_LIMITATION]);
     assert.deepEqual(result.technical_feasibility_identities, [
       {
         key: "main-default-feasibility",

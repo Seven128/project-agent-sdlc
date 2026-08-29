@@ -1,11 +1,21 @@
 #!/usr/bin/env node
 import { spawnSync } from "node:child_process";
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "..",
+);
 
 function parseArgs(argv) {
   const options = { clean: false, outDir: null, packIgnoreScripts: false };
@@ -55,10 +65,13 @@ function bin(name) {
 }
 
 function commandSpec(command, args) {
-  if (process.platform === "win32" && (command === "npm" || command === "npx")) {
+  if (
+    process.platform === "win32" &&
+    (command === "npm" || command === "npx")
+  ) {
     return {
       command: process.env.ComSpec || "cmd.exe",
-      args: ["/d", "/s", "/c", command, ...args]
+      args: ["/d", "/s", "/c", command, ...args],
     };
   }
   return { command: bin(command), args };
@@ -68,7 +81,7 @@ function run(command, args, cwd, options = {}) {
   const spec = commandSpec(command, args);
   const result = spawnSync(spec.command, spec.args, {
     cwd,
-    encoding: "utf8"
+    encoding: "utf8",
   });
   if (!options.capture) {
     if (result.stdout) {
@@ -83,7 +96,9 @@ function run(command, args, cwd, options = {}) {
   }
   if (result.status !== 0) {
     const detail = [result.stdout, result.stderr].filter(Boolean).join("\n");
-    throw new Error(`${command} ${args.join(" ")} failed with exit ${result.status}\n${detail}`);
+    throw new Error(
+      `${command} ${args.join(" ")} failed with exit ${result.status}\n${detail}`,
+    );
   }
   return result;
 }
@@ -102,8 +117,17 @@ function assertContains(filePath, pattern) {
 }
 
 function makeDefaultOutDir() {
-  const stamp = new Date().toISOString().replace(/[-:.TZ]/g, "").slice(0, 14);
-  return path.join(repoRoot, "tmp", "ty-context", "quickstart-smoke", `${stamp}-${process.pid}`);
+  const stamp = new Date()
+    .toISOString()
+    .replace(/[-:.TZ]/g, "")
+    .slice(0, 14);
+  return path.join(
+    repoRoot,
+    "tmp",
+    "ty-context",
+    "quickstart-smoke",
+    `${stamp}-${process.pid}`,
+  );
 }
 
 const options = parseArgs(process.argv.slice(2));
@@ -120,25 +144,184 @@ try {
   mkdirSync(packageDir, { recursive: true });
   mkdirSync(demoDir, { recursive: true });
 
-  const packArgs = ["pack", "--workspace", "project-tiny-context-harness", "--pack-destination", packageDir];
+  const packArgs = [
+    "pack",
+    "--workspace",
+    "project-tiny-context-harness",
+    "--pack-destination",
+    packageDir,
+  ];
   if (options.packIgnoreScripts) {
     packArgs.push("--ignore-scripts");
   }
   run("npm", packArgs, repoRoot);
-  const tarballs = readdirSync(packageDir).filter((file) => file.endsWith(".tgz"));
+  const tarballs = readdirSync(packageDir).filter((file) =>
+    file.endsWith(".tgz"),
+  );
   if (tarballs.length !== 1) {
-    throw new Error(`expected one packed tarball in ${packageDir}, found ${tarballs.length}`);
+    throw new Error(
+      `expected one packed tarball in ${packageDir}, found ${tarballs.length}`,
+    );
   }
   const tarballPath = path.join(packageDir, tarballs[0]);
 
   run("git", ["init"], demoDir);
   run("npm", ["init", "-y"], demoDir);
-  run("npm", ["install", "--save-dev", "--ignore-scripts", "--no-audit", "--no-fund", "--prefer-offline", tarballPath], demoDir);
+  run(
+    "npm",
+    [
+      "install",
+      "--save-dev",
+      "--ignore-scripts",
+      "--no-audit",
+      "--no-fund",
+      "--prefer-offline",
+      tarballPath,
+    ],
+    demoDir,
+  );
   run("npx", ["--no-install", "ty-context", "init"], demoDir);
-  run("npx", ["--no-install", "ty-context", "route", "--task", "inspect project context", "--term", "Project Goal", "--format", "json"], demoDir);
-  run("npx", ["--no-install", "ty-context", "context", "inspect", "project_context/global.md", "--format", "json"], demoDir);
-  run("npx", ["--no-install", "ty-context", "context", "create", "--path", "project_context/areas/main/scaffold.md", "--role", "domain", "--format", "json"], demoDir);
-  run("npx", ["--no-install", "ty-context", "context", "inspect", "project_context/areas/main/scaffold.md", "--format", "json"], demoDir);
+  run(
+    "npx",
+    [
+      "--no-install",
+      "ty-context",
+      "route",
+      "--task",
+      "inspect project context",
+      "--term",
+      "Project Goal",
+      "--format",
+      "json",
+    ],
+    demoDir,
+  );
+  run(
+    "npx",
+    [
+      "--no-install",
+      "ty-context",
+      "context",
+      "inspect",
+      "project_context/global.md",
+      "--format",
+      "json",
+    ],
+    demoDir,
+  );
+  run(
+    "npx",
+    [
+      "--no-install",
+      "ty-context",
+      "context",
+      "create",
+      "--path",
+      "project_context/areas/main/scaffold.md",
+      "--role",
+      "domain",
+      "--format",
+      "json",
+    ],
+    demoDir,
+  );
+  run(
+    "npx",
+    [
+      "--no-install",
+      "ty-context",
+      "context",
+      "inspect",
+      "project_context/areas/main/scaffold.md",
+      "--format",
+      "json",
+    ],
+    demoDir,
+  );
+  const designAuthority = JSON.parse(
+    run(
+      "npx",
+      [
+        "--no-install",
+        "ty-context",
+        "design-authority",
+        "inspect",
+        "--format",
+        "json",
+      ],
+      demoDir,
+      { capture: true },
+    ).stdout,
+  );
+  if (
+    designAuthority.status !== "valid" ||
+    !designAuthority.identity?.closure_digest
+  ) {
+    throw new Error(
+      "quickstart Design Authority inspection did not return a valid closure identity",
+    );
+  }
+  JSON.parse(
+    run(
+      "npx",
+      [
+        "--no-install",
+        "ty-context",
+        "design-authority",
+        "tokens",
+        "--from-entry",
+      ],
+      demoDir,
+      { capture: true },
+    ).stdout,
+  );
+  const authorityDeltaPath = path.join(
+    demoDir,
+    "authority-delta-assessment.json",
+  );
+  writeFileSync(
+    authorityDeltaPath,
+    `${JSON.stringify(
+      {
+        schema_version: "design-authority-delta-assessment-v1",
+        assessment: "consistent_with_current_authority",
+        based_on: designAuthority.identity,
+        evidence: {
+          tokens: ["color.primary"],
+          components: [],
+          rules: [],
+        },
+        observed_variances: [],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  const authorityDelta = JSON.parse(
+    run(
+      "npx",
+      [
+        "--no-install",
+        "ty-context",
+        "design-resource",
+        "authority-delta",
+        "validate",
+        path.basename(authorityDeltaPath),
+        "--json",
+      ],
+      demoDir,
+      { capture: true },
+    ).stdout,
+  );
+  if (
+    authorityDelta.authority_current !== true ||
+    authorityDelta.write_performed !== false
+  ) {
+    throw new Error(
+      "quickstart Authority Delta Assessment was not validated read-only",
+    );
+  }
   run("npx", ["--no-install", "ty-context", "validate-context"], demoDir);
 
   const expectedFiles = [
@@ -151,17 +334,29 @@ try {
     "project_context/architecture.md",
     "project_context/areas/main.md",
     "project_context/areas/main/verification.md",
-    "project_context/areas/main/scaffold.md"
+    "project_context/areas/main/scaffold.md",
   ];
 
   for (const file of expectedFiles) {
     assertFile(path.join(demoDir, file));
   }
   assertContains(path.join(demoDir, "AGENTS.md"), /Minimal Context Harness/);
-  assertContains(path.join(demoDir, "project_context/global.md"), /## Project Goal/);
-  assertContains(path.join(demoDir, "project_context/architecture.md"), /## System Boundary/);
-  assertContains(path.join(demoDir, "project_context/areas/main/scaffold.md"), /registration=unregistered/);
-  assertContains(path.join(demoDir, ".github/workflows/harness.yml"), /Run harness gate/);
+  assertContains(
+    path.join(demoDir, "project_context/global.md"),
+    /## Project Goal/,
+  );
+  assertContains(
+    path.join(demoDir, "project_context/architecture.md"),
+    /## System Boundary/,
+  );
+  assertContains(
+    path.join(demoDir, "project_context/areas/main/scaffold.md"),
+    /registration=unregistered/,
+  );
+  assertContains(
+    path.join(demoDir, ".github/workflows/harness.yml"),
+    /Run harness gate/,
+  );
 
   writeFileSync(
     path.join(outDir, "quickstart-smoke-report.json"),
@@ -170,12 +365,17 @@ try {
         status: "passed",
         package: tarballs[0],
         demoDir,
-        generatedFiles: expectedFiles
+        generatedFiles: expectedFiles,
+        designAuthority: {
+          mode: designAuthority.mode,
+          closureDigest: designAuthority.identity.closure_digest,
+        },
+        authorityDeltaAssessment: "validated-read-only",
       },
       null,
-      2
+      2,
     )}\n`,
-    "utf8"
+    "utf8",
   );
 
   console.log("");

@@ -8,7 +8,10 @@ import {
   writeDesignResourceSymbolicHandoffFixture,
 } from "./design-resource-symbolic-handoff-fixture.mjs";
 import { buildSymbolicFixtureModel } from "./design-resource-symbolic-handoff-fixture-model.mjs";
-import { withRoot } from "./design-resource-implementation-feasibility-test-support.mjs";
+import {
+  LEGACY_DESIGN_AUTHORITY_LIMITATION,
+  withRoot,
+} from "./design-resource-implementation-feasibility-test-support.mjs";
 
 test("Symbolic V2 validates exact reachable feasibility regions and legacy limitation", async () => {
   await withRoot(async (root) => {
@@ -19,7 +22,7 @@ test("Symbolic V2 validates exact reachable feasibility regions and legacy limit
       root,
       SYMBOLIC_HANDOFF_PATH,
     );
-    assert.deepEqual(result.limitations, []);
+    assert.deepEqual(result.limitations, [LEGACY_DESIGN_AUTHORITY_LIMITATION]);
     assert.equal(result.technical_feasibility_identities.length, 1);
     assert.equal(
       result.technical_feasibility_documents[0].condition_model.kind,
@@ -35,6 +38,7 @@ test("Symbolic V2 validates exact reachable feasibility regions and legacy limit
     );
     assert.deepEqual(result.technical_feasibility_identities, []);
     assert.deepEqual(result.limitations, [
+      LEGACY_DESIGN_AUTHORITY_LIMITATION,
       "technical feasibility not declared",
     ]);
   });

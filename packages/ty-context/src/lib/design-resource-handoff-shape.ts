@@ -6,6 +6,7 @@ import type { DesignResourceHandoffInput } from "./design-resource-handoff-input
 import { parseDesignResourceSymbolicHandoffShape } from "./design-resource-symbolic-fact-shape.js";
 import type { DesignResourceHandoffV1 } from "./design-resource-handoff-types.js";
 import { parseDesignResourceTechnicalFeasibilityInputs } from "./design-resource-implementation-feasibility-shape.js";
+import { parseDesignAuthorityHandoffBinding } from "./design-authority-binding.js";
 import {
   parseDesignResourceAssetBindings,
   parseDesignResourceAxisDispositions,
@@ -106,7 +107,7 @@ export function parseDesignResourceHandoffShape(
       "acceptance_blockers",
       "proposal",
     ],
-    ["technical_feasibility_inputs"],
+    ["technical_feasibility_inputs", "project_design_authority"],
   );
   const scope = object(root.scope, "design_resource_handoff.scope", [
     "key",
@@ -196,6 +197,14 @@ export function parseDesignResourceHandoffShape(
         "design_resource_handoff.provenance.design_system_id",
       ),
     },
+    ...(root.project_design_authority === undefined
+      ? {}
+      : {
+          project_design_authority: parseDesignAuthorityHandoffBinding(
+            root.project_design_authority,
+            "design_resource_handoff.project_design_authority",
+          ),
+        }),
     technical_feasibility_inputs: parseDesignResourceTechnicalFeasibilityInputs(
       root.technical_feasibility_inputs ?? [],
     ),
@@ -270,13 +279,16 @@ function parseManifestBackedDesignResourceHandoffShape(
       "coverage",
       "proposal",
     ],
-    ["technical_feasibility_inputs"],
+    ["technical_feasibility_inputs", "project_design_authority"],
   );
   const parsed = parseDesignResourceHandoffShape({
     schema_version: root.schema_version,
     intent: root.intent,
     scope: root.scope,
     provenance: root.provenance,
+    ...(root.project_design_authority === undefined
+      ? {}
+      : { project_design_authority: root.project_design_authority }),
     technical_feasibility_inputs: root.technical_feasibility_inputs ?? [],
     resources: root.resources,
     axis_dispositions: [],
@@ -311,6 +323,9 @@ function parseManifestBackedDesignResourceHandoffShape(
     intent: parsed.intent,
     scope: parsed.scope,
     provenance: parsed.provenance,
+    ...(parsed.project_design_authority === undefined
+      ? {}
+      : { project_design_authority: parsed.project_design_authority }),
     technical_feasibility_inputs: parsed.technical_feasibility_inputs,
     resources: parsed.resources,
     targets: parsed.targets,

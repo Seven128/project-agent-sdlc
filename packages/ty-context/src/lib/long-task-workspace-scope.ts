@@ -78,16 +78,20 @@ export function protectedWorkspacePaths(input: {
   contract_files?: Record<string, string> | null;
   source_hashes?: Record<string, string> | null;
   context_hashes?: Record<string, string> | null;
-  checks?: Array<{ verification_input_hashes: Record<string, string> }>;
+  checks?: Array<{
+    verification_input_hashes: Record<string, string>;
+    protected_authority_paths?: string[];
+  }>;
   additional_files?: string[];
 }): string[] {
   return normalizeFiles([
     ...Object.keys(input.contract_files ?? {}),
     ...Object.keys(input.source_hashes ?? {}),
     ...Object.keys(input.context_hashes ?? {}),
-    ...(input.checks ?? []).flatMap((check) =>
-      Object.keys(check.verification_input_hashes),
-    ),
+    ...(input.checks ?? []).flatMap((check) => [
+      ...Object.keys(check.verification_input_hashes),
+      ...(check.protected_authority_paths ?? []),
+    ]),
     ...(input.additional_files ?? []),
   ]);
 }

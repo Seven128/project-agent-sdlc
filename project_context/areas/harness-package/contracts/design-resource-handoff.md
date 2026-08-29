@@ -28,6 +28,14 @@ Expected Fact Universe
 
 The adapter connects upstream authoring to both development workflows. It creates no provider-specific schema, Design Authority, plan, registry, Claim kind, Gate, acceptance lifecycle or second source of truth.
 
+## Project Design Authority Binding
+
+The [Design Authority Bundle Contract](design-authority-bundle.md) is the sole owner of project-Authority closure identity. A newly authored style-bearing or mixed V1/V2 handoff explicitly carries its current `entry_path`, nullable `manifest_path`, `closure_digest` and diagnostic `revision`; preflight recomputes the repository closure and rejects stale identity before validating resource Facts. A non-fidelity handoff may declare the binding not applicable with a rationale.
+
+For compatibility only, an older handoff may omit the field when the current project has no bundle manifest. Preflight then derives the current `DESIGN.md`-only identity and reports that compatibility derivation in its limitations. Omission is never accepted when `design_system/authority.manifest.json` exists, and a human revision or provider `design_system_id` never substitutes for the project closure digest.
+
+Every handoff consumed together must bind one equal current project identity. Long-Task adds the entry, manifest and every declared authority/generated member to its existing protected observation/Authority paths. Changing a subordinate or generated member therefore invalidates the old handoff/Authority even when root revision text is unchanged; no second Design Authority or Gate is introduced.
+
 ## One Shared Adapter And Manifest-Backed Target Handoffs
 
 - Exploration and unselected previews need no handoff or validator.

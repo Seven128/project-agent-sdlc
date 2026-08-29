@@ -6,6 +6,7 @@ import {
   normalizeRepositoryFile,
 } from "../lib/long-task-paths.js";
 import { canonicalJson } from "../lib/strict-codec.js";
+import { designAuthorityDeltaCommand } from "./design-authority-delta.js";
 
 export async function designResource(args: string[]): Promise<void> {
   const [subcommand = "help", ...rest] = args;
@@ -19,6 +20,10 @@ export async function designResource(args: string[]): Promise<void> {
   }
   if (subcommand === "recovery") {
     await designResourceRecoveryCommand(rest);
+    return;
+  }
+  if (subcommand === "authority-delta") {
+    await designAuthorityDeltaCommand(rest);
     return;
   }
   if (subcommand !== "preflight")
@@ -168,5 +173,7 @@ function help(): void {
   recovery reconcile <session> --audit <audit.json> [--json]
                        Read-only reconciliation for a no-writeback checkpoint
   recovery remove <session> --expected-sha256 <sha256> [--json]
-                       Remove only the digest-matched helper-owned checkpoint`);
+                       Remove only the digest-matched helper-owned checkpoint
+  authority-delta validate <assessment.json> [--json]
+                       Validate one read-only, non-adopting Authority assessment`);
 }

@@ -13,12 +13,19 @@ import {
   arrayOf,
   digest,
   integer,
+  literal,
   object,
   oneOf,
   stringSet,
   text,
   unknownSemantics,
 } from "./design-resource-recovery-codec-primitives.js";
+import {
+  DESIGN_AUTHORITY_ENTRY_PATH,
+  DESIGN_AUTHORITY_IDENTITY_FORMAT_VERSION,
+  DESIGN_AUTHORITY_MANIFEST_PATH,
+  isDesignAuthorityDigest,
+} from "./design-authority-types.js";
 
 export const DESIGN_RESOURCE_ORIGINS = [
   "user-direct",
@@ -270,32 +277,108 @@ export function parseAuthorityIdentity(
     value,
     label,
     ["kind"],
-    ["locator", "raw_byte_digest", "rationale"],
+    [
+      "locator",
+      "raw_byte_digest",
+      "rationale",
+      "format_version",
+      "entry_path",
+      "manifest_path",
+      "closure_digest",
+      "revision",
+    ],
   );
   const kind = oneOf(
     first.kind,
-    ["repository-file", "external-immutable", "not-applicable"] as const,
+    [
+      "repository-closure",
+      "repository-file",
+      "external-immutable",
+      "not-applicable",
+    ] as const,
     `${label}.kind`,
   );
-  if (kind === "not-applicable") {
-    if ("locator" in first || "raw_byte_digest" in first)
+  if (kind === "repository-closure") {
+    rejectFields(first, label, ["locator", "raw_byte_digest", "rationale"]);
+    literal(
+      first.format_version,
+      DESIGN_AUTHORITY_IDENTITY_FORMAT_VERSION,
+      `${label}.format_version`,
+    );
+    literal(
+      first.entry_path,
+      DESIGN_AUTHORITY_ENTRY_PATH,
+      `${label}.entry_path`,
+    );
+    const manifestPath = parseNullableManifestPath(
+      first.manifest_path,
+      `${label}.manifest_path`,
+    );
+    if (!isDesignAuthorityDigest(first.closure_digest))
       throw new Error(
-        `design_resource_recovery_invalid:${label}:not_applicable_identity_fields`,
+        `design_resource_recovery_invalid:${label}.closure_digest:sha256_required`,
       );
+    const revision =
+      first.revision === null
+        ? null
+        : text(first.revision, `${label}.revision`);
+    return {
+      kind,
+      format_version: DESIGN_AUTHORITY_IDENTITY_FORMAT_VERSION,
+      entry_path: DESIGN_AUTHORITY_ENTRY_PATH,
+      manifest_path: manifestPath,
+      closure_digest: first.closure_digest,
+      revision,
+    };
+  }
+  if (kind === "not-applicable") {
+    rejectFields(first, label, [
+      "locator",
+      "raw_byte_digest",
+      "format_version",
+      "entry_path",
+      "manifest_path",
+      "closure_digest",
+      "revision",
+    ]);
     return {
       kind,
       rationale: text(first.rationale, `${label}.rationale`),
     };
   }
-  if ("rationale" in first)
-    throw new Error(
-      `design_resource_recovery_invalid:${label}:unexpected_rationale`,
-    );
+  rejectFields(first, label, [
+    "rationale",
+    "format_version",
+    "entry_path",
+    "manifest_path",
+    "closure_digest",
+    "revision",
+  ]);
   return {
     kind,
     locator: text(first.locator, `${label}.locator`),
     raw_byte_digest: digest(first.raw_byte_digest, `${label}.raw_byte_digest`),
   };
+}
+
+function parseNullableManifestPath(
+  value: unknown,
+  label: string,
+): typeof DESIGN_AUTHORITY_MANIFEST_PATH | null {
+  if (value === null) return null;
+  return literal(value, DESIGN_AUTHORITY_MANIFEST_PATH, label);
+}
+
+function rejectFields(
+  row: Record<string, unknown>,
+  label: string,
+  fields: string[],
+): void {
+  for (const field of fields)
+    if (Object.hasOwn(row, field))
+      throw new Error(
+        `design_resource_recovery_invalid:${label}:unexpected_field:${field}`,
+      );
 }
 
 export function parseDecisionAuthority(

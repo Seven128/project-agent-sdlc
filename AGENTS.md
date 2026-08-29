@@ -98,7 +98,7 @@ Tiny Context does not create or restore platform Goals, invoke models, spawn age
 
 - `make validate-context`: Context recoverability.
 - `make validate-harness`: Context plus touched-source modularity.
-- `ty-context doctor`: installation health plus advisory default Context footprint and Design Authority status.
+- `ty-context doctor`: installation health plus advisory default/all-Context diagnostics and Design Authority status.
 - `node packages/ty-context/dist/cli.js package check-source`: managed-source/package parity in this source workspace.
 
 Every handoff reports exactly one of `Context: updated ...` or `Context: no durable fact change`. Never claim tests, deployment or acceptance from Context alone.

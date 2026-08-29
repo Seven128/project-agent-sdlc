@@ -1976,21 +1976,21 @@ catalogs:
     - - input.context.project-context-areas-harness-package-contracts-design-resource-handoff-md
       - context
       - project_context/areas/harness-package/contracts/design-resource-handoff.md
-      - 1222eefeafde87da02200110c110f4d4185e982a08651cdf7d4b29a49d332024
+      - 8d2558d89e64feae7818c19c2f9b3106f3e61664b6fb6b506874ed8295d86ec9
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
       - context
       - project_context/areas/harness-package/contracts/package-managed-surfaces.md
-      - b24407982bb66807c6568b206f9ff7d7d1252b5145ff6b521d9b11a015814a43
+      - ccde1f5038525c5811d44ee759f6230c6e2da5972074f9b71da08e542fcde5e5
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-contracts-workflow-contract-md
       - context
       - project_context/areas/harness-package/contracts/workflow-contract.md
-      - a1a466bd987a09ef98115773698921daa780dee3123c2cb0fef3ed4adc7e575e
+      - 38bcf17dbff810078401b26d136c83331a36eb5c92232b61be3e490d685be875
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -2004,7 +2004,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-decision-rationale-long-task-workflow-md
       - context
       - project_context/areas/harness-package/decision-rationale/long-task-workflow.md
-      - 150866e662afa78f2d069b33b53fd45c299c1020b9ac7af9d6c7751e8cfae1df
+      - 3d99bff4832ca763113a90fa11461bfc4d27a8a2953aef38798fac55e2e4048f
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -2025,21 +2025,21 @@ catalogs:
     - - input.context.project-context-areas-harness-package-implementation-index-md
       - context
       - project_context/areas/harness-package/implementation-index.md
-      - 5c7fb70297af4dac01d76c60d067192fce8b5d3321af675c7f69db460353fdd4
+      - b33bdf7e0361b1b00d6de819683a71757e3cc7a0c6a6889b0bf1c6c69d9b9fe4
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-verification-md
       - context
       - project_context/areas/harness-package/verification.md
-      - 5313ce361370bd9e370cc36fb99fbbb04260fe49c8f32a55806c19e3b6872304
+      - 768e10b363513aaa4e6a21702b2c8d545fce82e4316ed3bebe951c38f9f5da0d
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-context-toml
       - context
       - project_context/context.toml
-      - 2b0bbe0e8089f4b94d6ff81c63703488ddf77c118e30306ef003d8535b5e3130
+      - 50319deebdfc7d1d230dc98cf64ddf74287394a11b66f679e0879412b80a78f9
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -2053,7 +2053,7 @@ catalogs:
     - - input.repository.project-spec-md
       - canonical_spec
       - PROJECT_SPEC.md
-      - 51cad139aad11566bcab21b335180733b23e6433a9de56751a84b1a1929374d6
+      - 886c80f1789d8f6264334d715ae987306cc38818739681c40e22f6923b31d471
       - - fact.symbolic-denotation-efficiency-result
         - fact.original-attachment-provenance
         - fact.audited-source-supersession
@@ -8693,7 +8693,7 @@ fact_sets:
   - provenance
   - source_item_refs
   rows:
-  - - 7b8c1d7b4831c3607e6684ad01fe9c1f07116d41906174f8dc0f5a03c08bbdb8
+  - - 459c3c35494f258449bb86708d82b96cdcf59aae71d2815d9e2f236ecbb6a963
     - fact.symbolic-denotation-efficiency-result
     - cell.symbolic-denotation-efficiency-result
     - subject.symbolic-denotation-efficiency-result
@@ -8708,7 +8708,7 @@ fact_sets:
       - symbolic-denotation-efficiency-result
       - symbolic-denotation-efficiency-result
     - - symbolic-denotation-efficiency-result
-  - - de5baab5dd9a10c5f705fe65c158ae8d326a57d4ef26664c9f93ac8ddd7e6494
+  - - 889cdf2a08fe1304957be5471ddd4b97ef8a04493e79cfbf88d214a15b8b61a7
     - fact.original-attachment-provenance
     - cell.original-attachment-provenance
     - subject.original-attachment-provenance
@@ -8723,7 +8723,7 @@ fact_sets:
       - original-attachment-provenance
       - original-attachment-provenance
     - - original-attachment-provenance
-  - - 2d726ed5d1fc2a578bd00b2b85a0ba2bb49d7f00d5ae314f665078ad9dea9922
+  - - 99fb8124d7eb481b719bde6fad95315e57824892aee8c9f65ba695646d2abc12
     - fact.audited-source-supersession
     - cell.audited-source-supersession
     - subject.audited-source-supersession
@@ -8738,7 +8738,7 @@ fact_sets:
       - audited-source-supersession
       - audited-source-supersession
     - - audited-source-supersession
-  - - 07932be02a627f62aad1ff0c0422c4dad3b25ab665b13c60dc29f2b6801bcd49
+  - - 5c7547c504f6052f8ef1af5377df3fc1855f620cb3c7b8489e0331cc56deb496
     - fact.complete-material-input-index
     - cell.complete-material-input-index
     - subject.complete-material-input-index
@@ -8753,7 +8753,7 @@ fact_sets:
       - complete-material-input-index
       - complete-material-input-index
     - - complete-material-input-index
-  - - 4797e83198620e54853a62577b1c3c2a486d13855938ca054c2fac5b1a0efc27
+  - - 361eb3c3e8a6f6c6a0beae2beb4c6993cb888744c1a546d95fe6e69aa6f83cbf
     - fact.complete-extensional-universe
     - cell.complete-extensional-universe
     - subject.complete-extensional-universe
@@ -8768,7 +8768,7 @@ fact_sets:
       - complete-extensional-universe
       - complete-extensional-universe
     - - complete-extensional-universe
-  - - 31397459c0ed2c7567cfd856848e43b550c0c6a836771bc752dd61a3de1faa4c
+  - - 234b8f6b56c0b02a40c46db895665f233dccafb2a4b5edd35515442c84c55e27
     - fact.subject-relation-universe-axis
     - cell.subject-relation-universe-axis
     - subject.subject-relation-universe-axis
@@ -8783,7 +8783,7 @@ fact_sets:
       - subject-relation-universe-axis
       - subject-relation-universe-axis
     - - subject-relation-universe-axis
-  - - c899a7db3fedfb5a79d84c7e04770c88ae0c78f7b4d6b194728feeef6acdee74
+  - - db1fb03fb90f66ceb80283d90a0cdfcb5835760e12b0def5366a534b7c9aed86
     - fact.target-universe-axis
     - cell.target-universe-axis
     - subject.target-universe-axis
@@ -8798,7 +8798,7 @@ fact_sets:
       - target-universe-axis
       - target-universe-axis
     - - target-universe-axis
-  - - 3c0a453cabd96af22c9f856dba35b144f34dfddb477ab07b66e9a7f0315d619b
+  - - e310500d39dcf8e002c541ca04adacced13904c0ff7aa451e53e7379e4bff1b2
     - fact.reachable-condition-variation-universe-axis
     - cell.reachable-condition-variation-universe-axis
     - subject.reachable-condition-variation-universe-axis
@@ -8813,7 +8813,7 @@ fact_sets:
       - reachable-condition-variation-universe-axis
       - reachable-condition-variation-universe-axis
     - - reachable-condition-variation-universe-axis
-  - - d2bb23af93f18c2d5fd671ce19cbe9aba977a2ba14929404ca57d0dde555ca17
+  - - f46dba7ecbb62b205341711fdd0fb88cc1ee27be674884a8cdb06764c5734758
     - fact.applicable-atomic-property-universe-axis
     - cell.applicable-atomic-property-universe-axis
     - subject.applicable-atomic-property-universe-axis
@@ -8828,7 +8828,7 @@ fact_sets:
       - applicable-atomic-property-universe-axis
       - applicable-atomic-property-universe-axis
     - - applicable-atomic-property-universe-axis
-  - - f56b3d348005a91b5a7073a509166da92baa6dfc0694b890af942aeb59efd6e6
+  - - 7982594d45fc7e814a755c25d7d10ec53190c732043191370e48da9d83532ab7
     - fact.population-quantifier-universe-axis
     - cell.population-quantifier-universe-axis
     - subject.population-quantifier-universe-axis
@@ -8843,7 +8843,7 @@ fact_sets:
       - population-quantifier-universe-axis
       - population-quantifier-universe-axis
     - - population-quantifier-universe-axis
-  - - ff5db6c90a358766624d4a27524b99bc8461b2afd5c2631805479bfb852140d0
+  - - bfc64876d65c60a3d9f462a99c79aa096085fecad631f857c115efcca8b2020b
     - fact.pointwise-disposition-equivalence
     - cell.pointwise-disposition-equivalence
     - subject.pointwise-disposition-equivalence
@@ -8858,7 +8858,7 @@ fact_sets:
       - pointwise-disposition-equivalence
       - pointwise-disposition-equivalence
     - - pointwise-disposition-equivalence
-  - - 525362451607502912410b2b434342513e3800a0b45d69fd95ed9fe8f60066f6
+  - - a7ac80bba1ece69b18fc60e419adbdcf12ed5bcab7fb4a236a5f274d29ef9571
     - fact.pointwise-expected-semantics-equivalence
     - cell.pointwise-expected-semantics-equivalence
     - subject.pointwise-expected-semantics-equivalence
@@ -8873,7 +8873,7 @@ fact_sets:
       - pointwise-expected-semantics-equivalence
       - pointwise-expected-semantics-equivalence
     - - pointwise-expected-semantics-equivalence
-  - - 1dabd4140546743112c3dbf31819838a4cc8b97a3ca8be510355dfd50d9ef751
+  - - 61bc7dbe9172002ab7d60bd8202cbea660440808f0041eb060757d7b3784b664
     - fact.pointwise-proof-denotation-equivalence
     - cell.pointwise-proof-denotation-equivalence
     - subject.pointwise-proof-denotation-equivalence
@@ -8888,7 +8888,7 @@ fact_sets:
       - pointwise-proof-denotation-equivalence
       - pointwise-proof-denotation-equivalence
     - - pointwise-proof-denotation-equivalence
-  - - c482887e6ac73edadc26046a53700436270c39d9873ee37976176ce41a79d05d
+  - - c05b22d6761e33fbcafeab818ce41fb0c5942d5e5ba2941769c7fcf79544dc4b
     - fact.v1-ground-row-identity-not-required
     - cell.v1-ground-row-identity-not-required
     - subject.v1-ground-row-identity-not-required
@@ -8903,7 +8903,7 @@ fact_sets:
       - v1-ground-row-identity-not-required
       - v1-ground-row-identity-not-required
     - - v1-ground-row-identity-not-required
-  - - 9abcb8ea522d0e23ceedd0a73b0c5db0b577478f7c94b480394459373450ddb5
+  - - f5c29c6baf17aa35b4f3fb08f649b5706e94a90dd508cef39f48789866d14a9c
     - fact.fact-identity-proof-obligation-separation
     - cell.fact-identity-proof-obligation-separation
     - subject.fact-identity-proof-obligation-separation
@@ -8918,7 +8918,7 @@ fact_sets:
       - fact-identity-proof-obligation-separation
       - fact-identity-proof-obligation-separation
     - - fact-identity-proof-obligation-separation
-  - - a34f293668879c49e943664e4fd2a8709f169d51740ab7e1f1e2c64fe0193103
+  - - 943fde8e8c0d282fd82b99e43bbc6bc894cf0f505a41f27baf5a4291a379c492
     - fact.required-method-denotation-preservation
     - cell.required-method-denotation-preservation
     - subject.required-method-denotation-preservation
@@ -8933,7 +8933,7 @@ fact_sets:
       - required-method-denotation-preservation
       - required-method-denotation-preservation
     - - required-method-denotation-preservation
-  - - c413d1378424fcb95522ee28d57e22109cdcbb64b4ff6d9872bb485e1acbeb0e
+  - - 8e03fed2233ad9f792d3d65fb433524840942835d5650a8d7221613ed956becc
     - fact.comparison-oracle-environment-preservation
     - cell.comparison-oracle-environment-preservation
     - subject.comparison-oracle-environment-preservation
@@ -8948,7 +8948,7 @@ fact_sets:
       - comparison-oracle-environment-preservation
       - comparison-oracle-environment-preservation
     - - comparison-oracle-environment-preservation
-  - - 776aceba24dd9bef6a463db420398a55eb02d0359bba1277bbcff90561830e77
+  - - 38fea0f721ccf77e4b207177d055d9e1ed6dec5867b85f6d9387a531e174ac51
     - fact.protected-observation-preservation
     - cell.protected-observation-preservation
     - subject.protected-observation-preservation
@@ -8963,7 +8963,7 @@ fact_sets:
       - protected-observation-preservation
       - protected-observation-preservation
     - - protected-observation-preservation
-  - - 153b21382cbca49d91bfc00e73be1bd76cbdd461826499ffe7c26950be2680fb
+  - - ed2ffa0fdc75273b345fbc3cd213310be6c0913a04153beb9894d0b9988e8c21
     - fact.exact-target-layout-pixel-preservation
     - cell.exact-target-layout-pixel-preservation
     - subject.exact-target-layout-pixel-preservation
@@ -8978,7 +8978,7 @@ fact_sets:
       - exact-target-layout-pixel-preservation
       - exact-target-layout-pixel-preservation
     - - exact-target-layout-pixel-preservation
-  - - 9fcb20c059a978ea7ec400824e097b9d5b4ea76c3576c9853eef63538a8780ff
+  - - 1f9aa8a95fe3d0310ebc56c40c3ea794de2763ca765f67133ffb816b22239c9b
     - fact.canonical-resource-value-authority
     - cell.canonical-resource-value-authority
     - subject.canonical-resource-value-authority
@@ -8993,7 +8993,7 @@ fact_sets:
       - canonical-resource-value-authority
       - canonical-resource-value-authority
     - - canonical-resource-value-authority
-  - - e5ccac5d4e342c645952cee6d2fcf568e8677d1df9b35000feb13bffa18db0a6
+  - - 9e90dd9b13fe38163d442a58956beb4c45a83524ae7524f8ab055f454a7c8e09
     - fact.versioned-ui-symbolic-v2
     - cell.versioned-ui-symbolic-v2
     - subject.versioned-ui-symbolic-v2
@@ -9008,7 +9008,7 @@ fact_sets:
       - versioned-ui-symbolic-v2
       - versioned-ui-symbolic-v2
     - - versioned-ui-symbolic-v2
-  - - 296cd81b2bef98d5c02406eb1d0d00006de5fb8ed8bda5b5ac4b0903f57533e4
+  - - 9e74b3f2de928377e22d7c236fe2725e7fab16a2d98c0c4a03ce279e92f9d9cd
     - fact.ui-v2-explicit-opt-in
     - cell.ui-v2-explicit-opt-in
     - subject.ui-v2-explicit-opt-in
@@ -9023,7 +9023,7 @@ fact_sets:
       - ui-v2-explicit-opt-in
       - ui-v2-explicit-opt-in
     - - ui-v2-explicit-opt-in
-  - - 9cf69ea3c0f8e0078fcc38a8726f8173643cb6b4a94722b3d12e68f321d9634b
+  - - b3fbb9c19b4b4e0b3636dda11868fbc1e0b6ca02d1e6ee632495980823cc68e6
     - fact.mixed-v1-v2-targets-one-contract
     - cell.mixed-v1-v2-targets-one-contract
     - subject.mixed-v1-v2-targets-one-contract
@@ -9038,7 +9038,7 @@ fact_sets:
       - mixed-v1-v2-targets-one-contract
       - mixed-v1-v2-targets-one-contract
     - - mixed-v1-v2-targets-one-contract
-  - - 13dc8ae3d9df5da38a21028441c8f75786f164070efbc0c817cde81fa0a3b627
+  - - 2e6054f1f43d3c9d0083a1cce428f27b7a03cb9444150ba8088ea9e0d48db85b
     - fact.restricted-symbolic-predicate-dsl
     - cell.restricted-symbolic-predicate-dsl
     - subject.restricted-symbolic-predicate-dsl
@@ -9053,7 +9053,7 @@ fact_sets:
       - restricted-symbolic-predicate-dsl
       - restricted-symbolic-predicate-dsl
     - - restricted-symbolic-predicate-dsl
-  - - 6b5c15653ed1b050a2cc0743b86725c7192dcfd17334772e49f1599d1c02f559
+  - - ce8ebb4e3317ee2f3933f7b3389760322b7e14446316afc096550cf970d031dd
     - fact.finite-enum-and-bounded-numeric-domains
     - cell.finite-enum-and-bounded-numeric-domains
     - subject.finite-enum-and-bounded-numeric-domains
@@ -9068,7 +9068,7 @@ fact_sets:
       - finite-enum-and-bounded-numeric-domains
       - finite-enum-and-bounded-numeric-domains
     - - finite-enum-and-bounded-numeric-domains
-  - - 27b719e7c03b2b3f5f57ee2e0802b60c09ee0d78be1f2fcba71450237e1e83b5
+  - - 712910ca4fa89ecaaffa7f4b342bf4e69df707423d83cb172907e8b6946a9633
     - fact.canonical-shared-decision-dag
     - cell.canonical-shared-decision-dag
     - subject.canonical-shared-decision-dag
@@ -9083,7 +9083,7 @@ fact_sets:
       - canonical-shared-decision-dag
       - canonical-shared-decision-dag
     - - canonical-shared-decision-dag
-  - - 9ec3237c71e57c59e16cb4f1041b681e856623a70641a674799ef83d2b6291a5
+  - - 9d6c57a12363a5cb89901db0b0c290d9df4d44a7f276ae4eea9afb0906453799
     - fact.unreachable-branch-elimination
     - cell.unreachable-branch-elimination
     - subject.unreachable-branch-elimination
@@ -9098,7 +9098,7 @@ fact_sets:
       - unreachable-branch-elimination
       - unreachable-branch-elimination
     - - unreachable-branch-elimination
-  - - 0a4f2a2e1c58a4b714e5186d0c5396278973797a98df84171250e6afb34b2f2f
+  - - 09d8664c15f2b8c6eefe7c71df346e76d8b970533e8508900d67a0af4315bb42
     - fact.no-production-ground-materialization
     - cell.no-production-ground-materialization
     - subject.no-production-ground-materialization
@@ -9113,7 +9113,7 @@ fact_sets:
       - no-production-ground-materialization
       - no-production-ground-materialization
     - - no-production-ground-materialization
-  - - 26f98e75d06cbd2a113ef8917e333cc9da0ead7f201c69a1e98066e167388c09
+  - - 952c862b515bcde3e2ef3bf960aaeace96377e50194b21eab7c3afd5af70b0f9
     - fact.mutually-exclusive-effective-regions
     - cell.mutually-exclusive-effective-regions
     - subject.mutually-exclusive-effective-regions
@@ -9128,7 +9128,7 @@ fact_sets:
       - mutually-exclusive-effective-regions
       - mutually-exclusive-effective-regions
     - - mutually-exclusive-effective-regions
-  - - 23dc29571a82ded1679353cf5a37529962b0cb32f7583c22db53c071673b7983
+  - - 4a9ca74b6f026875ed461d78c467e87045d1bc385c7b29513694cfa068717fec
     - fact.exact-region-coverage-no-gaps
     - cell.exact-region-coverage-no-gaps
     - subject.exact-region-coverage-no-gaps
@@ -9143,7 +9143,7 @@ fact_sets:
       - exact-region-coverage-no-gaps
       - exact-region-coverage-no-gaps
     - - exact-region-coverage-no-gaps
-  - - c626d89edfb416dc87328479a6483e402bbe225f83d24497d79253ea55c695f7
+  - - aa75a3969f70ccbe42c987e12984f7b7fab01ca7041cd02b63b231f043cbaf6f
     - fact.constant-located-expected-rule-values
     - cell.constant-located-expected-rule-values
     - subject.constant-located-expected-rule-values
@@ -9158,7 +9158,7 @@ fact_sets:
       - constant-located-expected-rule-values
       - constant-located-expected-rule-values
     - - constant-located-expected-rule-values
-  - - 60dc5eca52cd3874af4fc8601cc3cecdc1c20db6817f148ae6b9ffacc2a39247
+  - - 9a4e7aa23f4319f0fd511be429d8d51d2d87065382b5a320e12a2f387de86aa5
     - fact.no-rule-precedence-or-value-function
     - cell.no-rule-precedence-or-value-function
     - subject.no-rule-precedence-or-value-function
@@ -9173,7 +9173,7 @@ fact_sets:
       - no-rule-precedence-or-value-function
       - no-rule-precedence-or-value-function
     - - no-rule-precedence-or-value-function
-  - - f38f47908ed4c19e373dddd04ad93d0294efecbeecaeeb708356879d32cf2710
+  - - 0e0510352e570dd6648208f38b11d9c613b6fcddce0c753a451f2a7acfeb5a59
     - fact.deterministic-canonical-identity
     - cell.deterministic-canonical-identity
     - subject.deterministic-canonical-identity
@@ -9188,7 +9188,7 @@ fact_sets:
       - deterministic-canonical-identity
       - deterministic-canonical-identity
     - - deterministic-canonical-identity
-  - - 779fa8f11324487ab960cf4e7e340c6100d2f355f394167d08a1364ea78d2bb1
+  - - 540bd13d9f71257a854485ac5d0b84d15bbd64c85e383e6772bb08e3352eba07
     - fact.symbolic-complexity-fuse
     - cell.symbolic-complexity-fuse
     - subject.symbolic-complexity-fuse
@@ -9203,7 +9203,7 @@ fact_sets:
       - symbolic-complexity-fuse
       - symbolic-complexity-fuse
     - - symbolic-complexity-fuse
-  - - c1679dddc0972116dfa70dc3955b89b8911302b21e54ef8ead661cd6f4477411
+  - - 39bfa7450f496ce3d522bb68784bcced3aa32d8f59b258038a43a29d466f2203
     - fact.ground-cardinality-diagnostic-only
     - cell.ground-cardinality-diagnostic-only
     - subject.ground-cardinality-diagnostic-only
@@ -9218,7 +9218,7 @@ fact_sets:
       - ground-cardinality-diagnostic-only
       - ground-cardinality-diagnostic-only
     - - ground-cardinality-diagnostic-only
-  - - dde761729841d8271f2f23b987624e7375b3712b99b15fe57dc6bdb76cb81a7f
+  - - 4f3c390b5688a2bd4782f2e49cddf3b05df0d5ebbdbb3106abca2f63eb71ab74
     - fact.package-policy-property-catalog
     - cell.package-policy-property-catalog
     - subject.package-policy-property-catalog
@@ -9233,7 +9233,7 @@ fact_sets:
       - package-policy-property-catalog
       - package-policy-property-catalog
     - - package-policy-property-catalog
-  - - 2951546f399627b58890e87270da93775b9186884be9d53a57be2024158008f3
+  - - 3e72603664b3a1e6c5f7fec892674d2e7b3be5c76c07a7ba5174f14c52ee3f51
     - fact.inspector-census-applicability
     - cell.inspector-census-applicability
     - subject.inspector-census-applicability
@@ -9248,7 +9248,7 @@ fact_sets:
       - inspector-census-applicability
       - inspector-census-applicability
     - - inspector-census-applicability
-  - - e49e3f514adeba8610bca47fd83359c04cccb024284402fb32d5db743eb4aa51
+  - - 693dbb86223204becabbccaa20b3d5fb4e52ad35ea13c893ac3e969bddaf5557
     - fact.basis-backed-property-remainder
     - cell.basis-backed-property-remainder
     - subject.basis-backed-property-remainder
@@ -9263,7 +9263,7 @@ fact_sets:
       - basis-backed-property-remainder
       - basis-backed-property-remainder
     - - basis-backed-property-remainder
-  - - 5494e977dd5d790a15ba4bd7a68141b1aac768713cea63ed09c457297f828a13
+  - - 7eacecd68535bd937ab41892708c8e1efab827120a130108ee2dc79faa85e27e
     - fact.unknown-applicability-blocks
     - cell.unknown-applicability-blocks
     - subject.unknown-applicability-blocks
@@ -9278,7 +9278,7 @@ fact_sets:
       - unknown-applicability-blocks
       - unknown-applicability-blocks
     - - unknown-applicability-blocks
-  - - 135e222745e34ea24432435ca73e8281f47f4ae37a6dd0bddfa4cf4201e748f4
+  - - f51ef292ec7d62edaa9f721c3e7702438630835ba6b07e0d05c5718433a172cf
     - fact.relation-population-first-class-model
     - cell.relation-population-first-class-model
     - subject.relation-population-first-class-model
@@ -9293,7 +9293,7 @@ fact_sets:
       - relation-population-first-class-model
       - relation-population-first-class-model
     - - relation-population-first-class-model
-  - - a1570f2b5e3bdb3664ec0286bd99095dae09716e71580eea41473a6ad6819412
+  - - ffa609da9cbe34d527554fecd1c61c69e12219c3428ed52ae6c7484fb437a414
     - fact.population-quantifier-denotation
     - cell.population-quantifier-denotation
     - subject.population-quantifier-denotation
@@ -9308,7 +9308,7 @@ fact_sets:
       - population-quantifier-denotation
       - population-quantifier-denotation
     - - population-quantifier-denotation
-  - - f3c8a5cee284c66cc9123a0dd32c309c39c19b3f7e642c30272e98305776c72d
+  - - 9be96de3e3975f67fc9ab622bc6be15263a798ec0b99377d3a7cd4b870321e8c
     - fact.v2-rule-method-region-projection
     - cell.v2-rule-method-region-projection
     - subject.v2-rule-method-region-projection
@@ -9323,7 +9323,7 @@ fact_sets:
       - v2-rule-method-region-projection
       - v2-rule-method-region-projection
     - - v2-rule-method-region-projection
-  - - 26571f7f66b58d8ff5ef5a08497e1b63472e590a75d693991b4afdc566ef307d
+  - - d386f9b2267c80bae1acc2fd08689f90391eb28581356eaf68f03adc8b441f99
     - fact.stable-symbolic-fact-rule-identity
     - cell.stable-symbolic-fact-rule-identity
     - subject.stable-symbolic-fact-rule-identity
@@ -9338,7 +9338,7 @@ fact_sets:
       - stable-symbolic-fact-rule-identity
       - stable-symbolic-fact-rule-identity
     - - stable-symbolic-fact-rule-identity
-  - - c4eac7cd3426898becb884fcf1d18addf022e7d316304bd1a121a6754d21d18b
+  - - 0327667b9e15402e3992afc44f5eb2754c3356470de08f38857d3519e5532a7c
     - fact.per-method-region-obligations
     - cell.per-method-region-obligations
     - subject.per-method-region-obligations
@@ -9353,7 +9353,7 @@ fact_sets:
       - per-method-region-obligations
       - per-method-region-obligations
     - - per-method-region-obligations
-  - - 83ee934ce8da739ed48c0efad6b1c16c1d7ab83f997091252a4fdfad3bf9449b
+  - - 9d67996d2360b37531607eac017e1742d2488836d5c00e54873e7c10f7e2c0f8
     - fact.typed-v2-rule-results
     - cell.typed-v2-rule-results
     - subject.typed-v2-rule-results
@@ -9368,7 +9368,7 @@ fact_sets:
       - typed-v2-rule-results
       - typed-v2-rule-results
     - - typed-v2-rule-results
-  - - 325fa548d53e4003d220e0b49e77501cbf57c8c6a64180f203911784eab7ae32
+  - - 64bc3ce29ac00370f692ceb2cab7a89af4f2388edac5dd95cc2197e1783b791d
     - fact.typed-certificate-results
     - cell.typed-certificate-results
     - subject.typed-certificate-results
@@ -9383,7 +9383,7 @@ fact_sets:
       - typed-certificate-results
       - typed-certificate-results
     - - typed-certificate-results
-  - - 70538ded357240d2fa3b0c47692fb0f685ee9dcac1d25ed8ba857fe73558fdd2
+  - - 290d92198fbf29f98d69a00f927078b7697bf2af5c9235db79fb10c2ae4571bb
     - fact.current-snapshot-evidence-only
     - cell.current-snapshot-evidence-only
     - subject.current-snapshot-evidence-only
@@ -9398,7 +9398,7 @@ fact_sets:
       - current-snapshot-evidence-only
       - current-snapshot-evidence-only
     - - current-snapshot-evidence-only
-  - - 3c4ad531c0cc0d32b19ae85b2c4958e0dbd4ce92c50c4bd26810a8ce6b30ba6f
+  - - 566bb6fee6e29e301f5b1e2583dfe67a55421aa1d22c3ff132269ecab0d4d3da
     - fact.mixed-target-one-final-gate
     - cell.mixed-target-one-final-gate
     - subject.mixed-target-one-final-gate
@@ -9413,7 +9413,7 @@ fact_sets:
       - mixed-target-one-final-gate
       - mixed-target-one-final-gate
     - - mixed-target-one-final-gate
-  - - bc6e88ecc81b871ef146baee68cd20df61bb378aee1593548b706cabf94fc8e7
+  - - 82fb80da14b665b2a79ae6abc5160eedd02a74b349fc46d151c0963d11c1bbe3
     - fact.set-valued-noninterference-certificates
     - cell.set-valued-noninterference-certificates
     - subject.set-valued-noninterference-certificates
@@ -9428,7 +9428,7 @@ fact_sets:
       - set-valued-noninterference-certificates
       - set-valued-noninterference-certificates
     - - set-valued-noninterference-certificates
-  - - 7ee8cd5981869a65a381335a8b5efb71eab6a1b9f7e38918e12e9db90441745f
+  - - 828e4e775eb118a2154772f9ae27d48a8047491f49dd336e657c2fef6d6cfcf9
     - fact.certificate-omitted-axis-coverage
     - cell.certificate-omitted-axis-coverage
     - subject.certificate-omitted-axis-coverage
@@ -9443,7 +9443,7 @@ fact_sets:
       - certificate-omitted-axis-coverage
       - certificate-omitted-axis-coverage
     - - certificate-omitted-axis-coverage
-  - - 4139836250e117ef7e4ae1a3f29d2a6b8a9344e54dfec144b295764b4d2f2f49
+  - - 7ca36ece3a3afcbcff6903873d3d4982301ce79907ecf2449f8eed0710c3aa20
     - fact.certificate-dependency-edge-coverage
     - cell.certificate-dependency-edge-coverage
     - subject.certificate-dependency-edge-coverage
@@ -9458,7 +9458,7 @@ fact_sets:
       - certificate-dependency-edge-coverage
       - certificate-dependency-edge-coverage
     - - certificate-dependency-edge-coverage
-  - - f03bfc7232757e319655d601d0d03f0b388638ff6d4cfd71fc3408f0d04e39df
+  - - 8bdc54ae2ff3283abb5396b65fe2ccb0c35d3d8fd4ebc288c9fb76c8e797004a
     - fact.noninterference-obligation-count-metric
     - cell.noninterference-obligation-count-metric
     - subject.noninterference-obligation-count-metric
@@ -9473,7 +9473,7 @@ fact_sets:
       - noninterference-obligation-count-metric
       - noninterference-obligation-count-metric
     - - noninterference-obligation-count-metric
-  - - 8dd032a2b7980db85e86a66577fa138f6c9ee1290130b52f464a560a69f1df39
+  - - 03c4d9a347cdf863ca6ade4635bc5f8ccf6d253e88578bcdf7f32b52e52fd674
     - fact.noninterference-dag-node-count-metric
     - cell.noninterference-dag-node-count-metric
     - subject.noninterference-dag-node-count-metric
@@ -9488,7 +9488,7 @@ fact_sets:
       - noninterference-dag-node-count-metric
       - noninterference-dag-node-count-metric
     - - noninterference-dag-node-count-metric
-  - - 2f367dbaa74f688a20e0fe28bc850a1a145eb4fb9fef770ca9276e65b920e549
+  - - 8a831d5d53455c588a096324088fdcc3049ffdc85d7f62bf6c92069afa66880e
     - fact.noninterference-byte-count-metric
     - cell.noninterference-byte-count-metric
     - subject.noninterference-byte-count-metric
@@ -9503,7 +9503,7 @@ fact_sets:
       - noninterference-byte-count-metric
       - noninterference-byte-count-metric
     - - noninterference-byte-count-metric
-  - - 2ec121bb667ceb74032aaff09d16fcad12c4a4fa2fcdf461905c4e4626acc803
+  - - 8c52a6441918c4f5bb5074f68bc0b2c9613e6464a847bb280d009c3fb6d6eaaf
     - fact.complexity-independent-of-ground-cardinality
     - cell.complexity-independent-of-ground-cardinality
     - subject.complexity-independent-of-ground-cardinality
@@ -9518,7 +9518,7 @@ fact_sets:
       - complexity-independent-of-ground-cardinality
       - complexity-independent-of-ground-cardinality
     - - complexity-independent-of-ground-cardinality
-  - - fc0d131ba14256097508bfc5f19c3c1fcc4ee14a9d204ae9524bbcdde03aabbc
+  - - 0c6ce7629047e3c7109f95b15e2d4db9201a681a8570b1e7f8bd9011dc78726a
     - fact.certificate-package-recomputation
     - cell.certificate-package-recomputation
     - subject.certificate-package-recomputation
@@ -9533,7 +9533,7 @@ fact_sets:
       - certificate-package-recomputation
       - certificate-package-recomputation
     - - certificate-package-recomputation
-  - - 4a18ac2c7baabf1dd698bf823ecf2dfb5a6b370df0fe8236bbe85f95045a04ac
+  - - 5ee1f20d6066210e1286d93a79da419f204d06d87371142c7efc7e008b5fdf0e
     - fact.certificate-not-semantic-proof-substitute
     - cell.certificate-not-semantic-proof-substitute
     - subject.certificate-not-semantic-proof-substitute
@@ -9548,7 +9548,7 @@ fact_sets:
       - certificate-not-semantic-proof-substitute
       - certificate-not-semantic-proof-substitute
     - - certificate-not-semantic-proof-substitute
-  - - a3e43d3e2dc6d9b4a1d71b06f4449281a2cda9e2e553fa0218ad4aaa33de84ba
+  - - e2d819fdb447d256e85715d150d4b71392e4d073e5e1566a358dda78f052391e
     - fact.no-obligation-per-irrelevant-axis-rule
     - cell.no-obligation-per-irrelevant-axis-rule
     - subject.no-obligation-per-irrelevant-axis-rule
@@ -9563,7 +9563,7 @@ fact_sets:
       - no-obligation-per-irrelevant-axis-rule
       - no-obligation-per-irrelevant-axis-rule
     - - no-obligation-per-irrelevant-axis-rule
-  - - 202b7c2ae7de9cd3f7a81032ed69ec1b403e52fd8b76e6c50f6c06adfbd53416
+  - - 7f24134b111ef5ce469aec96f1e1adfd3cdefc827110f50d8e80a33a8f0699d3
     - fact.v1-stat-before-read
     - cell.v1-stat-before-read
     - subject.v1-stat-before-read
@@ -9578,7 +9578,7 @@ fact_sets:
       - v1-stat-before-read
       - v1-stat-before-read
     - - v1-stat-before-read
-  - - b58fc49935ff206450b90f9e334411d37ea4d419c24ca7107ed29f15ad46381b
+  - - 0fb7176674dc0b70bf82efa5011ca02e48fbd9eccaea835293175e570b62363e
     - fact.v1-bounded-prefix-stream-parse
     - cell.v1-bounded-prefix-stream-parse
     - subject.v1-bounded-prefix-stream-parse
@@ -9593,7 +9593,7 @@ fact_sets:
       - v1-bounded-prefix-stream-parse
       - v1-bounded-prefix-stream-parse
     - - v1-bounded-prefix-stream-parse
-  - - 1e08a9e28a8cf1e2d0029c7b724126a2ef287961729aa17eb0da39393132f44e
+  - - 7b80daef005d5addde5ed00e72a2e51ef2c1d3cbcb148b277c35d5bbe83d24ff
     - fact.v1-capacity-header-order
     - cell.v1-capacity-header-order
     - subject.v1-capacity-header-order
@@ -9608,7 +9608,7 @@ fact_sets:
       - v1-capacity-header-order
       - v1-capacity-header-order
     - - v1-capacity-header-order
-  - - 29e01b7b9a9e1a2430f7384f7cd9f7ede83d22c52db4ab3a91433a0ea38dc68e
+  - - c06432551bf98a3650ebd6db7aca54192ca5d592b0beefe8472c2def809bd2f9
     - fact.v1-embedded-handoff-byte-limit
     - cell.v1-embedded-handoff-byte-limit
     - subject.v1-embedded-handoff-byte-limit
@@ -9623,7 +9623,7 @@ fact_sets:
       - v1-embedded-handoff-byte-limit
       - v1-embedded-handoff-byte-limit
     - - v1-embedded-handoff-byte-limit
-  - - f642ca308e3e06c152e441cb9058957f2696ba196049fe54fd7c81cd3df8ee6b
+  - - 7d06a37cc66caf15537f57666a83c2db27143ac57fa1056cdc28f6218d8eee3f
     - fact.v1-manifest-byte-limit
     - cell.v1-manifest-byte-limit
     - subject.v1-manifest-byte-limit
@@ -9638,7 +9638,7 @@ fact_sets:
       - v1-manifest-byte-limit
       - v1-manifest-byte-limit
     - - v1-manifest-byte-limit
-  - - b23cacffad29612f9a1deed7b162a718845e85adc94bcd8c03b0d0c9f3104615
+  - - 9badca22ccb5c801dc7c991d0123d8431daef2f6946321e3b508871f7bb9cb41
     - fact.v1-ground-cell-limit
     - cell.v1-ground-cell-limit
     - subject.v1-ground-cell-limit
@@ -9653,7 +9653,7 @@ fact_sets:
       - v1-ground-cell-limit
       - v1-ground-cell-limit
     - - v1-ground-cell-limit
-  - - f187a74c3a7cc0c9bdd36e3177cb84949592fd8006a6d6f38595b79fe3b40dd2
+  - - f8302ffd702540b2cbc552db8a4896c9a4a081ba7e74de582260155eb92e2e42
     - fact.v1-capacity-prefix-limit
     - cell.v1-capacity-prefix-limit
     - subject.v1-capacity-prefix-limit
@@ -9668,7 +9668,7 @@ fact_sets:
       - v1-capacity-prefix-limit
       - v1-capacity-prefix-limit
     - - v1-capacity-prefix-limit
-  - - 50d88433da3061c7056eba4c9abef0cbd9a08a85b0139024f48614c8eabbdfb9
+  - - ea5a6e09c030a6295050e45b5a926c3d8e2156fcf926b793aa6fc5fafceaa719
     - fact.v1-reject-before-hydration
     - cell.v1-reject-before-hydration
     - subject.v1-reject-before-hydration
@@ -9683,7 +9683,7 @@ fact_sets:
       - v1-reject-before-hydration
       - v1-reject-before-hydration
     - - v1-reject-before-hydration
-  - - f1d2acc1241c4d47a2d4ad44551219acfc373a812f81d4fd6b167cda8df3ab0c
+  - - 7f97556373c9e14659e15615d5b62e4b0f39f192f8efac3de10374f6467143e8
     - fact.v1-threshold-measurement-basis
     - cell.v1-threshold-measurement-basis
     - subject.v1-threshold-measurement-basis
@@ -9698,7 +9698,7 @@ fact_sets:
       - v1-threshold-measurement-basis
       - v1-threshold-measurement-basis
     - - v1-threshold-measurement-basis
-  - - a447b8172f49d1bf49ff8186249cffbce6f5fbf0a8bb7f5de099e65632a216ba
+  - - 9505fa9d1bd9879064eff1b42e337b86a80d845c740bafb2fca942923209b8bb
     - fact.v1-capacity-actionable-diagnostics
     - cell.v1-capacity-actionable-diagnostics
     - subject.v1-capacity-actionable-diagnostics
@@ -9713,7 +9713,7 @@ fact_sets:
       - v1-capacity-actionable-diagnostics
       - v1-capacity-actionable-diagnostics
     - - v1-capacity-actionable-diagnostics
-  - - 3678ad151cb4d3671d31b22086dca8d2ce65f71b6da8bbb0b58eaa2d33df89ad
+  - - 59495c8ba66f03dbec847772a94a98bb893097a7e0cfff3d63cbb640f5bc0fa8
     - fact.capacity-fail-closed-no-truncation
     - cell.capacity-fail-closed-no-truncation
     - subject.capacity-fail-closed-no-truncation
@@ -9728,7 +9728,7 @@ fact_sets:
       - capacity-fail-closed-no-truncation
       - capacity-fail-closed-no-truncation
     - - capacity-fail-closed-no-truncation
-  - - 5b37d7c7fe261c50730aded582e489dd3085db6849d94ce7c35c7e9cb1b81a23
+  - - 90881c3ea991e1367568ce5fc850e00cbd3cd16cdb10c92b891531cfcbeb9442
     - fact.efficiency-admission-property-only
     - cell.efficiency-admission-property-only
     - subject.efficiency-admission-property-only
@@ -9743,7 +9743,7 @@ fact_sets:
       - efficiency-admission-property-only
       - efficiency-admission-property-only
     - - efficiency-admission-property-only
-  - - fa1322714d0644882b2e0113d05a7253b5c23cf0bfa56760211379b79a1043da
+  - - 22475eb44c9afe808a1e18cba688b59e9ed46e125120666630ab4f240382e844
     - fact.efficiency-not-terminal-safety-theorem
     - cell.efficiency-not-terminal-safety-theorem
     - subject.efficiency-not-terminal-safety-theorem
@@ -9758,7 +9758,7 @@ fact_sets:
       - efficiency-not-terminal-safety-theorem
       - efficiency-not-terminal-safety-theorem
     - - efficiency-not-terminal-safety-theorem
-  - - a73a6c99b26c973aae1324e9ffe9149a1a75cab35f8becedb566ab8f4dbf9043
+  - - 60136c3b3e883cee7596f5f2ce87d0062dc838ca51e21b8ffa6cb51e35711202
     - fact.no-second-authority
     - cell.no-second-authority
     - subject.no-second-authority
@@ -9773,7 +9773,7 @@ fact_sets:
       - no-second-authority
       - no-second-authority
     - - no-second-authority
-  - - 7de2b566ce73e33cb56dd5f8ce4cc50796d9cabd977b05adb11205cf2279fc7a
+  - - 302ae4960e3340ccf9d6abddca7766635506f7c0e569a15c02f6875a9685a397
     - fact.no-second-final-gate
     - cell.no-second-final-gate
     - subject.no-second-final-gate
@@ -9788,7 +9788,7 @@ fact_sets:
       - no-second-final-gate
       - no-second-final-gate
     - - no-second-final-gate
-  - - 4b669930cfd530ebca4a78f78aca58f962c4be3b7951181bec8f9c2280829873
+  - - 2d61c0ee63eaab6e75a5242ea31fd5243865b48e373e57a11c7656b38ff6984c
     - fact.no-delivery-deadline-condition
     - cell.no-delivery-deadline-condition
     - subject.no-delivery-deadline-condition
@@ -9803,7 +9803,7 @@ fact_sets:
       - no-delivery-deadline-condition
       - no-delivery-deadline-condition
     - - no-delivery-deadline-condition
-  - - 8e0f9e1c6260d016d6983a75b1ed4dbed758aca0e45d31c55e97041eb8480275
+  - - 5211b4f9c9cab9e53dfc35ccb5423e9a68929d3085f88b80cc77f41952ac5d0c
     - fact.no-fixed-execution-flow
     - cell.no-fixed-execution-flow
     - subject.no-fixed-execution-flow
@@ -9818,7 +9818,7 @@ fact_sets:
       - no-fixed-execution-flow
       - no-fixed-execution-flow
     - - no-fixed-execution-flow
-  - - d7bd5f60660fe9ee90b342809193675c17e48bd7eb5714a442c736fc0cb97228
+  - - d8f563c9b19108ff57d1645f1f54f84e3972d9c99941dff11640382f125d6364
     - fact.performance-claim-measurement-contract
     - cell.performance-claim-measurement-contract
     - subject.performance-claim-measurement-contract
@@ -9833,7 +9833,7 @@ fact_sets:
       - performance-claim-measurement-contract
       - performance-claim-measurement-contract
     - - performance-claim-measurement-contract
-  - - 8f070414dbc3035d3ace0db083f2cdcaf07305994a359d552088d331c1f264b6
+  - - 40ed989744db1e0ab9eba718ba63bb68d9ae875dfe9cf76bad2d371544f34265
     - fact.non-ui-v2-separate-admission
     - cell.non-ui-v2-separate-admission
     - subject.non-ui-v2-separate-admission
@@ -9851,7 +9851,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - non-ui-v2-separate-admission
-  - - df25d8ab2609db147b45a876d7472de64ed7796be352f1f790d2f7591fecbb89
+  - - 15a4d0ceaee322a5e3d3338f64b549904bdeffd330badea63d269354471b56cb
     - fact.provider-p0-excluded
     - cell.provider-p0-excluded
     - subject.provider-p0-excluded
@@ -9869,7 +9869,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - provider-p0-excluded
-  - - ce37dd14aa96ae9a15ee69e79291436fc3428cb2b7a7d3bb57189ed9492637dc
+  - - 0ccc90ade213994f6be4c4793b0d8a6f816324b8e06e0ee2f841c317d9565ded
     - fact.provider-reentry-evidence-required
     - cell.provider-reentry-evidence-required
     - subject.provider-reentry-evidence-required
@@ -9887,7 +9887,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - provider-reentry-evidence-required
-  - - bbc2c20c6419be58a4e5beb71c8e9aadce596d6fdb3d0ebbc55af09e62b24633
+  - - 90ff7d2ea2d22f504ece7303179d2e3944e8a757454521f14db086ecec6180b0
     - fact.shared-engine-future-boundary
     - cell.shared-engine-future-boundary
     - subject.shared-engine-future-boundary
@@ -9905,7 +9905,7 @@ fact_sets:
       - input.repository.docs-non-ui-semantic-fact-completeness-md
       derivation: null
     - - shared-engine-future-boundary
-  - - 810a78a3ef57018b4dc35990d03de32ff8208a930b2a5699349da81d6a23a823
+  - - 520f65b1fdf0a9fb4c9a0b7a932447ed16611c3c3b677abf8c6c8774a3eb4809
     - fact.rollout-1-v1-capacity
     - cell.rollout-1-v1-capacity
     - subject.rollout-1-v1-capacity
@@ -9920,7 +9920,7 @@ fact_sets:
       - rollout-1-v1-capacity
       - rollout-1-v1-capacity
     - - rollout-1-v1-capacity
-  - - 840a65cd4a827ae6784d3ccdfd7ec6aa0f85dc8e0be36f71756c0d0d222ce7ae
+  - - c0904f86b79f10cc522e09bd627f510508c73cc8037c539a6d86d527f5d47cf1
     - fact.rollout-2-formal-denotation
     - cell.rollout-2-formal-denotation
     - subject.rollout-2-formal-denotation
@@ -9935,7 +9935,7 @@ fact_sets:
       - rollout-2-formal-denotation
       - rollout-2-formal-denotation
     - - rollout-2-formal-denotation
-  - - 12c88e715ee0259a05239406ae0580776de919137a78117d7c34413fcfeffeea
+  - - 9923133082190cb697fc19128a9a7b388619259b8a1b59cd8bd651fa2016ee97
     - fact.rollout-3-engine-independent-oracle
     - cell.rollout-3-engine-independent-oracle
     - subject.rollout-3-engine-independent-oracle
@@ -9950,7 +9950,7 @@ fact_sets:
       - rollout-3-engine-independent-oracle
       - rollout-3-engine-independent-oracle
     - - rollout-3-engine-independent-oracle
-  - - d78a1d29c552bb457c49ea63b035d3adc724f4913ae0a5aed8317744aa9d77ff
+  - - 249d75b79f55276694adac41df97678765e8268150c4c64f1685a9646dd1ff07
     - fact.rollout-4-ui-v2-opt-in
     - cell.rollout-4-ui-v2-opt-in
     - subject.rollout-4-ui-v2-opt-in
@@ -9965,7 +9965,7 @@ fact_sets:
       - rollout-4-ui-v2-opt-in
       - rollout-4-ui-v2-opt-in
     - - rollout-4-ui-v2-opt-in
-  - - 24f293d2571e87b9c449d136e119b021ce79764ab6ef2732daff13ee717c093d
+  - - 24e3566a5bba314ac725e67b8344fac8cd92e5c2387de126517a240fc5ae85c9
     - fact.rollout-5-mixed-downstream
     - cell.rollout-5-mixed-downstream
     - subject.rollout-5-mixed-downstream
@@ -9980,7 +9980,7 @@ fact_sets:
       - rollout-5-mixed-downstream
       - rollout-5-mixed-downstream
     - - rollout-5-mixed-downstream
-  - - 453430959cfcab07242f1ed8ba76ff9006626843858c1528d02811b06c611807
+  - - 6dfac4277ecb547b878c89304dc26290161db3982f6c37afd89c3f92fd86b6ea
     - fact.rollout-6-default-after-proof
     - cell.rollout-6-default-after-proof
     - subject.rollout-6-default-after-proof
@@ -9995,7 +9995,7 @@ fact_sets:
       - rollout-6-default-after-proof
       - rollout-6-default-after-proof
     - - rollout-6-default-after-proof
-  - - bcf34981695ea92337259e02ea904377a8cbf8a1b5a9923f142f7d34c08e2628
+  - - b95a27d927597ab7ab3490740dc102e52806f909a4b606e13b060392e8349efb
     - fact.rollout-7-non-ui-provider-separate
     - cell.rollout-7-non-ui-provider-separate
     - subject.rollout-7-non-ui-provider-separate
@@ -10010,7 +10010,7 @@ fact_sets:
       - rollout-7-non-ui-provider-separate
       - rollout-7-non-ui-provider-separate
     - - rollout-7-non-ui-provider-separate
-  - - 0a5599841dbec132e9d78ccd3a393febb888c44783bac828b359bbd8a8e91852
+  - - 75051a979d41e27478f0ece871c0fa13a8ec99c6f045cf8149304ad1dd785c97
     - fact.independent-full-finite-test-expander
     - cell.independent-full-finite-test-expander
     - subject.independent-full-finite-test-expander
@@ -10025,7 +10025,7 @@ fact_sets:
       - independent-full-finite-test-expander
       - independent-full-finite-test-expander
     - - independent-full-finite-test-expander
-  - - bf00f3f53a53606ace2b1ec0894eb23bdd57e41cecccca88afe9e6727e60e367
+  - - e177cf8d019c8254c13360c52c48fca16f8e56aec2bbd1479386f4bef3f474db
     - fact.exhaustive-pointwise-equivalence-tests
     - cell.exhaustive-pointwise-equivalence-tests
     - subject.exhaustive-pointwise-equivalence-tests
@@ -10040,7 +10040,7 @@ fact_sets:
       - exhaustive-pointwise-equivalence-tests
       - exhaustive-pointwise-equivalence-tests
     - - exhaustive-pointwise-equivalence-tests
-  - - f293f7d8378cee19e948141ab7cf1b883119691dc87c99ef39f515a36eb9e0fc
+  - - 713a85d03aed6613adf5c7a86d091d09a93c557c0d76f67f14717f0e2a26d3ad
     - fact.adversarial-false-completion-counterexamples
     - cell.adversarial-false-completion-counterexamples
     - subject.adversarial-false-completion-counterexamples
@@ -10055,7 +10055,7 @@ fact_sets:
       - adversarial-false-completion-counterexamples
       - adversarial-false-completion-counterexamples
     - - adversarial-false-completion-counterexamples
-  - - 93132f804bade1d76b00570a595bb73ead6dfefa83991135dd9fa3a379111e68
+  - - c073664cc8fb4687ffef4aa835c33599ea2846a2ca6e1aff7e4b129153b1548c
     - fact.mixed-contract-verification
     - cell.mixed-contract-verification
     - subject.mixed-contract-verification
@@ -10070,7 +10070,7 @@ fact_sets:
       - mixed-contract-verification
       - mixed-contract-verification
     - - mixed-contract-verification
-  - - d98b859dcf1cfaee75f2163b8b70d1a67740eb555ddbcd788d91abfd92892844
+  - - bfe80f2a126b9e5140db34449f0ff3c2604624542ccb32b27f88709b0b4fffa9
     - fact.capacity-early-rejection-verification
     - cell.capacity-early-rejection-verification
     - subject.capacity-early-rejection-verification
@@ -10085,7 +10085,7 @@ fact_sets:
       - capacity-early-rejection-verification
       - capacity-early-rejection-verification
     - - capacity-early-rejection-verification
-  - - e5bbd62522f16d3c385f51c4b74ff33846e9cf95e05bf784a1a1af96a0337926
+  - - f9bfbaf86d28e196f1ec84cb068530da907d16f06d2f28709966d8ca896b3ad0
     - fact.complexity-parameter-verification
     - cell.complexity-parameter-verification
     - subject.complexity-parameter-verification
@@ -10100,7 +10100,7 @@ fact_sets:
       - complexity-parameter-verification
       - complexity-parameter-verification
     - - complexity-parameter-verification
-  - - 92e3f0b6e7890dbf61f3dbddcfb01160cd8e29cbc089992e9b214d9e7e9fc048
+  - - 45486880876c18c7066678d269e4024a9c7129db06701462a9dbd3452442e45f
     - fact.distribution-context-parity
     - cell.distribution-context-parity
     - subject.distribution-context-parity
@@ -10115,7 +10115,7 @@ fact_sets:
       - distribution-context-parity
       - distribution-context-parity
     - - distribution-context-parity
-  - - 437938a502070e6ee4f44add49ed1d412a9a4902daa7e92cb2cc5a5593c1fee7
+  - - ba5a6e0cda40a3d8d6424cd7bcff698ffb0705b8d17f4c15d057c2f87bb5f647
     - fact.architecture-deliberation
     - cell.architecture-deliberation
     - subject.architecture-deliberation
@@ -10130,7 +10130,7 @@ fact_sets:
       - architecture-deliberation
       - architecture-deliberation
     - - architecture-deliberation
-  - - 7948a8d3c1e5f1898c90a93572b0d7d2dc72582bc1982646124ea6c537261f42
+  - - 54854e7cbcda77785426bf7c05c2b56a1c0a67a83aeb2a0fcab6a66fede7a232
     - fact.no-sampling
     - cell.no-sampling
     - subject.no-sampling
@@ -10145,7 +10145,7 @@ fact_sets:
       - no-sampling
       - no-sampling
     - - no-sampling
-  - - eaccc2bda98b889b432e43d2ab938ad8864ef8f1ddb21c6441a113a5d4bbe675
+  - - 0c0011303d09317336345158f14bf114081412bd18604aba96e8ff2d1db0d223
     - fact.no-granularity-reduction
     - cell.no-granularity-reduction
     - subject.no-granularity-reduction
@@ -10160,7 +10160,7 @@ fact_sets:
       - no-granularity-reduction
       - no-granularity-reduction
     - - no-granularity-reduction
-  - - 3cb52f31c9e7be7dd2c6e8dd877b125562c4290b64190a2d24b261a5f2c3ffa7
+  - - 3a6561058e8e4b2958fd2eda112350c2430ecc5e48a148ab84552273ec4dd953
     - fact.no-expand-then-deduplicate
     - cell.no-expand-then-deduplicate
     - subject.no-expand-then-deduplicate
@@ -10175,7 +10175,7 @@ fact_sets:
       - no-expand-then-deduplicate
       - no-expand-then-deduplicate
     - - no-expand-then-deduplicate
-  - - 42a3b1c3db1f35d64c6d0f7caaefa4a0098f2efefce194eb9abee9a788f5e2c4
+  - - 6bdf9b1c4bd5b017a3e9279d4253e6108f9bad52fdee96d6ae25bf0fddd30bb6
     - fact.no-historical-proof-reuse
     - cell.no-historical-proof-reuse
     - subject.no-historical-proof-reuse
@@ -10190,7 +10190,7 @@ fact_sets:
       - no-historical-proof-reuse
       - no-historical-proof-reuse
     - - no-historical-proof-reuse
-  - - ca1063080b92f4b850f4e5afc32aea2773f0298d5eaa4815ca41777c1bd6f193
+  - - ed80b4ebb4b0917461c73f0548fef5ebcefbab0b3560f3341bf9f8a8781e393f
     - fact.no-authority-gate-proliferation
     - cell.no-authority-gate-proliferation
     - subject.no-authority-gate-proliferation
@@ -10205,7 +10205,7 @@ fact_sets:
       - no-authority-gate-proliferation
       - no-authority-gate-proliferation
     - - no-authority-gate-proliferation
-  - - b741cab75d814ec734036bfe1053e4bf5a882f311ba0f189e0b64f176b7146ca
+  - - 2992cf21d23e2a2b28100ad820b75beb7f8135b3bb13a4719ca6ef4c7884da5a
     - fact.no-arbitrary-symbolic-execution
     - cell.no-arbitrary-symbolic-execution
     - subject.no-arbitrary-symbolic-execution
@@ -10220,7 +10220,7 @@ fact_sets:
       - no-arbitrary-symbolic-execution
       - no-arbitrary-symbolic-execution
     - - no-arbitrary-symbolic-execution
-  - - 1e37c0d89a90294ef83bf195ba9c4cfdeac9eb302f57489f0582f2dd331015ba
+  - - 402f98f7b4ca7e1f32dce6429422da9b3cdaca8e43e86dfa124c7a1677481ff0
     - fact.no-ungrounded-applicability-omission
     - cell.no-ungrounded-applicability-omission
     - subject.no-ungrounded-applicability-omission
@@ -10235,7 +10235,7 @@ fact_sets:
       - no-ungrounded-applicability-omission
       - no-ungrounded-applicability-omission
     - - no-ungrounded-applicability-omission
-  - - 78fe2ec98b2cba040f53fb55e8a393d39fea4b13d66a8bc120b145fb28a6dc7a
+  - - 3865844aa88a839995451ef054c8f638e71d76438529b5bc57ce07d11c2ec43a
     - fact.v1-v2-denotation-equivalence-ac
     - cell.v1-v2-denotation-equivalence-ac
     - subject.v1-v2-denotation-equivalence-ac
@@ -10250,7 +10250,7 @@ fact_sets:
       - v1-v2-denotation-equivalence-ac
       - v1-v2-denotation-equivalence-ac
     - - v1-v2-denotation-equivalence-ac
-  - - 1584d3dd1b9c05bfbaa31db40353d5f70b14c5e83ee2d29e5ca05d8179707ffa
+  - - 4e0bbb54adb5cd0fb71c66d780b20da0741ea0d79383065058fc0fc66c084364
     - fact.canonical-region-and-applicability-ac
     - cell.canonical-region-and-applicability-ac
     - subject.canonical-region-and-applicability-ac
@@ -10265,7 +10265,7 @@ fact_sets:
       - canonical-region-and-applicability-ac
       - canonical-region-and-applicability-ac
     - - canonical-region-and-applicability-ac
-  - - 80161b65e74b17520fae7394c8fb24391cc9e028f115a36efe18c737799881f9
+  - - 700d885688b6a507968b8dad22b03e294aa8f937902c60cd9021948cb0690f56
     - fact.mixed-contract-current-evidence-ac
     - cell.mixed-contract-current-evidence-ac
     - subject.mixed-contract-current-evidence-ac
@@ -10280,7 +10280,7 @@ fact_sets:
       - mixed-contract-current-evidence-ac
       - mixed-contract-current-evidence-ac
     - - mixed-contract-current-evidence-ac
-  - - 6ceda958bad1f0b373dd2eafe517438201108e2dbf5550e46699ec5eb6edaf96
+  - - ce95495f91ddaaac388869057716347be2739bd7bf29a6587501ec36b0d82074
     - fact.noninterference-complexity-ac
     - cell.noninterference-complexity-ac
     - subject.noninterference-complexity-ac
@@ -10295,7 +10295,7 @@ fact_sets:
       - noninterference-complexity-ac
       - noninterference-complexity-ac
     - - noninterference-complexity-ac
-  - - 06b315efcb0b4c9de714f85ce52e03ad337f186059bf13f4cf908835696604a5
+  - - dc4e0b3cdc2e249239274069603d1ce7813c76a46fc25cb127cf0058967520a4
     - fact.v1-capacity-guard-ac
     - cell.v1-capacity-guard-ac
     - subject.v1-capacity-guard-ac
@@ -10310,7 +10310,7 @@ fact_sets:
       - v1-capacity-guard-ac
       - v1-capacity-guard-ac
     - - v1-capacity-guard-ac
-  - - 06e19d44924a631cc74fe1ceed2e987062bddf12dcf78ee64dee5654179b3c6d
+  - - 9695a76471c4a25c1c10dbdd218885f2cd82423fe1cad45f0d85ff374d98af6e
     - fact.scope-and-rollout-ac
     - cell.scope-and-rollout-ac
     - subject.scope-and-rollout-ac
@@ -10325,7 +10325,7 @@ fact_sets:
       - scope-and-rollout-ac
       - scope-and-rollout-ac
     - - scope-and-rollout-ac
-  - - ecb7d1ae44db9fd97b393fa75ba68f989a4b151f81cd7468c0d96ec4aa3371aa
+  - - 3fb7c3bb6ddb625006a2aa1b3078d55a6c63fdf3d85050f9608fba530126c8f7
     - fact.package-antidegradation-and-parity-ac
     - cell.package-antidegradation-and-parity-ac
     - subject.package-antidegradation-and-parity-ac
@@ -10340,7 +10340,7 @@ fact_sets:
       - package-antidegradation-and-parity-ac
       - package-antidegradation-and-parity-ac
     - - package-antidegradation-and-parity-ac
-  - - faf74f1adf82721168bfd03b4c8bb9e6323e546efe17a0b5c7080863892c0ecb
+  - - 9870f2d5e6256504b6617c2f0d486995b7e487779ea807c29eaf2df9de5acced
     - fact.inventory-is-not-completion
     - cell.inventory-is-not-completion
     - subject.inventory-is-not-completion
@@ -10355,7 +10355,7 @@ fact_sets:
       - inventory-is-not-completion
       - inventory-is-not-completion
     - - inventory-is-not-completion
-  - - 3b1c1445c64638691f315de3cb7244d47e0d9ab0ecaf4eb6ae9e03dd563f7638
+  - - 809599b3d892daf97643df3ddf6e35b8364176091cc5b8d47ca43e725aa4f73e
     - fact.public-schema-change-risk
     - cell.public-schema-change-risk
     - subject.public-schema-change-risk
@@ -10370,7 +10370,7 @@ fact_sets:
       - public-schema-change-risk
       - public-schema-change-risk
     - - public-schema-change-risk
-  - - 5fbc0d21b464418329dbefe8172847118cb797c4c96f96af20cf7abe8bb0cb11
+  - - 1d2b85837f54a0479ab399c9c7404d0dc8ceed0f85a8cf512b688a638d338b06
     - fact.false-completion-critical-path-risk
     - cell.false-completion-critical-path-risk
     - subject.false-completion-critical-path-risk
@@ -10385,7 +10385,7 @@ fact_sets:
       - false-completion-critical-path-risk
       - false-completion-critical-path-risk
     - - false-completion-critical-path-risk
-  - - 67fad189cc3adbbf7cb204244a42828ab7fbb80b39343c72b7627d50a8b5678d
+  - - 75a758c8db59e0f2d71f95cdee5fdcbe25bb4e00aa2ac1f3a59990956984f9b1
     - fact.symbolic-oracle-observability-risk
     - cell.symbolic-oracle-observability-risk
     - subject.symbolic-oracle-observability-risk
@@ -10422,791 +10422,791 @@ obligations:
   - overrides
   rows:
   - - proof.symbolic-denotation-efficiency-result.exact
-    - 8cf96029b39d11de28bf4b539edf2faabfd03209d15b57d2cc9b9b99eb1abfed
+    - 7d399bc2891dd48bffe9ec65dbf283410be3aa6e67348c4a031949e78fde6bf9
     - fact.symbolic-denotation-efficiency-result
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/0/comparison/parameters/value
       - symbolic-denotation-efficiency-result
   - - proof.original-attachment-provenance.exact
-    - abe7534ec845a950e35766b5731cdf6eeb16403034a43478ffe9d0a0dc9a57cd
+    - 9fd128c3484dff37bbce566431ffffee5e1b8566ad0a8b99fbad6535a7554b21
     - fact.original-attachment-provenance
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/1/comparison/parameters/value
       - original-attachment-provenance
   - - proof.audited-source-supersession.exact
-    - d0ed56f618cf7a7112d834463ab0da3426a18193a4e4f5ad7762116da1256973
+    - bbf0a790821ed5a53ab073c05ae2e42ea35ecf10c6c6f765130fdb1f9f91edf6
     - fact.audited-source-supersession
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/2/comparison/parameters/value
       - audited-source-supersession
   - - proof.complete-material-input-index.exact
-    - 15f836d363064aea3d79db84a0bbc6b97e4934700b09c56163962be895220753
+    - 6fb96f03b2abf3e8277d6f3f04d3410ce0d76e028c60f02c2d7aa0ffa329d137
     - fact.complete-material-input-index
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/3/comparison/parameters/value
       - complete-material-input-index
   - - proof.complete-extensional-universe.exact
-    - 97c0b30a839978fbb85f1bbd10180a0e37a7bf5442d0ab8576c5712949b404d2
+    - b93d70fdecb5ce559cfc7b20518ef3ebf968f99940205c7d62d963c9b0a846f2
     - fact.complete-extensional-universe
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/4/comparison/parameters/value
       - complete-extensional-universe
   - - proof.subject-relation-universe-axis.exact
-    - 912eb1f9b7ccc03b66c2a30656a1ffe12ffe2ca36948185a728ff6ce99dd1d07
+    - 0b5db24601a4949ed08374f2600df905a78f324c54e8415faf4bb980b365af6b
     - fact.subject-relation-universe-axis
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/5/comparison/parameters/value
       - subject-relation-universe-axis
   - - proof.target-universe-axis.exact
-    - 7fc53707985b3f48d0f613fa15532994ee4a1d447468ebcb7565311b60981aae
+    - b04808bdf36a8513b86e8383e7bfe7202d6d16703ba8642be668a50253a1c8fe
     - fact.target-universe-axis
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/6/comparison/parameters/value
       - target-universe-axis
   - - proof.reachable-condition-variation-universe-axis.exact
-    - 413d4f594707e05d243ba4ed9aed84ea1b7761e0be808dfef062c81c584a4e74
+    - a76ef2c97b064b643ce800379f10a7e747896c643b5d9905e0b346c09bbd3f04
     - fact.reachable-condition-variation-universe-axis
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/7/comparison/parameters/value
       - reachable-condition-variation-universe-axis
   - - proof.applicable-atomic-property-universe-axis.exact
-    - 80283228f7487d951395054efa034fbae3c9e5bc7a61b5b4e7008227b9aa5c22
+    - c194999ed9954d797f03441372d7eb2d3055da6870572a31a35368f31da5ad59
     - fact.applicable-atomic-property-universe-axis
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/8/comparison/parameters/value
       - applicable-atomic-property-universe-axis
   - - proof.population-quantifier-universe-axis.exact
-    - 7b21e7a363abd2197d4677489f7b756751cd5eb912a055c5dff032fb8f62caa9
+    - 2ad439a15f99d6ff13fef8a9ff471091377ad1aeccb724ead1f8bd17adfb2a7f
     - fact.population-quantifier-universe-axis
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/9/comparison/parameters/value
       - population-quantifier-universe-axis
   - - proof.pointwise-disposition-equivalence.exact
-    - b9813bab647db727af6b713718e58aad7f18cdef9115a3e1fc1420ffb41ed722
+    - 9c11f9e784e56fe9c2823c9c8e8cac9bab7dc370de6757b288848b61c9d9cdbf
     - fact.pointwise-disposition-equivalence
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/10/comparison/parameters/value
       - pointwise-disposition-equivalence
   - - proof.pointwise-expected-semantics-equivalence.exact
-    - 8b0136415f76744f2ef4d412a4bfefadbdeeb7167799dc9720994aa6b54e445d
+    - 17840267a58d9f4f042ae0f1c3588f27c9b971d2b36a6284b0ea8a0c9369ddcc
     - fact.pointwise-expected-semantics-equivalence
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/11/comparison/parameters/value
       - pointwise-expected-semantics-equivalence
   - - proof.pointwise-proof-denotation-equivalence.exact
-    - c152eef1e8465e4bfa65900495dea3ef621a6542cf5ea98134c5c0e02b418872
+    - 7c0c405308bc4acc91ee3a9a7c29c95edad7e4f2251adfea69acfd1c4ac8e67e
     - fact.pointwise-proof-denotation-equivalence
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/12/comparison/parameters/value
       - pointwise-proof-denotation-equivalence
   - - proof.v1-ground-row-identity-not-required.exact
-    - 3c39f107eae940b4aa7ee1fbbba400555f82f046d3f400c205ff8bf0848a42d0
+    - ea65dfd0d6d2c858ce2b51b8b15d0c08d260eb867ae947cebbb1ccae4ae3f756
     - fact.v1-ground-row-identity-not-required
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/13/comparison/parameters/value
       - v1-ground-row-identity-not-required
   - - proof.fact-identity-proof-obligation-separation.exact
-    - d860c69c3966ea9626b95370056acfe083b15e3c79d24818fc3a449b1b3c1e5d
+    - 033660a1cddedec647f5669be74ce3a3c361b7ef330689125faaa5d68b9e9897
     - fact.fact-identity-proof-obligation-separation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/14/comparison/parameters/value
       - fact-identity-proof-obligation-separation
   - - proof.required-method-denotation-preservation.exact
-    - 9cf743d82dd28bcded5437c0262349b986d6391612e6bb1b68d1c4f9257d7614
+    - 1600f3f7a795d071d007aded09907ff5738c3d7da8c09d6fd17fd2375a5e3971
     - fact.required-method-denotation-preservation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/15/comparison/parameters/value
       - required-method-denotation-preservation
   - - proof.comparison-oracle-environment-preservation.exact
-    - 0701ecf1e9914d8f6f46be26b295c167f93065091a9da77d0675b25a0184c80f
+    - b0b151b8e9580ff5d75f52217c2db3c7497a2801a7719707c6e70c88b6581a31
     - fact.comparison-oracle-environment-preservation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/16/comparison/parameters/value
       - comparison-oracle-environment-preservation
   - - proof.protected-observation-preservation.exact
-    - d725f7f4d902fcaca2c6abcfae0231f6dee025adfb08c8711a43a9f523220e2e
+    - dd070cc74558b9820eb84cb1f298774d1fe655d3bc22987d50da3d60152bb849
     - fact.protected-observation-preservation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/17/comparison/parameters/value
       - protected-observation-preservation
   - - proof.exact-target-layout-pixel-preservation.exact
-    - b9bc33abf523834f4cd6d2f7ec0af652fff69f331d5e9d503bbf531e84a1aed2
+    - bde3d1d7f0ca5c3887a10990f92cfd74719607be1c590050f78929c4bcb08ec3
     - fact.exact-target-layout-pixel-preservation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/18/comparison/parameters/value
       - exact-target-layout-pixel-preservation
   - - proof.canonical-resource-value-authority.exact
-    - 72e6ad80b8b176c4da4bc8c767d0180d39bc7396e4da42140e526fd001bd9844
+    - 9a471762daa77f83492583641b75cb5047d97cd96dd2581ebf411dd3c18fada5
     - fact.canonical-resource-value-authority
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/19/comparison/parameters/value
       - canonical-resource-value-authority
   - - proof.versioned-ui-symbolic-v2.exact
-    - 96d467cf932e23003ec49019dd8eefcb0bae412ff46eb5017758b64cf143bbf7
+    - e341cad02e362345eba5280efe1d38ff3b073a00ce17e013822a374269dae5c6
     - fact.versioned-ui-symbolic-v2
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/20/comparison/parameters/value
       - versioned-ui-symbolic-v2
   - - proof.ui-v2-explicit-opt-in.exact
-    - 98cf10503b51d6a6fe2b1763ec14b3ab03aa26d1964d02fa5e00e4878221c396
+    - c1942201a66453c904e909c79a3ebf7d0c4c1c74ea9efad816c19956d570d6f8
     - fact.ui-v2-explicit-opt-in
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/21/comparison/parameters/value
       - ui-v2-explicit-opt-in
   - - proof.mixed-v1-v2-targets-one-contract.exact
-    - 858f310ea869f1b5b4ce4b1c0e08145e7bfffdb852b469f8669060cd350071c4
+    - d79c8c818c635ac6eb996cf35ce50320d9c6a5af5296facd63739b205861e522
     - fact.mixed-v1-v2-targets-one-contract
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/22/comparison/parameters/value
       - mixed-v1-v2-targets-one-contract
   - - proof.restricted-symbolic-predicate-dsl.exact
-    - 45640a3f820d5ff58c4039ddc8f7a610429cb8ed1584b29c66f27bb9eb5c5ffb
+    - 72a8252f694a51eeb5286ca97090991ed588dab6c8b7bd5ba1dd74be7d3cf9af
     - fact.restricted-symbolic-predicate-dsl
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/23/comparison/parameters/value
       - restricted-symbolic-predicate-dsl
   - - proof.finite-enum-and-bounded-numeric-domains.exact
-    - 3bfc8e9395d2d1ef591c4bbd2bc6cabe45ef2072dd8adcb40069b550323627e0
+    - b17943dbec64c2f8512d9d674651245af9c4492a1a58514a0b73989c1f73d9ff
     - fact.finite-enum-and-bounded-numeric-domains
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/24/comparison/parameters/value
       - finite-enum-and-bounded-numeric-domains
   - - proof.canonical-shared-decision-dag.exact
-    - d3011ef313bc8d2055667de4abed595f1b8d192cd7799ab846a6a3d6b8abf7b3
+    - f39fd07d1414a6155e0b919db6cf30fec82fc0873ca18df2e67284111192d231
     - fact.canonical-shared-decision-dag
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/25/comparison/parameters/value
       - canonical-shared-decision-dag
   - - proof.unreachable-branch-elimination.exact
-    - 9584f0c79542fd6cec541147b39dd53baa3d34eeee58dbe9b7a1aad7ac9efc25
+    - 75e4e2564781a13d32a7955f9b995fdd036ae51d66369ec78ad11d46d8a06c75
     - fact.unreachable-branch-elimination
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/26/comparison/parameters/value
       - unreachable-branch-elimination
   - - proof.no-production-ground-materialization.exact
-    - d99c47df3409503742bdc8a5d79330db9c1b341be3447801c837c49354507013
+    - 383b7f4ff103d1d22779a8e614b17eac694afdbfea15022dbdc903f0da86b403
     - fact.no-production-ground-materialization
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/27/comparison/parameters/value
       - no-production-ground-materialization
   - - proof.mutually-exclusive-effective-regions.exact
-    - 676520ae163feeef6bfcc22a8c41c736e642501435a55b8d4e73ba3c351154c2
+    - cb6b2d5f5c382bc330e9d94f43854ef92248c59f7765bbba8f8b7e3b054f79d3
     - fact.mutually-exclusive-effective-regions
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/28/comparison/parameters/value
       - mutually-exclusive-effective-regions
   - - proof.exact-region-coverage-no-gaps.exact
-    - 25ba622849d07bda0077252cdd170ad856983d4ccdc5e336baf450622428df9e
+    - f76b1bb4c18a603356afb6b6f4d48338dcbe25e043c0b563b536ffd5778ec924
     - fact.exact-region-coverage-no-gaps
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/29/comparison/parameters/value
       - exact-region-coverage-no-gaps
   - - proof.constant-located-expected-rule-values.exact
-    - ab8981f65f04e916e66ffa281fca257f8216a259018e0c8d5138382ae24214c5
+    - 69eced8ae5c7a02c4f6cfd6d73ef232946a2fdfde3a8e2fe67bc21e7c03698e8
     - fact.constant-located-expected-rule-values
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/30/comparison/parameters/value
       - constant-located-expected-rule-values
   - - proof.no-rule-precedence-or-value-function.exact
-    - b6f05df46f758a842337827833e5abfd5452a531fbcb5a1ab59746da5b5cb619
+    - 47b96f76c50761c5667e0fc5792cb7cca5d98160182bb6ed883b9561c57989aa
     - fact.no-rule-precedence-or-value-function
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/31/comparison/parameters/value
       - no-rule-precedence-or-value-function
   - - proof.deterministic-canonical-identity.exact
-    - 7494c4fe089d07a6dc2b5e7756a7df1be4455dda5062e9c8b9a17cbfc864ceaf
+    - 1479b92b98c4a5d3fdf755ef78344aad148fa46cc0ed27fb55fc633006cab926
     - fact.deterministic-canonical-identity
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/32/comparison/parameters/value
       - deterministic-canonical-identity
   - - proof.symbolic-complexity-fuse.exact
-    - ee516fbefeee7316fe5a2d750bc43c48a5afab87363c704cfb8822c781610e3f
+    - 5c03ba1694b5903a19381d7ae1a52644532cf536cca42349164d9d43471d7d91
     - fact.symbolic-complexity-fuse
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/33/comparison/parameters/value
       - symbolic-complexity-fuse
   - - proof.ground-cardinality-diagnostic-only.exact
-    - 725c25320361e541713b5b174d9ff46a70b9743219ccce8682475bda89e5f5d2
+    - 1956d852fdf732f84d74a97ceae1677f3e5575470937a03f9741917b9adc081e
     - fact.ground-cardinality-diagnostic-only
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/34/comparison/parameters/value
       - ground-cardinality-diagnostic-only
   - - proof.package-policy-property-catalog.exact
-    - 0a96c7b5661a8470c3b43eceea878925dd323b3e4d04d25af9c48e65b17dc279
+    - 57fa5dd99976ae01054c6539a1ceb695846d3070dfc4c0f33aad776a4d86e08e
     - fact.package-policy-property-catalog
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/35/comparison/parameters/value
       - package-policy-property-catalog
   - - proof.inspector-census-applicability.exact
-    - 94298f977db4c27d89b9114df66e70cc1433193c9c686102651170844807f49c
+    - 656cf7a7b570421a230a74cf4fabd9b607f59cff888839abd15df47b1d0112a0
     - fact.inspector-census-applicability
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/36/comparison/parameters/value
       - inspector-census-applicability
   - - proof.basis-backed-property-remainder.exact
-    - 20dfa4fcf5f99256e2527c39c653a4879c6be9a501034d60493ba9c2e8863380
+    - f868b6c952b305761465a20b46233e1fe21850fe5d7c6313190980948a2868db
     - fact.basis-backed-property-remainder
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/37/comparison/parameters/value
       - basis-backed-property-remainder
   - - proof.unknown-applicability-blocks.exact
-    - b246f3ae6c60672ba2560e871b66b3414da9c5c4d236a39387719bdf92478d7f
+    - c5be2681424ae58b7a40dfc5f043c8fc7db83fe838a7108cc4017839900a4508
     - fact.unknown-applicability-blocks
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/38/comparison/parameters/value
       - unknown-applicability-blocks
   - - proof.relation-population-first-class-model.exact
-    - 33d46cb9f5b20015c37bf62074a8a4fc16d07137c680230d2c59388c169abcf6
+    - f88e8d0ccf2a5f010415fd47b8cb28d0b784513e567749c2b2c7670616231eb1
     - fact.relation-population-first-class-model
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/39/comparison/parameters/value
       - relation-population-first-class-model
   - - proof.population-quantifier-denotation.exact
-    - 8c37157410da4794613543dfff3ebbae92b56baf362d62c3d70273ac9348d4c9
+    - 097c914872d4eba3f85f98308a315fbfdc3f381a1dd7acfbb3195ac31b2acc18
     - fact.population-quantifier-denotation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/40/comparison/parameters/value
       - population-quantifier-denotation
   - - proof.v2-rule-method-region-projection.exact
-    - a71d7da8509d74027daf62d74b3d2ccd2678824b041a8795253c8c3e0cedb6bf
+    - f3193f4582c877abe1a06dd3e7c4aa587c104ea34a79e49faa215a72314f4a92
     - fact.v2-rule-method-region-projection
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/41/comparison/parameters/value
       - v2-rule-method-region-projection
   - - proof.stable-symbolic-fact-rule-identity.exact
-    - 6bdda0ed6646eaef614fe20307f7212815e95a1f465e593f97ccffcf00f8a53c
+    - 719ae06bc46acabea5cae0364623245cd09d3da03944c8fcbdb2577b1304728e
     - fact.stable-symbolic-fact-rule-identity
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/42/comparison/parameters/value
       - stable-symbolic-fact-rule-identity
   - - proof.per-method-region-obligations.exact
-    - c5a061d05012766ca89ecd37141080b6ef53c15fdb8fcc6f71cfc5c961176be9
+    - bd2d309962b4a495cba18bfc3267d4f47697a8582bbf934691bbecc6554dd1a6
     - fact.per-method-region-obligations
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/43/comparison/parameters/value
       - per-method-region-obligations
   - - proof.typed-v2-rule-results.exact
-    - fb3eb08022ceb1d0d475b9590a600f99ef83b4e6049763e585e4c49737c6e3bb
+    - 35ea8f2a961a657389bd9d94f78b3bf787c68413116cdde918781139da6a89e9
     - fact.typed-v2-rule-results
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/44/comparison/parameters/value
       - typed-v2-rule-results
   - - proof.typed-certificate-results.exact
-    - 540e6cf3113369da32d3dfa3ebbed924f44f8c776c0ab3caa07a5c97ef4cd40e
+    - eee9bc46d2c422ef676da3b77849cce0a66643a6c5a5407c601def8fc8a4bdf7
     - fact.typed-certificate-results
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/45/comparison/parameters/value
       - typed-certificate-results
   - - proof.current-snapshot-evidence-only.exact
-    - ecdf158da5d840fef6e911868fad40c3c5ca999b9e774a126ea35a303428d4ff
+    - 2e8ed9e134adae341e008e3452c14cccdc6ec6ce82db68d0fe60743f13fc0ff7
     - fact.current-snapshot-evidence-only
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/46/comparison/parameters/value
       - current-snapshot-evidence-only
   - - proof.mixed-target-one-final-gate.exact
-    - 2bc2fdf3a4d25a3d9aeca293839391b05cadce451976220a94b3d8c8a0ae2f13
+    - 24b21cf1cd4208b34afd6616350bf591e3e260c4550944f1c8c5f76847b6233a
     - fact.mixed-target-one-final-gate
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/47/comparison/parameters/value
       - mixed-target-one-final-gate
   - - proof.set-valued-noninterference-certificates.exact
-    - 9492fb1ab6b16cf1e1926acf398596bfaed955892f6b5f328262c3865f64304f
+    - f1b857b8ee4de01f74bff45d6eea17312bc8ffe44c019722203aa8497e5c6984
     - fact.set-valued-noninterference-certificates
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/48/comparison/parameters/value
       - set-valued-noninterference-certificates
   - - proof.certificate-omitted-axis-coverage.exact
-    - ce37e4b4d7b7fc281ee7b333a699fe0234050806a7932743fe584f57ccb39934
+    - 51958d07b3aedaa1770719670f85bf677e0f777e44896bc51d1deecd69ac08f0
     - fact.certificate-omitted-axis-coverage
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/49/comparison/parameters/value
       - certificate-omitted-axis-coverage
   - - proof.certificate-dependency-edge-coverage.exact
-    - 85a5d1104ea8dfeeaa4712c98929730bc4d5a318b689d8d5a1a78ce647c5019b
+    - 541a8dfef951d3833eb8fb6a7309b414241c8333945e60aaa856716d3ff10152
     - fact.certificate-dependency-edge-coverage
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/50/comparison/parameters/value
       - certificate-dependency-edge-coverage
   - - proof.noninterference-obligation-count-metric.exact
-    - d9f629f25976d1c9b2ab25be2f7c8bb907df9b8a7a437cb413523bbfd7b4267f
+    - b93284b076b89db474bdb07b56b7a3918a2d602e7093a958bfea0fe74bf53cf3
     - fact.noninterference-obligation-count-metric
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/51/comparison/parameters/value
       - noninterference-obligation-count-metric
   - - proof.noninterference-dag-node-count-metric.exact
-    - f7725015b1a4c9b778c7d96ac49cec684e1990951e4b1feb7a8db4a73ec82d1c
+    - 1a395ae64e694783878cc6077cc036a9022c2cf96b45d4c86e166628c9e9e20f
     - fact.noninterference-dag-node-count-metric
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/52/comparison/parameters/value
       - noninterference-dag-node-count-metric
   - - proof.noninterference-byte-count-metric.exact
-    - 2854f06e32f616427502b9ee2e55c947beb5c9d3184a18ffbf3f1445c7ff96ab
+    - b7de4c22e4c7344b54272fe1a8aa4ee31fcfc5d10fa29ba15a4df001c67ed0c5
     - fact.noninterference-byte-count-metric
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/53/comparison/parameters/value
       - noninterference-byte-count-metric
   - - proof.complexity-independent-of-ground-cardinality.exact
-    - 9c0e595ebcb7ea15c157da9b8cf357123b28bebcec228c43be846c3f61aacc5b
+    - d0069869393705b68bdeb288cc6d3d1d39491972f816eb28b7c5b7d7cd850e95
     - fact.complexity-independent-of-ground-cardinality
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/54/comparison/parameters/value
       - complexity-independent-of-ground-cardinality
   - - proof.certificate-package-recomputation.exact
-    - 4ed2cdae0610d2f0784d8238cbba3b8bd016d76daa13b6dad10be0e291816c7c
+    - 4d18ff2b3115fc6d796caf346fd9533090c0117fd6e2ed2b6afc90954e026f60
     - fact.certificate-package-recomputation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/55/comparison/parameters/value
       - certificate-package-recomputation
   - - proof.certificate-not-semantic-proof-substitute.exact
-    - af459b66c6f814ee39d24114b10a29720ecb695690bf49ba948b6fa2e5f455ee
+    - b833ab83e83fa7788416f2d4c224904b769e74e5afc83e3c706731a1c0b5dfca
     - fact.certificate-not-semantic-proof-substitute
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/56/comparison/parameters/value
       - certificate-not-semantic-proof-substitute
   - - proof.no-obligation-per-irrelevant-axis-rule.exact
-    - 87be9d7866d8db3d842a1f3620b7c3061f32e04475d2275111e38aeb43025b6c
+    - dd6f79305a3177827aa7f64c54f6cb5f35ab387da68e07cc1860205c9e4975db
     - fact.no-obligation-per-irrelevant-axis-rule
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/57/comparison/parameters/value
       - no-obligation-per-irrelevant-axis-rule
   - - proof.v1-stat-before-read.exact
-    - a0df05af64da55f8a24ffd0dc43ec5ae60ebb357e9c59424ebab2bb1ce4caa17
+    - dcacd3a5899abfef289db006addace3ca56ea911cfd4e4fa9cea4fca6d488081
     - fact.v1-stat-before-read
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/58/comparison/parameters/value
       - v1-stat-before-read
   - - proof.v1-bounded-prefix-stream-parse.exact
-    - c877738d3b4968c55768eef93379babc9f8d65c881673c76248bad2b768c0830
+    - 447520ea9adade86e0f284f16927797d3c291ab9506964bc0b3e07771eb5932d
     - fact.v1-bounded-prefix-stream-parse
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/59/comparison/parameters/value
       - v1-bounded-prefix-stream-parse
   - - proof.v1-capacity-header-order.exact
-    - b632fbce650126fcca958d82c858df6f15d000528a37c2018d89d1c261abf692
+    - ddfa4157ea0a8e6d8e2a290b49a289452e0d0bb47bf78e9dddd184d724492786
     - fact.v1-capacity-header-order
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/60/comparison/parameters/value
       - v1-capacity-header-order
   - - proof.v1-embedded-handoff-byte-limit.exact
-    - 86bed11a4254237e9a0d734fc37411da5a87d1bd4ce422a9974292ab421fa307
+    - 374cdc2599d7ec6797db5ac3b8f06c3acb839db006882e98753166f0f1335415
     - fact.v1-embedded-handoff-byte-limit
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/61/comparison/parameters/value
       - v1-embedded-handoff-byte-limit
   - - proof.v1-manifest-byte-limit.exact
-    - 629b71d3b94fa976efba8a23242154ad878c7abc6b05e235d634f4f87068bf47
+    - de83bcc22fcae666278ec664087a605eb2c65a487a39244cc70579a0e2435901
     - fact.v1-manifest-byte-limit
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/62/comparison/parameters/value
       - v1-manifest-byte-limit
   - - proof.v1-ground-cell-limit.exact
-    - 80f927e30e710e5b2eea1ff5b87c46a9b3d2bec3940f4ca2974cda14878f9193
+    - dbe343c56075fd170c066d432053163a8b9505acdfef2b9817b84d919550aef9
     - fact.v1-ground-cell-limit
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/63/comparison/parameters/value
       - v1-ground-cell-limit
   - - proof.v1-capacity-prefix-limit.exact
-    - f9d5a5ea90b8f5092e906346a4113559247fabb5f5ec21a1c2784967f2083505
+    - 6d8e28de85201e3852fc691eab4a459c151c11e979b440dff4efc1b506bb0593
     - fact.v1-capacity-prefix-limit
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/64/comparison/parameters/value
       - v1-capacity-prefix-limit
   - - proof.v1-reject-before-hydration.exact
-    - c4ea0ec8dd0458733e23bc5bf49832e20399fdb6e138df34e051c1a31822600c
+    - d176b0734f7c5e91bae14b2616c5941649a42f00491013d95017af2ace22d942
     - fact.v1-reject-before-hydration
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/65/comparison/parameters/value
       - v1-reject-before-hydration
   - - proof.v1-threshold-measurement-basis.exact
-    - 5c80c4009acf5aa33ef06097f4e32272cfd5e5695d7df56df2db65aacbee0b47
+    - 5c499657cce6569b4787e0ea5eb6610a3d1e314b82219213f5e71dafd9649e0f
     - fact.v1-threshold-measurement-basis
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/66/comparison/parameters/value
       - v1-threshold-measurement-basis
   - - proof.v1-capacity-actionable-diagnostics.exact
-    - b1de9434f8f96585f00bd1ba8ea2f68bfe2672a043306e23d0b0fb9272baa87d
+    - 866e8216ba500509aed8e589b0f44ce94c5ab70e517661bbf7b1315c21186bea
     - fact.v1-capacity-actionable-diagnostics
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/67/comparison/parameters/value
       - v1-capacity-actionable-diagnostics
   - - proof.capacity-fail-closed-no-truncation.exact
-    - b443b6f4660cebab83d16ef6c32a0bbb1b607f20a76787da8b552f8cf79e6532
+    - 26cb40799fe3bbda043f9022f6b34aa3a4fee8bc1349cfe0fe34219bbeac7027
     - fact.capacity-fail-closed-no-truncation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/68/comparison/parameters/value
       - capacity-fail-closed-no-truncation
   - - proof.efficiency-admission-property-only.exact
-    - 717c2f03382d6fde78dc1f4c9b533c60ee7a2f94c74a7060221f1596a5474295
+    - d629e288fed98f15cfa9642a1f3b3dfbd1b70e754ccba59f8309e263f79f44c9
     - fact.efficiency-admission-property-only
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/69/comparison/parameters/value
       - efficiency-admission-property-only
   - - proof.efficiency-not-terminal-safety-theorem.exact
-    - c6397104520b6d353ff72fe4b1bd924e00d9bb5317c85c266b7dfdc5117e73e2
+    - e51f3f203f6a3df62983a03f9111dda4d2f35be2f14377ae4e21ec224d349c28
     - fact.efficiency-not-terminal-safety-theorem
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/70/comparison/parameters/value
       - efficiency-not-terminal-safety-theorem
   - - proof.no-second-authority.exact
-    - ec6ee53480b74baf73045ac97e968cfa63ba7ebb817fec19f81fe5b08aaf288d
+    - 7b49c5c5337f395e01d607a01a64dfeb93dc3a8f16c94ec2b3ff9256ae8ef9c9
     - fact.no-second-authority
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/71/comparison/parameters/value
       - no-second-authority
   - - proof.no-second-final-gate.exact
-    - 70d7cef6f7f081290edf27cd0d9e57c1357e170d6b750eb7941f9e5e6fafdc24
+    - b60d423b8ca0a79c2d4d90f7ee1dc5882d1bd32cdba55936dda5ed644af1f6da
     - fact.no-second-final-gate
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/72/comparison/parameters/value
       - no-second-final-gate
   - - proof.no-delivery-deadline-condition.exact
-    - 1d2945df057a87be7692e885c4bc68c22dce31826b4fec534dce9292b498cca1
+    - edb0adce48d5c12756998b9e684384c561b45fd75334d1ef163e53057ef2ae8e
     - fact.no-delivery-deadline-condition
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/73/comparison/parameters/value
       - no-delivery-deadline-condition
   - - proof.no-fixed-execution-flow.exact
-    - 37688477951625cf4224a0995a48433e750c9d1148471a096413dc5da250e2ea
+    - f7952240c26406ff4e7c28408b1539b4aeda41144bbf7981e7504744a5067432
     - fact.no-fixed-execution-flow
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/74/comparison/parameters/value
       - no-fixed-execution-flow
   - - proof.performance-claim-measurement-contract.exact
-    - 1e55c98abd4ba5d2c446ff492dc8fb19ca2393b469a5449773c290e161205997
+    - 24eeb80e5440aa045749dadc0f3b89e53f1f9d5efba758fa4553e122f50677a0
     - fact.performance-claim-measurement-contract
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/75/comparison/parameters/value
       - performance-claim-measurement-contract
   - - proof.non-ui-v2-separate-admission.exact
-    - c0a2bb6c0a983ce4298e225fa2e37cb1d40cd6d69eb1d2ebf0ee9d53cb207a6d
+    - a2636f8d88125798847df9afdbec1370f5606820d8845ed0cb6e8b1c4d69dda7
     - fact.non-ui-v2-separate-admission
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/76/comparison/parameters/value
       - non-ui-v2-separate-admission
   - - proof.provider-p0-excluded.exact
-    - 9e9d9dafeced64b7b7b9b74f68b0fdcc515f1ceba3b67ee0041879b27e252c66
+    - e7b0c3f4603b4e09fbd2aec1db97b9608a6db7200def432a0938dab8283f759f
     - fact.provider-p0-excluded
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/77/comparison/parameters/value
       - provider-p0-excluded
   - - proof.provider-reentry-evidence-required.exact
-    - 35f90da3441725a3395e350fbbc8a6eae4c7927ccfb579739646830f17a54aba
+    - 09c7c1f08be8791456a42eb706e17c65df08dc54b40d484be6c048d85cc29a39
     - fact.provider-reentry-evidence-required
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/78/comparison/parameters/value
       - provider-reentry-evidence-required
   - - proof.shared-engine-future-boundary.exact
-    - c0de671a085aa5cd6c4c9f4557bcb2b9affa656edc1871fed5385bd2413339c4
+    - 44a575d7ac59a7b6a2fa2fb18ebfc3b2cac3c582dea6d8de1f2dde9ebe510d3a
     - fact.shared-engine-future-boundary
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/79/comparison/parameters/value
       - shared-engine-future-boundary
   - - proof.rollout-1-v1-capacity.exact
-    - 7fb2eb1ee36104cb25df91fc398951000ddf33d76c7600bff276f5ca79e13b2b
+    - 70cb21221956ed6bb1cf78e4f29358d8ce76ef0cda4d141a8aa86cacb16770ab
     - fact.rollout-1-v1-capacity
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/80/comparison/parameters/value
       - rollout-1-v1-capacity
   - - proof.rollout-2-formal-denotation.exact
-    - 2c90aa2f2f8244f035aea90fc38ee21cc6c4b97c9008d852984ea8b0ca6a3f02
+    - f18f24868702aaadab5fb5e7ce5d60fa636188c7f1ab86468532291bbda102ff
     - fact.rollout-2-formal-denotation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/81/comparison/parameters/value
       - rollout-2-formal-denotation
   - - proof.rollout-3-engine-independent-oracle.exact
-    - 62a3548a3b8b2c654cadddae54f242050e237c79d914cfe467e0a6a2ad2d64b8
+    - 3dd8815ebd581fba77bf554c8f4204190d9d610baba782ce9c2f6c3383db1b9a
     - fact.rollout-3-engine-independent-oracle
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/82/comparison/parameters/value
       - rollout-3-engine-independent-oracle
   - - proof.rollout-4-ui-v2-opt-in.exact
-    - 9d174496c2df19df15f73ba2a8ec7c7f35daa69ce3d93f39a345e116c1aa7d1c
+    - 19b0b6bde3e0dc6db0fe1f33c6c0b9461197ef55a0026680ec049912e05f0fd7
     - fact.rollout-4-ui-v2-opt-in
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/83/comparison/parameters/value
       - rollout-4-ui-v2-opt-in
   - - proof.rollout-5-mixed-downstream.exact
-    - 7017d35ae26ded81f396abd97b3b13437ffa31fb1c64fd0f344e9c5ff05c8b89
+    - 382044b81ad3120120bfaa647315c2fb1718f02e865a065926d0acca389cd49c
     - fact.rollout-5-mixed-downstream
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/84/comparison/parameters/value
       - rollout-5-mixed-downstream
   - - proof.rollout-6-default-after-proof.exact
-    - ba5c47a0629d906474c9383e8fd6d3d0ae8c6a79fb45708c8ced72878bf8548a
+    - d3e3446322222310a46e76bd8d1c8c65ffb56d4ee8b208642a1eebeb6db0f869
     - fact.rollout-6-default-after-proof
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/85/comparison/parameters/value
       - rollout-6-default-after-proof
   - - proof.rollout-7-non-ui-provider-separate.exact
-    - 96da31342c9bd92ec17361ca0100fb0e1ad38950b7d90fbbfb9ce2f1f74a65fc
+    - 5d86b763e592d5e1d8e10750c0b6ab7cbc5baea5f208b8feb3dc8479c7024ece
     - fact.rollout-7-non-ui-provider-separate
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/86/comparison/parameters/value
       - rollout-7-non-ui-provider-separate
   - - proof.independent-full-finite-test-expander.exact
-    - 08299b0c3eb19407325632b642dd408d33fd5ea929033610729d5d7e442fbf0c
+    - 89a8a4cd97032aa6354990ddc433d799bb1c18cb734122a7c21fa3eceeb2f55a
     - fact.independent-full-finite-test-expander
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/87/comparison/parameters/value
       - independent-full-finite-test-expander
   - - proof.exhaustive-pointwise-equivalence-tests.exact
-    - 1287706b1db0132cd02f16da885adda7e57d3c8681f14dbd07c572e3fa90983f
+    - 0ce3d889479c168a0ce9e74c48509ca9c83174b5fe392a961172a6ae5805887a
     - fact.exhaustive-pointwise-equivalence-tests
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/88/comparison/parameters/value
       - exhaustive-pointwise-equivalence-tests
   - - proof.adversarial-false-completion-counterexamples.exact
-    - e5bf5825c57e4c75a616ccbf3230a48497f6b727b8c41b3b05d189be8effebaf
+    - 0e06555dd86a348d808f8efeb4afff3cc8f19e4dbb89725f8f3e1d0df9d2dd1f
     - fact.adversarial-false-completion-counterexamples
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/89/comparison/parameters/value
       - adversarial-false-completion-counterexamples
   - - proof.mixed-contract-verification.exact
-    - 86d3e13f6761e4c18fe459986589d558204f567e0579decd2cd8667b2ec1dcd3
+    - e74a4dcab031f0a2db1473df0afefa49c3f1243c66525e91e9e24d2f7af0ba28
     - fact.mixed-contract-verification
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/90/comparison/parameters/value
       - mixed-contract-verification
   - - proof.capacity-early-rejection-verification.exact
-    - 6f52ea740c02d1286a45e5e768e80f59040d0b935164a62e444df010eb0280ee
+    - e4411801904d8cbfa816b4d1c2d707aacea3a232cc70ad15a87c25247912edc4
     - fact.capacity-early-rejection-verification
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/91/comparison/parameters/value
       - capacity-early-rejection-verification
   - - proof.complexity-parameter-verification.exact
-    - eec392f991c339fa90268064dbdcf27db28272dc0225931c7acf5b8064887f26
+    - abc5793b48f1adab37131cb87465ff11b34e4a07c8c93427a7c908c478fa0f69
     - fact.complexity-parameter-verification
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/92/comparison/parameters/value
       - complexity-parameter-verification
   - - proof.distribution-context-parity.exact
-    - 78f9861a6a36846ed33f126cb638fe033389db9ce012aa573da0b8fb085b534b
+    - a247258e2f8faecdacbb63f62b7dc1594aed61096e361687d36c3e75ed9bdb48
     - fact.distribution-context-parity
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/93/comparison/parameters/value
       - distribution-context-parity
   - - proof.architecture-deliberation.exact
-    - 4235647c65c9a9e0e13dfe9f1daf40b936ba521b5a3c85dde4b62e962495d1dd
+    - 156b38b8c0658f7b83c73e60220cd53fb2df61140c039590893b46dd012b12cd
     - fact.architecture-deliberation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/94/comparison/parameters/value
       - architecture-deliberation
   - - proof.no-sampling.exact
-    - 1fc9a7c8d9250c7660e75c0e276f3afa6a10d33de246dd71a13e794e8b185640
+    - 229b0a8f5884de570ef9edbcf3935aed54ecebd3969c06132a88b9d23b0cf48a
     - fact.no-sampling
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/95/comparison/parameters/value
       - no-sampling
   - - proof.no-granularity-reduction.exact
-    - 88829ce3422b7caa1f19fe435c0e65822bea5ec4bddb7804029b57099e2316a9
+    - c8d53c3820f6f9cc31c6aeef55a2fb1bdcb408da725e7a228714558b207241e5
     - fact.no-granularity-reduction
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/96/comparison/parameters/value
       - no-granularity-reduction
   - - proof.no-expand-then-deduplicate.exact
-    - f644bae88b0f4dde6b4f9466709c3f2e9849b63e0e06e3a769ebd85ac69f12e3
+    - d44b13664d470513b56ba25f005923e22a00a03dc34cd62c4ab45a0f32680dd7
     - fact.no-expand-then-deduplicate
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/97/comparison/parameters/value
       - no-expand-then-deduplicate
   - - proof.no-historical-proof-reuse.exact
-    - a2b105d7f35b6c4b50a3851f6bd1acc203f954d1524c31da1ef402ec4c2c581d
+    - ee8eb5e736fead217cf224b6055a9307793697dc9fbccf9158e4db4e88df37c5
     - fact.no-historical-proof-reuse
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/98/comparison/parameters/value
       - no-historical-proof-reuse
   - - proof.no-authority-gate-proliferation.exact
-    - 2b5c0c68a8ffbe6a1687c897d364b4c8d85430e21cb72925ac9c7785cae7f361
+    - e8adba92ea5cf7ae8d85def88dbddf1cd1d2b213342a9cd2c393638eb765d505
     - fact.no-authority-gate-proliferation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/99/comparison/parameters/value
       - no-authority-gate-proliferation
   - - proof.no-arbitrary-symbolic-execution.exact
-    - f9a2731aa3226cb2d12e4a62673333b96e4e3ff20acaeac7cdfdc88d4aa1cb75
+    - 01f66d05fb97786ea244493f5b0d8f03667d3440b5601ee09977728f118a780d
     - fact.no-arbitrary-symbolic-execution
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/100/comparison/parameters/value
       - no-arbitrary-symbolic-execution
   - - proof.no-ungrounded-applicability-omission.exact
-    - 0c3ed0a61e579a830af9ccdb4a6b206fba31efa43d5a7bff8af571e4b21a053f
+    - f204bf1ea926b95fd7720b6cebbd12f872b55be22b51d88d48f467d6bc9a7a8b
     - fact.no-ungrounded-applicability-omission
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/101/comparison/parameters/value
       - no-ungrounded-applicability-omission
   - - proof.v1-v2-denotation-equivalence-ac.exact
-    - 98504c04cc34f7ebf9ae3f5f530877042a9b9886b22e94227940927e79793f4d
+    - 146e04954e292f07aba175d997ff098c1c7e3d4e568260f9190833ce6bc8df45
     - fact.v1-v2-denotation-equivalence-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/102/comparison/parameters/value
       - v1-v2-denotation-equivalence-ac
   - - proof.canonical-region-and-applicability-ac.exact
-    - 3da70d7c0849852d67d9244f7c17c54159daf86a714025213e8806ebcc9abf15
+    - 016ec3725025ce10711e5b082fe5dfdce7c45e6bd8425505544b499230da2b74
     - fact.canonical-region-and-applicability-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/103/comparison/parameters/value
       - canonical-region-and-applicability-ac
   - - proof.mixed-contract-current-evidence-ac.exact
-    - e91fd68ec8d914272898af67a3aba54aa3dc29ad600b00b3d8d91bc731af0c47
+    - c0959ef0d0ba345fe6b827936a8b2de8635b4d14793f0c9afe4e4e885dbdaa44
     - fact.mixed-contract-current-evidence-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/104/comparison/parameters/value
       - mixed-contract-current-evidence-ac
   - - proof.noninterference-complexity-ac.exact
-    - 7054f5575b839a812c0d94fca14a0b58c6038244193c5af402e4d283aa1c2e4f
+    - b565d088a0ae997fa0bf7ef946e86b19559ca2e90f19f4ddc401525f15527b20
     - fact.noninterference-complexity-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/105/comparison/parameters/value
       - noninterference-complexity-ac
   - - proof.v1-capacity-guard-ac.exact
-    - ca3d4adaec91ad861c84980f612ea259830bbbe48b1c70c79a3562f9f82a5941
+    - c9be80cfd34901499feeef550fa6a47919137702a5bdfee151c061648a60c4fa
     - fact.v1-capacity-guard-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/106/comparison/parameters/value
       - v1-capacity-guard-ac
   - - proof.scope-and-rollout-ac.exact
-    - ec3a8a148544da3c01249d01d9e32729335dc7bf57ef2fbe0b531ec8b303b8c5
+    - 2b9ab38ee072dec997bce01ff6c961f0ff39be28865b6c91c194ee79618808bc
     - fact.scope-and-rollout-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/107/comparison/parameters/value
       - scope-and-rollout-ac
   - - proof.package-antidegradation-and-parity-ac.exact
-    - 3c699f6de7468043bc72defdfebf463534d4e8b6c496121c54bd81aae2f839e5
+    - ca785f08ce0d3f003c4a34210bea5a23acdfc763b9f13aa7cf1c0a031b30baf5
     - fact.package-antidegradation-and-parity-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/108/comparison/parameters/value
       - package-antidegradation-and-parity-ac
   - - proof.inventory-is-not-completion.exact
-    - e62892f4a4e790075d6320574fcff47ec00208db407d05c1a67997365602f640
+    - 3de6491fbbf1e98fe27164c0cd125fa2054c5a40476d887068b00a620f0360d8
     - fact.inventory-is-not-completion
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/109/comparison/parameters/value
       - inventory-is-not-completion
   - - proof.public-schema-change-risk.exact
-    - b1c921453be22ad7bb96a70718d35d8c24d91bc7969a694d74cd3dc248e2b3e3
+    - 4c7f4ebcea146d551e76ddb33452455ec542229adfeaa883743adb9afb394780
     - fact.public-schema-change-risk
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/110/comparison/parameters/value
       - public-schema-change-risk
   - - proof.false-completion-critical-path-risk.exact
-    - b8314c7ef3805935fbe5c24541a66f5a9deccd80af98e366fa4e218881dd0834
+    - bf2d6d3dd5ed5657948c4fa14b7df12ff4e11cf68df59de902709ff40a1c5c79
     - fact.false-completion-critical-path-risk
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/111/comparison/parameters/value
       - false-completion-critical-path-risk
   - - proof.symbolic-oracle-observability-risk.exact
-    - 1a05caae7c9f265afe1131c66ad250d62dd5018b7e896d59717ae64b93a5cac9
+    - b868b6bceef414fb2038cb8f00791ce08daed363f6093f62af7ef98bb385d428
     - fact.symbolic-oracle-observability-risk
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:

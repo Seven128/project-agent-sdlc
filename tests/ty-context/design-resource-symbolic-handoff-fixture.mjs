@@ -43,8 +43,10 @@ export async function writeDesignResourceSymbolicHandoffFixture(
     afterProofArtifacts,
     feasibility = false,
     mutateFeasibility,
+    mutateHandoff,
   } = {},
 ) {
+  await ensureFixtureDesignAuthority(root);
   const handoffPath = `${directory}/symbolic-handoff.md`;
   const manifestPath = `${directory}/symbolic-rules.json`;
   const pagePath = `${directory}/page.html`;
@@ -134,6 +136,7 @@ export async function writeDesignResourceSymbolicHandoffFixture(
     manifest,
     certificate,
   );
+  await mutateHandoff?.(handoff);
   let feasibilityDocument = null;
   if (feasibility)
     feasibilityDocument = await addSymbolicImplementationFeasibility(
@@ -164,6 +167,18 @@ ${YAML.stringify(handoff, { lineWidth: 0 }).trimEnd()}
     sourceIrPath: sourceIrResource?.resource.path ?? null,
     feasibility: feasibilityDocument,
   };
+}
+
+async function ensureFixtureDesignAuthority(root) {
+  try {
+    await writeFile(
+      path.join(root, "DESIGN.md"),
+      "# Fixture Design Authority\n\nLegacy single-file test authority.\n",
+      { encoding: "utf8", flag: "wx" },
+    );
+  } catch (error) {
+    if (error?.code !== "EEXIST") throw error;
+  }
 }
 
 async function addSymbolicImplementationFeasibility(

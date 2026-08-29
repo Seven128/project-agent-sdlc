@@ -54,6 +54,7 @@ import {
   type AcceptanceReachabilityV1,
 } from "./long-task-acceptance-reachability.js";
 import { exactExternalClaimActualObligationRefsByAssertion } from "./long-task-acceptance-reachability-helpers.js";
+import type { DesignAuthorityIdentityV1 } from "./design-authority-types.js";
 import {
   captureWorkspaceManifest,
   repoRelative,
@@ -65,6 +66,7 @@ export interface ActivationValidationResult {
   source_hashes: Record<string, string> | null;
   source_items: CompiledSourceItemV2[] | null;
   context_snapshot: ContextAuthoritySnapshotV2 | null;
+  project_design_authority: DesignAuthorityIdentityV1 | null;
   workspace: WorkspaceManifestV2 | null;
   global_checks: CompiledCheckV2[];
   outcomes: CompiledOutcomeV2[];
@@ -142,6 +144,11 @@ export async function validateContractForActivation(options: {
       sourceItems ?? [],
     ),
   );
+  const projectDesignAuthority =
+    designHandoffs?.find(
+      (handoff) =>
+        handoff.project_design_authority_resolution.identity !== null,
+    )?.project_design_authority_resolution.identity ?? null;
   const risk = await attempt(mode, diagnostics, () => {
     return classifyLongTaskRisk(contract);
   });
@@ -189,16 +196,21 @@ export async function validateContractForActivation(options: {
       context,
     );
   const observationAuthorityPaths = [
-    ...workspace.files
-      .map((file) => file.path)
-      .filter(
-        (file) =>
-          file === workdirRelative || file.startsWith(`${workdirRelative}/`),
+    ...new Set([
+      ...workspace.files
+        .map((file) => file.path)
+        .filter(
+          (file) =>
+            file === workdirRelative || file.startsWith(`${workdirRelative}/`),
+        ),
+      `${workdirRelative}/delivery-contract.yaml`,
+      ...Object.keys(sourceHashes ?? {}),
+      ...(context?.files ?? []),
+      ...(designHandoffs ?? []).flatMap(
+        (handoff) => handoff.project_design_authority_resolution.member_paths,
       ),
-    `${workdirRelative}/delivery-contract.yaml`,
-    ...Object.keys(sourceHashes ?? {}),
-    ...(context?.files ?? []),
-  ];
+    ]),
+  ].sort((left, right) => Buffer.from(left).compare(Buffer.from(right)));
 
   const globalChecks: CompiledCheckV2[] = [];
   for (const check of contract.global.acceptance.checks) {
@@ -412,6 +424,7 @@ export async function validateContractForActivation(options: {
     source_hashes: sourceHashes,
     source_items: sourceItems,
     context_snapshot: context,
+    project_design_authority: projectDesignAuthority,
     workspace,
     global_checks: globalChecks,
     outcomes,
@@ -508,6 +521,7 @@ function emptyCompiledResult(
     source_hashes: sourceHashes,
     source_items: sourceItems,
     context_snapshot: context,
+    project_design_authority: null,
     workspace: null,
     global_checks: [],
     outcomes: [],
