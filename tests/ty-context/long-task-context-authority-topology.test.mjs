@@ -148,3 +148,54 @@ test("authority topology is stable under ordering and path separators", () => {
     contextAuthorityTopologyHash(base, SELECTED),
   );
 });
+
+test("authority topology canonicalizes NFC-equivalent Area ids and Context paths", () => {
+  const decomposedArea = "Cafe\u0301";
+  const composedArea = decomposedArea.normalize("NFC");
+  const decomposedContext = "project_context/areas/Cafe\u0301/verification.md";
+  const composedContext = decomposedContext.normalize("NFC");
+  const decomposedChild = "project_context/areas/Cafe\u0301/rules.md";
+  const composedChild = decomposedChild.normalize("NFC");
+  const makeManifest = (areaId, contextPath, childPath) => ({
+    areas: [
+      {
+        line: 1,
+        id: areaId,
+        root: ".",
+        context: contextPath,
+        kind: "repository",
+        default: true,
+        forbidden_runtime_dependencies: [],
+      },
+    ],
+    contexts: [
+      {
+        line: 8,
+        path: contextPath,
+        role: "verification",
+        read_policy: "default",
+        triggers: [],
+        default_children: [childPath],
+      },
+      {
+        line: 14,
+        path: childPath,
+        role: "contract",
+        read_policy: "on-demand",
+        triggers: [],
+        default_children: [],
+      },
+    ],
+  });
+
+  assert.equal(
+    contextAuthorityTopologyHash(
+      makeManifest(decomposedArea, decomposedContext, decomposedChild),
+      [composedContext, composedChild],
+    ),
+    contextAuthorityTopologyHash(
+      makeManifest(composedArea, composedContext, composedChild),
+      [composedContext, composedChild],
+    ),
+  );
+});

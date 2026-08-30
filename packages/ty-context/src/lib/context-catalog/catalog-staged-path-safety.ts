@@ -5,7 +5,10 @@ import {
   assertSafeRepositoryFilePath,
   resolveInsideRepository,
 } from "../repository-path-safety.js";
-import { normalizeContextPath } from "./catalog-paths.js";
+import {
+  normalizeContextPath,
+  normalizeContextPathSpelling,
+} from "./catalog-paths.js";
 
 export async function assertCatalogStagedFilePath(
   repository: string,
@@ -14,12 +17,13 @@ export async function assertCatalogStagedFilePath(
   label: string,
 ): Promise<void> {
   const absolute = resolveInsideRepository(repository, relative, label);
-  const parent = normalizeContextPath(path.posix.dirname(relative));
-  let cursor = "";
+  const parent = normalizeContextPathSpelling(path.posix.dirname(relative));
+  let physicalCursor = "";
   for (const segment of parent.split("/")) {
     if (!segment || segment === ".") continue;
-    cursor = cursor ? `${cursor}/${segment}` : segment;
-    const candidate = path.join(repository, ...cursor.split("/"));
+    physicalCursor = physicalCursor ? `${physicalCursor}/${segment}` : segment;
+    const canonicalCursor = normalizeContextPath(physicalCursor);
+    const candidate = path.join(repository, ...physicalCursor.split("/"));
     const status = await lstat(candidate).catch(
       (error: NodeJS.ErrnoException) => {
         if (error.code === "ENOENT") return null;
@@ -27,8 +31,10 @@ export async function assertCatalogStagedFilePath(
       },
     );
     if (!status) {
-      if (!stagedDirectories.has(cursor))
-        throw new Error(`staged_parent_not_declared:${label}:${cursor}`);
+      if (!stagedDirectories.has(canonicalCursor))
+        throw new Error(
+          `staged_parent_not_declared:${label}:${canonicalCursor}`,
+        );
       continue;
     }
     await assertProtectedRepositoryDirectory(

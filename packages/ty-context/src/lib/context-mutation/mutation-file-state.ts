@@ -80,7 +80,10 @@ export async function assertMutationChangesCurrent(
 ): Promise<void> {
   const conflicts: string[] = [];
   for (const change of changes) {
-    const current = await captureMutationFileState(repository, change.path);
+    const current = await captureMutationFileState(
+      repository,
+      mutationPhysicalPath(change),
+    );
     if (!sameMutationSnapshot(current, change.before))
       conflicts.push(change.path);
   }
@@ -98,7 +101,10 @@ export async function assertMutationChangesContentState(
       side === "before"
         ? (change.published_before ?? change.before)
         : (change.published_after ?? change.after);
-    const current = await captureMutationFileState(repository, change.path);
+    const current = await captureMutationFileState(
+      repository,
+      mutationPhysicalPath(change),
+    );
     if (!sameMutationRecordedState(current, expected))
       conflicts.push(change.path);
   }
@@ -111,6 +117,12 @@ export function sameMutationContentState(
   right: MutationFileState,
 ): boolean {
   return left.exists === right.exists && left.sha256 === right.sha256;
+}
+
+export function mutationPhysicalPath(
+  change: Pick<MutationFileChange, "path" | "physical_path">,
+): string {
+  return change.physical_path ?? change.path;
 }
 
 export function mutationRecordedFileState(

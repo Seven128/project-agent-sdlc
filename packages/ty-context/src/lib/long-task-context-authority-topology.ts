@@ -1,4 +1,8 @@
 import type { ContextManifest } from "./context-manifest-schema.js";
+import {
+  compareUtf8Paths,
+  normalizeContextPath,
+} from "./context-catalog/catalog-paths.js";
 import { canonicalJson, sha256Hex } from "./strict-codec.js";
 
 /**
@@ -23,6 +27,7 @@ export function contextAuthorityTopologyHash(
           ...area
         }) => ({
           ...area,
+          id: area.id.normalize("NFC"),
           ...(kind === undefined ? {} : { kind }),
           context: normalizeRepoPath(area.context),
           forbidden_runtime_dependencies: [
@@ -30,7 +35,7 @@ export function contextAuthorityTopologyHash(
           ].sort(),
         }),
       )
-      .sort((left, right) => left.id.localeCompare(right.id)),
+      .sort((left, right) => compareUtf8Paths(left.id, right.id)),
     contexts: manifest.contexts
       .filter((context) => selected.has(normalizeRepoPath(context.path)))
       .map(
@@ -47,14 +52,14 @@ export function contextAuthorityTopologyHash(
           default_children: [...default_children]
             .map(normalizeRepoPath)
             .filter((child) => selected.has(child))
-            .sort(),
+            .sort(compareUtf8Paths),
         }),
       )
-      .sort((left, right) => left.path.localeCompare(right.path)),
+      .sort((left, right) => compareUtf8Paths(left.path, right.path)),
   };
   return sha256Hex(canonicalJson(topology));
 }
 
 function normalizeRepoPath(value: string): string {
-  return value.replace(/\\/gu, "/").replace(/^\.\//u, "");
+  return normalizeContextPath(value);
 }

@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
-import { captureContextGraphSnapshot } from "./context-graph-snapshot.js";
+import {
+  captureContextGraphSnapshot,
+  captureContextGraphSnapshotWithPhysicalFiles,
+} from "./context-graph-snapshot.js";
 import type {
   CompiledCheckV2,
   CompiledDeliveryContractV2,
@@ -53,24 +56,27 @@ export async function captureProtectedAuthorityInputsIdentity(
   const hashRepositoryFile = (
     relativeInput: string,
     label: string,
+    absoluteInput?: string,
   ): Promise<string> => {
     const relative = relativeInput.replace(/\\/gu, "/");
-    const existing = fileHashCache.get(relative);
+    const cacheKey = absoluteInput ?? relative;
+    const existing = fileHashCache.get(cacheKey);
     if (existing) return existing;
     const captured = (async () => {
       const file = await assertProtectedRepositoryFile(
         repository,
-        path.join(repository, ...relative.split("/")),
+        absoluteInput ?? path.join(repository, ...relative.split("/")),
         label,
       );
       return sha256Hex(await readFile(file));
     })();
-    fileHashCache.set(relative, captured);
+    fileHashCache.set(cacheKey, captured);
     return captured;
   };
   const hashFiles = async (
     files: Iterable<string>,
     label: string,
+    physicalFiles?: ReadonlyMap<string, string>,
   ): Promise<Record<string, string>> =>
     Object.fromEntries(
       await Promise.all(
@@ -80,17 +86,22 @@ export async function captureProtectedAuthorityInputsIdentity(
             async (file) =>
               [
                 file,
-                await hashRepositoryFile(file, `${label}:${file}`),
+                await hashRepositoryFile(
+                  file,
+                  `${label}:${file}`,
+                  requiredPhysicalFile(physicalFiles, file),
+                ),
               ] as const,
           ),
       ),
     );
 
-  const context = await captureContextGraphSnapshot(
+  const contextCapture = await captureContextGraphSnapshotWithPhysicalFiles(
     repository,
     compiled.task.context_refs,
     compiled.context_snapshot.mode,
   );
+  const context = contextCapture.snapshot;
   const [
     contractFiles,
     sourceFiles,
@@ -103,7 +114,11 @@ export async function captureProtectedAuthorityInputsIdentity(
   ] = await Promise.all([
     hashFiles(Object.keys(compiled.contract_files), "protected_contract"),
     hashFiles(Object.keys(compiled.source_hashes), "protected_source"),
-    hashFiles(context.files, "protected_context"),
+    hashFiles(
+      context.files,
+      "protected_context",
+      contextCapture.physical_files,
+    ),
     captureCheckFileIdentities(
       checks,
       (check) => check.runner.frozen_files,
@@ -150,6 +165,17 @@ export async function captureProtectedAuthorityInputsIdentity(
     identity: sha256Hex(canonicalValueJson(snapshot)),
     snapshot,
   };
+}
+
+function requiredPhysicalFile(
+  physicalFiles: ReadonlyMap<string, string> | undefined,
+  file: string,
+): string | undefined {
+  if (!physicalFiles) return undefined;
+  const physical = physicalFiles.get(file);
+  if (!physical)
+    throw new Error(`protected_context_physical_file_missing:${file}`);
+  return physical;
 }
 
 export async function deliveryCompileFreshness(

@@ -3,6 +3,12 @@ import path from "node:path";
 import { contextAuthorityTopologyHash } from "./long-task-context-authority-topology.js";
 import { canonicalJson, sha256Hex } from "./strict-codec.js";
 import {
+  compareUtf8Paths,
+  normalizeContextPath,
+  portableContextPathCaseKey,
+  repositoryRelativePathSpelling,
+} from "./context-catalog/catalog-paths.js";
+import {
   parseContextManifest,
   type ContextManifest,
 } from "./context-manifest-schema.js";
@@ -20,10 +26,21 @@ export interface ContextGraphSnapshot {
   supporting_files: string[];
 }
 
+export interface CapturedContextGraphSnapshot {
+  snapshot: ContextGraphSnapshot;
+  physical_files: ReadonlyMap<string, string>;
+}
+
 export interface CampaignContextBaseline {
   graph_sha256: string;
   files: Record<string, string>;
   baseline_sha256: string;
+}
+
+interface ContextGraphFile {
+  path: string;
+  physical_path: string;
+  absolute_path: string;
 }
 
 export async function captureContextGraphSnapshot(
@@ -31,10 +48,25 @@ export async function captureContextGraphSnapshot(
   contextRefs: Iterable<string>,
   mode: "referenced" | "full" = "referenced",
 ): Promise<ContextGraphSnapshot> {
+  return (
+    await captureContextGraphSnapshotWithPhysicalFiles(
+      repositoryRoot,
+      contextRefs,
+      mode,
+    )
+  ).snapshot;
+}
+
+export async function captureContextGraphSnapshotWithPhysicalFiles(
+  repositoryRoot: string,
+  contextRefs: Iterable<string>,
+  mode: "referenced" | "full" = "referenced",
+): Promise<CapturedContextGraphSnapshot> {
   const root = path.resolve(repositoryRoot);
   const manifest = await readContextManifest(root);
-  const allFiles = await listContextFiles(root);
-  const available = new Set(allFiles);
+  const fileRecords = await listContextFileRecords(root);
+  const allFiles = fileRecords.map((file) => file.path);
+  const available = new Map(fileRecords.map((file) => [file.path, file]));
   const selected = new Set<string>();
   const explicitlySelected = new Set<string>();
 
@@ -67,10 +99,10 @@ export async function captureContextGraphSnapshot(
       selected.add(normalized);
       explicitlySelected.add(normalized);
     }
-    addTransitiveChildren(manifest, selected, available);
+    addTransitiveChildren(manifest, selected, new Set(available.keys()));
   }
 
-  const files = [...selected].sort();
+  const files = [...selected].sort(compareUtf8Paths);
   const authorityTopologySha256 = contextAuthorityTopologyHash(manifest, files);
   const hashes = Object.fromEntries(
     await Promise.all(
@@ -80,7 +112,7 @@ export async function captureContextGraphSnapshot(
             file,
             file === CONTEXT_MANIFEST_PATH
               ? authorityTopologySha256
-              : await hashFile(root, path.join(root, file)),
+              : await hashFile(root, available.get(file)!.absolute_path),
           ] as const,
       ),
     ),
@@ -92,12 +124,17 @@ export async function captureContextGraphSnapshot(
     mode,
   );
   return {
-    mode,
-    topology_sha256: authorityTopologySha256,
-    files,
-    sha256: sortRecord(hashes),
-    controlling_files: classification.controlling,
-    supporting_files: classification.supporting,
+    snapshot: {
+      mode,
+      topology_sha256: authorityTopologySha256,
+      files,
+      sha256: sortRecord(hashes),
+      controlling_files: classification.controlling,
+      supporting_files: classification.supporting,
+    },
+    physical_files: new Map(
+      files.map((file) => [file, available.get(file)!.absolute_path]),
+    ),
   };
 }
 
@@ -140,7 +177,7 @@ export async function assertCampaignContextBaselineFresh(
       ]),
     ]
       .filter((file) => expected.files[file] !== current.files[file])
-      .sort();
+      .sort(compareUtf8Paths);
     throw new Error(
       `campaign_context_changed:files:${changed.join(",") || "set"}`,
     );
@@ -160,11 +197,22 @@ export async function currentContextTopologySha256(
 export async function listContextFiles(
   repositoryRoot: string,
 ): Promise<string[]> {
+  return (await listContextFileRecords(path.resolve(repositoryRoot))).map(
+    (file) => file.path,
+  );
+}
+
+async function listContextFileRecords(
+  repositoryRoot: string,
+): Promise<ContextGraphFile[]> {
   const root = path.resolve(repositoryRoot);
   const contextRoot = path.join(root, "project_context");
-  const result: string[] = [];
+  const result = new Map<string, ContextGraphFile>();
+  const portabilityKeys = new Map<string, string>();
   async function visit(directory: string): Promise<void> {
-    for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const entries = await readdir(directory, { withFileTypes: true });
+    entries.sort((left, right) => compareUtf8Paths(left.name, right.name));
+    for (const entry of entries) {
       const absolute = path.join(directory, entry.name);
       if (entry.isSymbolicLink()) {
         throw new Error(
@@ -179,12 +227,32 @@ export async function listContextFiles(
           absolute,
           "context_authority",
         );
-        result.push(repoRelative(root, absolute));
+        const physicalPath = repositoryRelativePathSpelling(root, absolute);
+        const publicPath = normalizeContextPath(physicalPath);
+        const existing = result.get(publicPath);
+        if (existing)
+          throw new Error(
+            `context_authority_unicode_collision:${existing.physical_path}:${physicalPath}:${publicPath}`,
+          );
+        const portabilityKey = portableContextPathCaseKey(publicPath);
+        const caseCollision = portabilityKeys.get(portabilityKey);
+        if (caseCollision && caseCollision !== publicPath)
+          throw new Error(
+            `context_authority_case_collision:${caseCollision}:${publicPath}`,
+          );
+        portabilityKeys.set(portabilityKey, publicPath);
+        result.set(publicPath, {
+          path: publicPath,
+          physical_path: physicalPath,
+          absolute_path: absolute,
+        });
       }
     }
   }
   await visit(contextRoot);
-  return result.sort();
+  return [...result.values()].sort((left, right) =>
+    compareUtf8Paths(left.path, right.path),
+  );
 }
 
 async function readContextManifest(root: string): Promise<ContextManifest> {
@@ -265,20 +333,14 @@ async function hashFile(root: string, file: string): Promise<string> {
   return sha256Hex(await readFile(protectedFile));
 }
 
-function repoRelative(root: string, file: string): string {
-  const value = path.relative(root, file).replace(/\\/g, "/");
-  if (value.startsWith("../") || path.isAbsolute(value)) {
-    throw new Error(`Path is outside repository: ${file}`);
-  }
-  return value;
-}
-
 function normalizeRepoPath(value: string): string {
-  return value.replace(/\\/g, "/").replace(/^\.\//, "");
+  return normalizeContextPath(value);
 }
 
 function sortRecord<T>(value: Record<string, T>): Record<string, T> {
   return Object.fromEntries(
-    Object.entries(value).sort(([left], [right]) => left.localeCompare(right)),
+    Object.entries(value).sort(([left], [right]) =>
+      compareUtf8Paths(left, right),
+    ),
   );
 }

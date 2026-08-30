@@ -24,6 +24,7 @@ export async function analyzeContextMarkdownCatalog(input: {
   file_overrides?: ReadonlyMap<string, Uint8Array | null>;
 }): Promise<ContextMarkdownCatalogAnalysis> {
   const files: ContextMarkdownFileAnalysis[] = [];
+  const catalogFiles = new Map(input.files.map((file) => [file.path, file]));
   for (const file of [...input.files].sort((left, right) =>
     compareUtf8Paths(left.path, right.path),
   ))
@@ -31,6 +32,7 @@ export async function analyzeContextMarkdownCatalog(input: {
       await analyzeContextMarkdownFile({
         project_root: input.project_root,
         file,
+        catalog_files: catalogFiles,
         long_line_threshold: input.long_line_threshold,
         file_overrides: input.file_overrides,
       }),
@@ -48,6 +50,7 @@ export async function analyzeContextMarkdownCatalog(input: {
 export async function analyzeContextMarkdownFile(input: {
   project_root: string;
   file: CatalogFile;
+  catalog_files?: ReadonlyMap<string, CatalogFile>;
   long_line_threshold: number;
   file_overrides?: ReadonlyMap<string, Uint8Array | null>;
 }): Promise<ContextMarkdownFileAnalysis> {
@@ -62,8 +65,9 @@ export async function analyzeContextMarkdownFile(input: {
   for (const reference of extracted.references) {
     const resolved = await resolveReference(
       input.project_root,
-      input.file.path,
+      input.file,
       reference,
+      input.catalog_files ?? new Map([[input.file.path, input.file]]),
       input.file_overrides,
     );
     if (resolved) references.push(resolved);
@@ -81,10 +85,12 @@ export async function analyzeContextMarkdownFile(input: {
 
 async function resolveReference(
   projectRoot: string,
-  sourcePath: string,
+  sourceFile: CatalogFile,
   reference: ContextMarkdownRawReference,
+  catalogFiles: ReadonlyMap<string, CatalogFile>,
   fileOverrides?: ReadonlyMap<string, Uint8Array | null>,
 ): Promise<ContextMarkdownReference | null> {
+  const sourcePath = sourceFile.path;
   const split = splitDestination(reference.destination);
   if (split.disposition === "ignored") return null;
   if (split.disposition === "invalid")
@@ -97,16 +103,18 @@ async function resolveReference(
       detail: split.detail,
     };
   const normalizedDestination = split.local.replaceAll("\\", "/");
-  const absolute = normalizedDestination.startsWith("/")
+  const lexicalAbsolute = normalizedDestination.startsWith("/")
     ? path.resolve(projectRoot, normalizedDestination.slice(1))
     : normalizedDestination.startsWith("project_context/")
       ? path.resolve(projectRoot, normalizedDestination)
       : path.resolve(
-          path.dirname(path.join(projectRoot, sourcePath)),
+          path.dirname(sourceFile.absolute_path),
           normalizedDestination,
         );
-  const targetPath = normalizeContextPath(path.relative(projectRoot, absolute));
-  if (!isPathWithin(projectRoot, absolute))
+  const targetPath = normalizeContextPath(
+    path.relative(projectRoot, lexicalAbsolute),
+  );
+  if (!isPathWithin(projectRoot, lexicalAbsolute))
     return {
       ...reference,
       source_path: sourcePath,
@@ -115,6 +123,8 @@ async function resolveReference(
       status: "outside_repository",
       detail: "local Markdown destination resolves outside the repository",
     };
+  const absolute =
+    catalogFiles.get(targetPath)?.absolute_path ?? lexicalAbsolute;
   if (fileOverrides?.has(targetPath)) {
     if (fileOverrides.get(targetPath) === null)
       return {

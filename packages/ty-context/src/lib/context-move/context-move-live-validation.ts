@@ -1,6 +1,6 @@
 import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { analyzeContextMarkdownCatalog } from "../context-markdown/context-markdown-analysis.js";
+import { resolveCatalogFile } from "../context-catalog/catalog-paths.js";
 import type { ContextCatalog } from "../context-catalog/catalog-types.js";
 import type { ContextMutationJournal } from "../context-mutation/mutation-types.js";
 import { assertProtectedRepositoryFile } from "../repository-path-safety.js";
@@ -26,9 +26,11 @@ export async function validateLiveContextMove(
     catalog.registered_contexts.some((entry) => entry.path === data.from_path)
   )
     invalid("live_move_owner_mismatch");
+  const targetFile = resolveCatalogFile(catalog, data.to_path);
+  if (!targetFile) invalid("live_move_target_missing");
   const target = await assertProtectedRepositoryFile(
     repository,
-    path.join(repository, ...data.to_path.split("/")),
+    targetFile.absolute_path,
     "context_mutation_moved_context",
   );
   const content = await readFile(target, "utf8");

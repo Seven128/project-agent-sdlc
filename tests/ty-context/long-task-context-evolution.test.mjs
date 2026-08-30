@@ -1,5 +1,14 @@
 import assert from "node:assert/strict";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  mkdir,
+  mkdtemp,
+  readFile,
+  rename,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { captureContextGraphSnapshot } from "../../packages/ty-context/dist/lib/context-graph-snapshot.js";
@@ -53,7 +62,10 @@ async function addUnselectedContext(fixture, manifestFile) {
   const relative = "project_context/areas/other/contract.md";
   const contextFile = path.join(fixture.root, ...relative.split("/"));
   await mkdir(path.dirname(contextFile), { recursive: true });
-  await writeFile(contextFile, "# Other contract\n\nUnselected durable contract.\n");
+  await writeFile(
+    contextFile,
+    "# Other contract\n\nUnselected durable contract.\n",
+  );
   const manifest = await readFile(manifestFile, "utf8");
   await writeFile(
     manifestFile,
@@ -85,6 +97,73 @@ test("legacy Context snapshots fail closed with every file controlling", () => {
   assert.deepEqual(normalized.supporting_files, []);
 });
 
+test("Context freeze binds one NFC Authority key to its exact NFD physical file", async (t) => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-freeze-nfd-"));
+  const physical = "project_context/areas/Cafe\u0301/rules.md";
+  const canonical = physical.normalize("NFC");
+  const physicalFile = path.join(root, ...physical.split("/"));
+  const canonicalFile = path.join(root, ...canonical.split("/"));
+  try {
+    await mkdir(path.dirname(physicalFile), { recursive: true });
+    await writeFile(
+      path.join(root, "project_context", "global.md"),
+      "# Global\n",
+    );
+    await writeFile(
+      path.join(root, "project_context", "architecture.md"),
+      "# Architecture\n",
+    );
+    await writeFile(
+      path.join(root, "project_context", "areas", "main.md"),
+      "# Main\n",
+    );
+    await writeFile(
+      physicalFile,
+      "# Rules Contract\n\nConsumers must preserve this durable rule.\n",
+    );
+    try {
+      await access(canonicalFile);
+      t.skip("filesystem does not preserve distinct NFC/NFD spellings");
+      return;
+    } catch {
+      // The counterexample is expressible: only the NFD physical spelling exists.
+    }
+    const manifestFile = path.join(root, "project_context", "context.toml");
+    await writeFile(
+      manifestFile,
+      `[[areas]]
+id = "main"
+root = "."
+context = "project_context/areas/main.md"
+kind = "repository"
+default = true
+
+[[context]]
+path = "${physical}"
+role = "contract"
+read_policy = "on-demand"
+`,
+    );
+
+    const first = await captureContextGraphSnapshot(
+      root,
+      [canonical],
+      "referenced",
+    );
+    const second = await captureContextGraphSnapshot(
+      root,
+      [physical],
+      "referenced",
+    );
+    assert.deepEqual(second, first);
+    assert.ok(first.files.includes(canonical));
+    assert.equal(first.files.includes(physical), false);
+    assert.match(first.sha256[canonical], /^[0-9a-f]{64}$/u);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("full Context revisions invalidate scoped Progress without requiring approval", async () => {
   const fixture = await createDeliveryFixture();
   try {
@@ -101,9 +180,7 @@ test("full Context revisions invalidate scoped Progress without requiring approv
     let compiled = JSON.parse(await readFile(compiledFile, "utf8"));
     assert.deepEqual(compiled.context_snapshot.supporting_files, []);
     assert.ok(
-      compiled.context_snapshot.controlling_files.includes(
-        SUPPORTING_CONTEXT,
-      ),
+      compiled.context_snapshot.controlling_files.includes(SUPPORTING_CONTEXT),
     );
     assert.ok(
       compiled.context_snapshot.controlling_files.includes(
@@ -182,8 +259,9 @@ test("full Context revisions invalidate scoped Progress without requiring approv
       "--revise",
     ]);
     assert.ok(
-      controllingRevision.authority_revision_change.approval_summary
-        .mechanically_bounded_reasons.includes("context_authority_changed"),
+      controllingRevision.authority_revision_change.approval_summary.mechanically_bounded_reasons.includes(
+        "context_authority_changed",
+      ),
     );
     assert.equal(
       controllingRevision.authority_revision_change.user_decision_required,
@@ -308,12 +386,36 @@ role = "foundation"`,
   }
 });
 
-test("full Context snapshots classify every selected file as controlling", async () => {
+test("full Context snapshots keep NFC authority keys bound to NFD physical files", async () => {
   const fixture = await createDeliveryFixture();
+  const physical = "project_context/areas/Cafe\u0301.md";
+  const canonical = physical.normalize("NFC");
+  const original = "project_context/areas/main.md";
+  const manifestFile = path.join(
+    fixture.root,
+    "project_context",
+    "context.toml",
+  );
+  const originalFile = path.join(fixture.root, ...original.split("/"));
+  const canonicalFile = path.join(fixture.root, ...canonical.split("/"));
+  const physicalFile = path.join(fixture.root, ...physical.split("/"));
   try {
-    await addTransitiveContext(fixture);
+    await rename(originalFile, canonicalFile);
+    await writeFile(
+      manifestFile,
+      (await readFile(manifestFile, "utf8")).replaceAll(original, canonical),
+    );
+    fixture.contract.task.context_refs = fixture.contract.task.context_refs.map(
+      (entry) => (entry === original ? canonical : entry),
+    );
+    for (const outcome of fixture.contract.outcomes)
+      outcome.product.owner.context_refs =
+        outcome.product.owner.context_refs.map((entry) =>
+          entry === original ? canonical : entry,
+        );
     fixture.contract.task.context_snapshot_mode = "full";
     await writeContract(fixture.workdir, fixture.contract);
+    await rename(canonicalFile, physicalFile);
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
     const compiled = JSON.parse(
@@ -323,8 +425,10 @@ test("full Context snapshots classify every selected file as controlling", async
       ),
     );
     assert.deepEqual(compiled.context_snapshot.supporting_files, []);
-    assert.ok(
-      compiled.context_snapshot.controlling_files.includes(SUPPORTING_CONTEXT),
+    assert.ok(compiled.context_snapshot.controlling_files.includes(canonical));
+    assert.equal(
+      compiled.context_snapshot.controlling_files.includes(physical),
+      false,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });

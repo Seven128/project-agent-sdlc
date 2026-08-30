@@ -1,4 +1,5 @@
 import { captureMutationFileState } from "../context-mutation/mutation-cas.js";
+import { resolveCatalogFile } from "../context-catalog/catalog-paths.js";
 import {
   assertMutationCatalogValid,
   assertNoUnfinishedContextMutation,
@@ -96,6 +97,11 @@ export async function planContextMove(
     normalized.from_path,
     normalized.to_path,
   );
+  const sourceFile = resolveCatalogFile(beforeCatalog, normalized.from_path);
+  if (!sourceFile)
+    mutationIoFailure(
+      `context move source is missing: ${normalized.from_path}`,
+    );
   const directories = await missingContextMoveDirectories(
     input.project_root,
     normalized.to_path,
@@ -110,7 +116,7 @@ export async function planContextMove(
   });
   const sourceBefore = await captureMutationFileState(
     input.project_root,
-    normalized.from_path,
+    sourceFile.physical_path,
   );
   if (!sourceBefore.exists || sourceBefore.mode === null)
     mutationIoFailure(
@@ -190,6 +196,7 @@ export async function planContextMove(
     normalized,
     directories,
     source_before: sourceBefore,
+    source_physical_path: sourceFile.physical_path,
     manifest_before: manifestBefore,
     manifest_bytes: manifestBytes,
     target_bytes: targetBytes,

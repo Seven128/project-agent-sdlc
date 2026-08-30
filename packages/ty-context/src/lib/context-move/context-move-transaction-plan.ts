@@ -17,6 +17,11 @@ import type {
   CatalogRegisteredContext,
   ContextCatalog,
 } from "../context-catalog/catalog-types.js";
+import {
+  compareUtf8Paths,
+  resolveCatalogFile,
+} from "../context-catalog/catalog-paths.js";
+import { mutationCatalogFailure } from "../context-mutation/mutation-command-support.js";
 import { canonicalValueJson, sha256Hex } from "../strict-codec.js";
 import type { ContextMoveFileProjection } from "./context-move-types.js";
 
@@ -28,6 +33,7 @@ export async function buildContextMoveTransactionPlan(input: {
   normalized: { from_path: string; to_path: string };
   directories: string[];
   source_before: MutationFileState;
+  source_physical_path: string;
   manifest_before: MutationFileState;
   manifest_bytes: Buffer;
   target_bytes: Buffer;
@@ -42,25 +48,38 @@ export async function buildContextMoveTransactionPlan(input: {
   const raw: Array<
     Omit<
       MutationFileChange,
+      | "physical_path"
       | "commit_order"
       | "temporary_path"
       | "temporary_state"
       | "published_before"
       | "published_after"
-    >
+    > & { physical_path: string }
   > = [];
   raw.push({
     path: input.normalized.to_path,
+    physical_path: input.normalized.to_path,
     before: absentMutationFileState(),
     after: mutationFileStateFromBytes(
       input.target_bytes,
       input.source_before.mode!,
     ),
   });
-  for (const [file, content] of [...input.updated_files].sort()) {
-    const before = await captureMutationFileState(input.repository, file);
+  for (const [file, content] of [...input.updated_files].sort(
+    ([left], [right]) => compareUtf8Paths(left, right),
+  )) {
+    const catalogFile = resolveCatalogFile(input.before_catalog, file);
+    if (!catalogFile)
+      mutationCatalogFailure(
+        `Context move reference source is absent from the Catalog: ${file}`,
+      );
+    const before = await captureMutationFileState(
+      input.repository,
+      catalogFile.physical_path,
+    );
     raw.push({
       path: file,
+      physical_path: catalogFile.physical_path,
       before,
       after: mutationFileStateFromBytes(
         Buffer.from(content, "utf8"),
@@ -70,6 +89,7 @@ export async function buildContextMoveTransactionPlan(input: {
   }
   raw.push({
     path: MANIFEST_PATH,
+    physical_path: MANIFEST_PATH,
     before: input.manifest_before,
     after: mutationFileStateFromBytes(
       input.manifest_bytes,
@@ -78,6 +98,7 @@ export async function buildContextMoveTransactionPlan(input: {
   });
   raw.push({
     path: input.normalized.from_path,
+    physical_path: input.source_physical_path,
     before: input.source_before,
     after: absentMutationFileState(),
   });
@@ -102,6 +123,7 @@ export async function buildContextMoveTransactionPlan(input: {
       directories: input.directories,
       files: raw.map((entry, commit_order) => ({
         path: entry.path,
+        physical_path: entry.physical_path,
         before_sha256: entry.before.sha256,
         after_sha256: entry.after.sha256,
         commit_order,
@@ -113,7 +135,7 @@ export async function buildContextMoveTransactionPlan(input: {
     ...entry,
     commit_order: commitOrder,
     temporary_path: mutationTemporaryPath(
-      entry.path,
+      entry.physical_path,
       transactionId,
       commitOrder,
     ),

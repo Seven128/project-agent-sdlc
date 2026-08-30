@@ -168,6 +168,7 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
   let manifestReadPolicies = new Map<string, string>();
   let manifestCatalogLoaded = false;
   let catalogContextFiles: string[] | undefined;
+  let catalogFilesByPath = new Map<string, string>();
   let schemaVersion = "4";
 
   if (!(await pathExists(configPath))) {
@@ -258,6 +259,9 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
     catalogContextFiles = catalog.context_files
       .map((entry) => entry.absolute_path)
       .filter((file) => file !== globalPath && file !== architecturePath);
+    catalogFilesByPath = new Map(
+      catalog.context_files.map((entry) => [entry.path, entry.absolute_path]),
+    );
     errors.push(...catalogErrors(catalog.diagnostics));
     warnings.push(...catalogWarnings(catalog.diagnostics));
     manifestRoles = catalog.roles_by_path;
@@ -335,8 +339,8 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
 
   for (const [relative, role] of manifestRoles.entries()) {
     if (!validatedContextFiles.has(relative)) {
-      const absolute = path.join(projectRoot, ...relative.split("/"));
-      if (await pathExists(absolute)) {
+      const absolute = catalogFilesByPath.get(relative);
+      if (absolute && (await pathExists(absolute))) {
         validateContextFile(
           projectRoot,
           relative,

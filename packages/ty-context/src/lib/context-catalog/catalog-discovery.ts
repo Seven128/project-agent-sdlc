@@ -7,6 +7,7 @@ import {
   normalizeContextPath,
   normalizeContextPathSpelling,
   portableContextPathCaseKey,
+  repositoryRelativePathSpelling,
 } from "./catalog-paths.js";
 import { catalogDiagnostic } from "./catalog-diagnostics.js";
 import type { CatalogDiagnostic } from "./catalog-types.js";
@@ -25,8 +26,9 @@ export async function discoverContextMarkdownFiles(
     .filter((file) => file.toLowerCase().endsWith(".md"))
     .map((absolutePath) => ({
       absolutePath,
-      physicalRelative: normalizeContextPathSpelling(
-        path.relative(projectRoot, absolutePath),
+      physicalRelative: repositoryRelativePathSpelling(
+        projectRoot,
+        absolutePath,
       ),
     }))
     .sort((left, right) =>
@@ -44,6 +46,7 @@ export async function discoverContextMarkdownFiles(
     const metadata = await lstat(absolutePath);
     result.set(relative, {
       path: relative,
+      physical_path: physicalRelative,
       absolute_path: absolutePath,
       bytes: metadata.size,
     });
@@ -68,12 +71,20 @@ export async function discoverContextMarkdownFiles(
     )
       continue;
     if (bytes === null) result.delete(relative);
-    else
+    else {
+      const existing = result.get(relative);
+      if (existing) {
+        result.set(relative, { ...existing, bytes: bytes.byteLength });
+        continue;
+      }
+      const physicalPath = normalizeContextPathSpelling(relativeInput);
       result.set(relative, {
         path: relative,
-        absolute_path: path.join(projectRoot, ...relative.split("/")),
+        physical_path: physicalPath,
+        absolute_path: path.join(projectRoot, ...physicalPath.split("/")),
         bytes: bytes.byteLength,
       });
+    }
   }
   addContextCaseCollisionDiagnostics(diagnostics, result.keys());
   return {

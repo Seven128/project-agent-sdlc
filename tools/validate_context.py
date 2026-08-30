@@ -7,6 +7,7 @@ import os
 import re
 import subprocess
 import sys
+import unicodedata
 
 try:
     import tomllib
@@ -16,6 +17,15 @@ except ImportError:  # Python 3.10 compatibility; Node is already required by ty
 
 ROOT = Path.cwd().resolve()
 CONTEXT_ROOT = ROOT / "project_context"
+
+# The portable validator is a UTF-8 command-line surface on every supported
+# platform.  Windows pipe encodings otherwise depend on the active locale and
+# can corrupt the canonical NFC paths that TypeScript and Python are required
+# to report identically.
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8", errors="strict")
+if hasattr(sys.stderr, "reconfigure"):
+    sys.stderr.reconfigure(encoding="utf-8", errors="strict")
 
 
 def load_context_rules():
@@ -114,8 +124,16 @@ def normalize_role(value):
     return role if role in VALID_ROLES else None
 
 
-def normalize_context_path(value):
+def normalize_context_path_spelling(value):
     return value.replace("\\", "/").removeprefix("./")
+
+
+def normalize_context_path(value):
+    return unicodedata.normalize("NFC", normalize_context_path_spelling(value))
+
+
+def portable_context_path_case_key(value):
+    return normalize_context_path(value).lower()
 
 
 def parse_front_matter(text):
@@ -254,12 +272,18 @@ def is_relative_to(target, root):
         return False
 
 
-def safe_manifest_path(raw, allowed_root, label, expected, errors):
-    normalized = raw.replace("\\", "/")
+def safe_manifest_path(raw, allowed_root, label, expected, errors, physical_files=None):
+    normalized = normalize_context_path_spelling(raw)
     if Path(raw).is_absolute() or PureWindowsPath(raw).is_absolute() or ".." in normalized.split("/"):
         errors.append(f"project_context/context.toml {label} path must be relative and must not contain '..': {raw}")
         return None
-    target = ROOT.joinpath(*normalized.split("/"))
+    target = (
+        physical_files.get(normalize_context_path(raw))
+        if expected == "context file" and physical_files is not None
+        else None
+    )
+    if target is None:
+        target = ROOT.joinpath(*normalized.split("/"))
     if not target.exists():
         errors.append(f"project_context/context.toml references missing {expected}: {normalized}")
         return None
@@ -277,7 +301,7 @@ def safe_manifest_path(raw, allowed_root, label, expected, errors):
     return resolved_target
 
 
-def validate_area_entry(area, area_ids, registered_paths, roles, policies, errors):
+def validate_area_entry(area, area_ids, registered, roles, policies, errors, physical_files):
     area_id = required_string(area, "id", errors)
     area_root = required_string(area, "root", errors)
     context_path = required_string(area, "context", errors)
@@ -286,17 +310,37 @@ def validate_area_entry(area, area_ids, registered_paths, roles, policies, error
         errors.append(f"project_context/context.toml line {area['line']} default must be a boolean")
     string_array(area, "forbidden_runtime_dependencies", errors)
     if area_id:
-        if area_id in area_ids:
-            errors.append(f"project_context/context.toml has duplicate area id: {area_id}")
-        area_ids.add(area_id)
+        canonical_area_id = unicodedata.normalize("NFC", area_id)
+        previous_area_id = area_ids.get(canonical_area_id)
+        if previous_area_id is not None:
+            if previous_area_id == area_id:
+                errors.append(f"project_context/context.toml has duplicate area id: {area_id}")
+            else:
+                aliases = sorted((previous_area_id, area_id), key=lambda value: value.encode("utf-8"))
+                errors.append(
+                    "project_context/context.toml area ids "
+                    f"{', '.join(aliases)} normalize to the same NFC id {canonical_area_id}"
+                )
+        else:
+            area_ids[canonical_area_id] = area_id
     label = f"area {area_id or area['line']}"
     if area_root:
         safe_manifest_path(area_root, ROOT, f"{label} root", "area root", errors)
     if context_path:
-        register_context_path(context_path, "area", None, label, registered_paths, roles, policies, errors)
+        register_context_path(
+            context_path,
+            "area",
+            None,
+            label,
+            registered,
+            roles,
+            policies,
+            errors,
+            physical_files,
+        )
 
 
-def validate_context_entry(entry, registered_paths, roles, policies, errors, warnings):
+def validate_context_entry(entry, registered, roles, policies, errors, warnings, physical_files):
     context_path = required_string(entry, "path", errors)
     raw_role = required_string(entry, "role", errors)
     optional_string(entry, "read_when", errors)
@@ -319,14 +363,15 @@ def validate_context_entry(entry, registered_paths, roles, policies, errors, war
             role,
             read_policy,
             f"context {context_path}",
-            registered_paths,
+            registered,
             roles,
             policies,
             errors,
+            physical_files,
         )
 
 
-def validate_default_children(contexts, registered_paths, errors, warnings):
+def validate_default_children(contexts, registered, errors, warnings):
     contexts_by_path = {
         normalize_context_path(entry["path"]): entry
         for entry in contexts
@@ -335,7 +380,7 @@ def validate_default_children(contexts, registered_paths, errors, warnings):
     for entry in contexts:
         for child in entry.get("default_children", []):
             normalized = normalize_context_path(child)
-            if normalized not in registered_paths:
+            if normalized not in registered["paths"]:
                 errors.append(f"project_context/context.toml line {entry['line']} default_children references unregistered Context path: {child}")
             elif contexts_by_path.get(normalized, {}).get("read_policy") == "never-default":
                 warnings.append(
@@ -345,7 +390,7 @@ def validate_default_children(contexts, registered_paths, errors, warnings):
                 )
 
 
-def validate_manifest(errors, warnings):
+def validate_manifest(errors, warnings, physical_files):
     manifest_path = CONTEXT_ROOT / "context.toml"
     roles = {}
     policies = {}
@@ -361,27 +406,64 @@ def validate_manifest(errors, warnings):
     defaults = [entry for entry in areas if entry.get("default") is True]
     if areas and len(defaults) != 1:
         errors.append(f"project_context/context.toml must mark exactly one [[areas]] entry with default = true; found {len(defaults)}")
-    area_ids = set()
-    registered_paths = set()
+    area_ids = {}
+    registered = {"paths": set(), "spellings": {}, "cases": {}}
 
     for area in areas:
-        validate_area_entry(area, area_ids, registered_paths, roles, policies, errors)
+        validate_area_entry(area, area_ids, registered, roles, policies, errors, physical_files)
     for entry in contexts:
-        validate_context_entry(entry, registered_paths, roles, policies, errors, warnings)
-    validate_default_children(contexts, registered_paths, errors, warnings)
+        validate_context_entry(entry, registered, roles, policies, errors, warnings, physical_files)
+    validate_default_children(contexts, registered, errors, warnings)
     return roles, policies
 
 
-def register_context_path(raw, role, read_policy, label, registered, roles, policies, errors):
+def register_context_path(
+    raw,
+    role,
+    read_policy,
+    label,
+    registered,
+    roles,
+    policies,
+    errors,
+    physical_files,
+):
     normalized = normalize_context_path(raw)
-    if normalized in registered:
-        errors.append(f"project_context/context.toml has duplicate Context path: {normalized}")
-        return
-    registered.add(normalized)
+    raw_spelling = normalize_context_path_spelling(raw)
+    previous = registered["spellings"].get(normalized)
+    if previous is not None:
+        if previous == raw_spelling:
+            errors.append(f"project_context/context.toml has duplicate Context path: {normalized}")
+        else:
+            aliases = sorted((previous, raw_spelling), key=lambda value: value.encode("utf-8"))
+            errors.append(
+                "project_context/context.toml Context paths "
+                f"{', '.join(aliases)} normalize to the same NFC repository path {normalized}"
+            )
+    else:
+        registered["spellings"][normalized] = raw_spelling
+    case_key = portable_context_path_case_key(normalized)
+    previous_case = registered["cases"].get(case_key)
+    if previous_case is not None and previous_case != normalized:
+        aliases = sorted((previous_case, normalized), key=lambda value: value.encode("utf-8"))
+        errors.append(
+            "project_context/context.toml Context paths "
+            f"{', '.join(aliases)} collide on a case-insensitive filesystem"
+        )
+    else:
+        registered["cases"][case_key] = normalized
+    registered["paths"].add(normalized)
     if not normalized.startswith("project_context/") or not normalized.endswith(".md"):
         errors.append(f"project_context/context.toml {label} must reference a markdown file under project_context/: {raw}")
         return
-    if safe_manifest_path(raw, CONTEXT_ROOT, label, "context file", errors) is None:
+    if safe_manifest_path(
+        raw,
+        CONTEXT_ROOT,
+        label,
+        "context file",
+        errors,
+        physical_files,
+    ) is None:
         return
     roles[normalized] = role
     if read_policy:
@@ -473,6 +555,55 @@ def validate_context_file(rel, text, role, errors):
         validate_role_recoverability(rel, text, role, errors)
 
 
+def discover_context_markdown(errors):
+    paths = (
+        [
+            candidate
+            for candidate in CONTEXT_ROOT.rglob("*")
+            if candidate.is_file() and candidate.suffix.lower() == ".md"
+        ]
+        if CONTEXT_ROOT.exists()
+        else []
+    )
+    rows = []
+    for context_path in paths:
+        physical = context_path.relative_to(ROOT).as_posix()
+        canonical = normalize_context_path(physical)
+        rows.append((canonical, physical, context_path))
+    rows.sort(key=lambda row: (row[0].encode("utf-8"), row[1].encode("utf-8")))
+
+    grouped = {}
+    for canonical, physical, context_path in rows:
+        grouped.setdefault(canonical, []).append((physical, context_path))
+
+    public_rows = []
+    physical_files = {}
+    case_groups = {}
+    for canonical in sorted(grouped, key=lambda value: value.encode("utf-8")):
+        candidates = sorted(
+            grouped[canonical],
+            key=lambda row: row[0].encode("utf-8"),
+        )
+        spellings = [physical for physical, _path in candidates]
+        if len(spellings) > 1:
+            errors.append(
+                f"Context files {', '.join(spellings)} normalize to the same NFC repository path {canonical}"
+            )
+        physical, context_path = candidates[0]
+        public_rows.append((canonical, physical, context_path))
+        physical_files[canonical] = context_path
+        case_key = portable_context_path_case_key(canonical)
+        case_groups.setdefault(case_key, []).append(canonical)
+
+    for canonical_paths in case_groups.values():
+        aliases = sorted(set(canonical_paths), key=lambda value: value.encode("utf-8"))
+        if len(aliases) > 1:
+            errors.append(
+                f"Context files {', '.join(aliases)} collide on a case-insensitive filesystem"
+            )
+    return public_rows, physical_files
+
+
 def main():
     errors = []
     warnings = []
@@ -491,11 +622,14 @@ def main():
         validate_checks("project_context/architecture.md", text, ARCHITECTURE_CHECKS, errors)
         validate_context_file("project_context/architecture.md", text, "architecture", errors)
 
-    manifest_roles, manifest_policies = validate_manifest(errors, warnings)
+    context_rows, physical_files = discover_context_markdown(errors)
+    manifest_roles, manifest_policies = validate_manifest(
+        errors,
+        warnings,
+        physical_files,
+    )
     checked = 0
-    context_files = sorted(CONTEXT_ROOT.rglob("*.md")) if CONTEXT_ROOT.exists() else []
-    for path in context_files:
-        rel = path.relative_to(ROOT).as_posix()
+    for rel, _physical, path in context_rows:
         if rel in {"project_context/global.md", "project_context/architecture.md"}:
             continue
         text = path.read_text(encoding="utf-8")

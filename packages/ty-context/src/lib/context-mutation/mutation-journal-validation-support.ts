@@ -45,19 +45,14 @@ export function validateJournalRecordedFileState(
   if (typeof value.exists !== "boolean")
     invalidJournal(`${label}_exists_invalid`);
   if (!value.exists) {
-    if (
-      value.sha256 !== null ||
-      value.mode !== null ||
-      value.identity !== null
-    )
+    if (value.sha256 !== null || value.mode !== null || value.identity !== null)
       invalidJournal(`${label}_absent_shape`);
     return;
   }
   validateJournalDigest(value.sha256, `${label}.sha256`);
   const mode = requiredJournalInteger(value.mode, `${label}.mode`);
   if (mode > 0o777) invalidJournal(`${label}_mode_invalid`);
-  if (value.identity === null)
-    invalidJournal(`${label}_identity_required`);
+  if (value.identity === null) invalidJournal(`${label}_identity_required`);
   validateIdentity(value.identity, label);
 }
 
@@ -159,17 +154,8 @@ export function invalidJournal(reason: string): never {
 
 export function validateIdentity(value: unknown, label: string): void {
   if (!isJournalRecord(value)) invalidJournal(`${label}_identity_invalid`);
-  const fields = [
-    "dev",
-    "ino",
-    "nlink",
-    "size",
-    "mtime_ns",
-    "ctime_ns",
-  ];
-  if (
-    Object.keys(value).sort().join("\0") !== [...fields].sort().join("\0")
-  )
+  const fields = ["dev", "ino", "nlink", "size", "mtime_ns", "ctime_ns"];
+  if (Object.keys(value).sort().join("\0") !== [...fields].sort().join("\0"))
     invalidJournal(`${label}_identity_fields_invalid`);
   for (const field of ["dev", "ino", "nlink", "size"]) {
     const item = value[field];

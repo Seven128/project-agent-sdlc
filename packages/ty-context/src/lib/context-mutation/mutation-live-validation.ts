@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
-import path from "node:path";
 import { loadContextCatalog } from "../context-catalog/catalog-load.js";
 import { catalogErrors } from "../context-catalog/catalog-diagnostics.js";
+import { resolveCatalogFile } from "../context-catalog/catalog-paths.js";
 import { assertProtectedRepositoryFile } from "../repository-path-safety.js";
 import { validateContextContentForRole } from "../validators.js";
 import { validateLiveContextMove } from "../context-move/context-move-live-validation.js";
@@ -37,9 +37,11 @@ export async function validateLiveContextMutation(
       registered[0].read_policy !== data.read_policy
     )
       invalid("live_registration_metadata_mismatch");
+    const file = resolveCatalogFile(catalog, data.context_path);
+    if (!file) invalid("live_registration_file_missing");
     const absolute = await assertProtectedRepositoryFile(
       repository,
-      path.join(repository, ...data.context_path.split("/")),
+      file.absolute_path,
       "context_mutation_registered_context",
     );
     const content = await readFile(absolute, "utf8");

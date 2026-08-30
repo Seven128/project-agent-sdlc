@@ -1,6 +1,9 @@
 import { readFile } from "node:fs/promises";
-import path from "node:path";
-import type { ContextCatalog } from "../context-catalog/catalog-types.js";
+import { portableContextPathCaseKey } from "../context-catalog/catalog-paths.js";
+import type {
+  CatalogFile,
+  ContextCatalog,
+} from "../context-catalog/catalog-types.js";
 import {
   decodeMutationUtf8,
   mutationCatalogFailure,
@@ -13,17 +16,17 @@ import type { NormalizedRegisterInput } from "./context-register-input.js";
 export function assertRegistrationTarget(
   catalog: ContextCatalog,
   contextPath: string,
-): void {
-  const folded = contextPath.toLocaleLowerCase("en-US");
+): CatalogFile {
+  const folded = portableContextPathCaseKey(contextPath);
   const registered = catalog.registered_contexts.find(
-    (entry) => entry.path.toLocaleLowerCase("en-US") === folded,
+    (entry) => portableContextPathCaseKey(entry.path) === folded,
   );
   if (registered)
     mutationCatalogFailure(
       `Context is already registered as ${registered.path}`,
     );
   const file = catalog.unregistered_context_files.find(
-    (entry) => entry.path.toLocaleLowerCase("en-US") === folded,
+    (entry) => portableContextPathCaseKey(entry.path) === folded,
   );
   if (!file)
     mutationIoFailure(
@@ -33,6 +36,7 @@ export function assertRegistrationTarget(
     mutationIoFailure(
       `context register path case does not match existing file: ${file.path}`,
     );
+  return file;
 }
 
 export function assertStagedRegistration(
@@ -55,15 +59,15 @@ export function assertStagedRegistration(
 
 export async function readContextContent(
   repository: string,
-  relative: string,
+  file: CatalogFile,
 ): Promise<string> {
   try {
     const absolute = await assertProtectedRepositoryFile(
       repository,
-      path.join(repository, ...relative.split("/")),
+      file.absolute_path,
       "context_register_source",
     );
-    return decodeMutationUtf8(await readFile(absolute), relative);
+    return decodeMutationUtf8(await readFile(absolute), file.path);
   } catch (error) {
     mutationIoFailure(
       `unable to read Context registration source: ${mutationMessage(error)}`,

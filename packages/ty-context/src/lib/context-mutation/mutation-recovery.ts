@@ -34,6 +34,7 @@ import type {
   MutationFileChange,
 } from "./mutation-types.js";
 import { canonicalJson } from "../strict-codec.js";
+import { mutationPhysicalPath } from "./mutation-file-state.js";
 
 export async function contextMutationStatus(
   repository: string,
@@ -237,8 +238,7 @@ async function assertRecoveryLiveVector(
   const dispositions: Array<"before" | "after"> = [];
   for (const change of ordered(journal.files)) {
     const disposition = await mutationChangeDisposition(repository, change);
-    if (disposition === "conflict")
-      conflicts.push(change.path);
+    if (disposition === "conflict") conflicts.push(change.path);
     else dispositions.push(disposition);
   }
   if (conflicts.length)
@@ -268,7 +268,7 @@ async function currentDigest(
   change: MutationFileChange,
 ): Promise<string | null> {
   return (
-    await captureMutationFileState(repository, change.path, {
+    await captureMutationFileState(repository, mutationPhysicalPath(change), {
       allow_hardlinks: true,
     })
   ).sha256;

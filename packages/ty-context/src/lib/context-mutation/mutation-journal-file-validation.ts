@@ -11,17 +11,20 @@ import {
   validateJournalRecordedFileState,
   validateJournalTemporaryPath,
 } from "./mutation-journal-validation-support.js";
+import { normalizeContextPath } from "../context-catalog/catalog-paths.js";
 
 export function validateJournalFiles(
   value: unknown,
   transactionId: string,
   maxFiles: number,
   maxStoredBytes: number,
+  physicalPathMode: "forbidden-v2" | "required-v3",
 ): Record<string, unknown>[] {
   if (!Array.isArray(value) || value.length === 0 || value.length > maxFiles)
     invalidJournal("journal_files_invalid");
   const orders = new Set<number>();
   const paths = new Set<string>();
+  const physicalPaths = new Set<string>();
   const files: Record<string, unknown>[] = [];
   let storedBytes = 0;
   for (const entry of value) {
@@ -29,8 +32,31 @@ export function validateJournalFiles(
     const file = requiredJournalString(entry.path, "file.path");
     assertJournalRelative(file, "file.path");
     assertJournalMutationTarget(file);
+    if (
+      physicalPathMode === "required-v3" &&
+      file !== normalizeContextPath(file)
+    )
+      invalidJournal("journal_file_logical_path_not_nfc");
     if (paths.has(file)) invalidJournal("journal_file_path_duplicate");
     paths.add(file);
+    if (
+      physicalPathMode === "forbidden-v2" &&
+      entry.physical_path !== undefined
+    )
+      invalidJournal("journal_v2_physical_path_forbidden");
+    if (physicalPathMode === "required-v3" && entry.physical_path === undefined)
+      invalidJournal("journal_v3_physical_path_required");
+    const physicalFile =
+      physicalPathMode === "required-v3"
+        ? requiredJournalString(entry.physical_path, "file.physical_path")
+        : file;
+    assertJournalRelative(physicalFile, "file.physical_path");
+    assertJournalMutationTarget(physicalFile);
+    if (normalizeContextPath(physicalFile) !== normalizeContextPath(file))
+      invalidJournal("journal_file_physical_path_identity_mismatch");
+    if (physicalPaths.has(physicalFile))
+      invalidJournal("journal_file_physical_path_duplicate");
+    physicalPaths.add(physicalFile);
     const order = requiredJournalInteger(
       entry.commit_order,
       "file.commit_order",
@@ -44,7 +70,7 @@ export function validateJournalFiles(
       invalidJournal("journal_file_noop");
     validateJournalTemporaryPath(
       entry.temporary_path,
-      file,
+      physicalFile,
       transactionId,
       order,
     );
@@ -105,7 +131,10 @@ function validateTemporaryState(
   const identity = isJournalRecord(entry.temporary_state.state)
     ? entry.temporary_state.state.identity
     : null;
-  if (!isJournalRecord(identity) || !["1", "2"].includes(identity.nlink as string))
+  if (
+    !isJournalRecord(identity) ||
+    !["1", "2"].includes(identity.nlink as string)
+  )
     invalidJournal(`file_temporary_state_link_count_invalid:${file}`);
   if (
     identity.nlink === "2" &&

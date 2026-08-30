@@ -4,6 +4,7 @@ import { pathExists } from "../fs.js";
 import { assertSafeRepositoryFilePath } from "../repository-path-safety.js";
 import { assertCatalogStagedFilePath } from "./catalog-staged-path-safety.js";
 import { isPathWithin, normalizeContextPath } from "./catalog-paths.js";
+import type { CatalogFile } from "./catalog-types.js";
 
 const EXPORT_ARTIFACT_NAME_PATTERNS = [
   /full-project-context/iu,
@@ -31,6 +32,7 @@ export async function validateCatalogManifestPath(
   addError: CatalogPathErrorReporter,
   fileOverrides: ReadonlyMap<string, Uint8Array | null> = new Map(),
   directoryOverrides: ReadonlySet<string> = new Set(),
+  filesByPath: ReadonlyMap<string, CatalogFile> = new Map(),
 ): Promise<boolean> {
   if (
     path.isAbsolute(rawPath) ||
@@ -51,6 +53,8 @@ export async function validateCatalogManifestPath(
     return false;
   }
   const relative = normalizeContextPath(path.relative(projectRoot, target));
+  const physicalRelative = filesByPath.get(relative)?.physical_path ?? relative;
+  const physicalTarget = path.resolve(projectRoot, physicalRelative);
   if (allowFile && fileOverrides.has(relative)) {
     if (fileOverrides.get(relative) === null) {
       addError(
@@ -62,7 +66,7 @@ export async function validateCatalogManifestPath(
     try {
       await assertCatalogStagedFilePath(
         projectRoot,
-        relative,
+        physicalRelative,
         directoryOverrides,
         `catalog_staged_file:${source}`,
       );
@@ -75,7 +79,8 @@ export async function validateCatalogManifestPath(
       return false;
     }
   }
-  if (!(await pathExists(target))) {
+  const existingTarget = allowFile ? physicalTarget : target;
+  if (!(await pathExists(existingTarget))) {
     addError(
       "manifest_path_missing",
       `project_context/context.toml references missing ${allowFile ? "context file" : "area root"}: ${normalizeContextPath(rawPath)}`,
@@ -83,7 +88,7 @@ export async function validateCatalogManifestPath(
     return false;
   }
   const realAllowedRoot = await realpath(allowedRoot);
-  const realTarget = await realpath(target);
+  const realTarget = await realpath(existingTarget);
   if (!isPathWithin(realAllowedRoot, realTarget)) {
     addError(
       "manifest_path_symlink_escape",

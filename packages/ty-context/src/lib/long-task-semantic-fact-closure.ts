@@ -28,6 +28,7 @@ import type {
   SemanticFactExpectationV2,
   SemanticFactManifestV1,
 } from "./semantic-fact-types.js";
+import type { CapturedContextGraphSnapshot } from "./context-graph-snapshot.js";
 
 export interface LongTaskSemanticFactClosureV2 {
   manifest: SemanticFactManifestV1;
@@ -41,7 +42,7 @@ export async function validateLongTaskSemanticFactClosure(
   contract: DeliveryContractV2,
   repository: string,
   sourceItems: CompiledSourceItemV2[],
-  contextFiles: string[],
+  context: CapturedContextGraphSnapshot,
   designHandoffs?: LongTaskDesignHandoffPreflight[],
 ): Promise<LongTaskSemanticFactClosureV2> {
   const parsed = await loadSemanticFactManifest(
@@ -66,7 +67,7 @@ export async function validateLongTaskSemanticFactClosure(
   const materialInputs = await validateSemanticFactInputInventory(
     repository,
     sourceItems,
-    contextFiles,
+    context,
     manifest,
     designProjection,
   );

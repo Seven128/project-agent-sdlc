@@ -29,6 +29,10 @@ import {
 } from "../../packages/ty-context/dist/lib/context-mutation/mutation-journal.js";
 import { readLatestJournalSnapshot } from "../../packages/ty-context/dist/lib/context-mutation/mutation-journal-storage.js";
 import {
+  CONTEXT_MUTATION_JOURNAL_SCHEMA,
+  validateContextMutationJournal,
+} from "../../packages/ty-context/dist/lib/context-mutation/mutation-journal-validation.js";
+import {
   completeContextMutation,
   contextMutationStatus,
   rollbackContextMutation,
@@ -97,7 +101,10 @@ test("journal snapshot identity rejects same-byte replacement and read-time repl
         const journalFile = await journalSnapshotPath(root);
         const bytes = await readFile(journalFile);
         const mode = (await lstat(journalFile)).mode & 0o777;
-        const replacement = path.join(root, `.journal-replacement-${phase.replace(/\s/gu, "-")}`);
+        const replacement = path.join(
+          root,
+          `.journal-replacement-${phase.replace(/\s/gu, "-")}`,
+        );
         await writeFile(replacement, bytes);
         await chmod(replacement, mode);
         const replace = async (absolute) => {
@@ -107,12 +114,9 @@ test("journal snapshot identity rejects same-byte replacement and read-time repl
         if (phase === "before successor") {
           await replace(journalFile);
           await assert.rejects(
-            updateContextMutationJournal(
-              root,
-              initial,
-              { ...initial },
-              ["planning"],
-            ),
+            updateContextMutationJournal(root, initial, { ...initial }, [
+              "planning",
+            ]),
             /journal_predecessor_compare_and_swap_failed/u,
           );
         } else {
@@ -178,11 +182,105 @@ test("temporary creation before identity persistence and pre-v2 journals give ma
   });
 });
 
+test("journal v3 binds logical and physical paths while v2 remains restart-recoverable", async (t) => {
+  await t.test(
+    "new v3 journals require an NFC logical key and matching physical identity",
+    async () => {
+      const root = await projectWithUnregisteredContext();
+      try {
+        const planned = await planContextRegistration(registerInput(root));
+        const journal = await createContextMutationJournal(root, planned.plan);
+        assert.equal(
+          CONTEXT_MUTATION_JOURNAL_SCHEMA,
+          "context-mutation-journal-v3",
+        );
+        assert.equal(journal.schema_version, CONTEXT_MUTATION_JOURNAL_SCHEMA);
+        assert.equal(
+          journal.files[0].physical_path,
+          "project_context/context.toml",
+        );
+
+        const missingPhysical = structuredClone(journal);
+        delete missingPhysical.files[0].physical_path;
+        assert.throws(
+          () => validateContextMutationJournal(missingPhysical),
+          /journal_v3_physical_path_required/u,
+        );
+
+        const nonNfcLogical = structuredClone(journal);
+        nonNfcLogical.files[0].path = "project_context/Cafe\u0301.md";
+        nonNfcLogical.files[0].physical_path = "project_context/Cafe\u0301.md";
+        assert.throws(
+          () => validateContextMutationJournal(nonNfcLogical),
+          /journal_file_logical_path_not_nfc/u,
+        );
+
+        const mismatchedPhysical = structuredClone(journal);
+        mismatchedPhysical.files[0].physical_path =
+          "project_context/other-context.md";
+        assert.throws(
+          () => validateContextMutationJournal(mismatchedPhysical),
+          /journal_file_physical_path_identity_mismatch/u,
+        );
+
+        const ambiguousV2 = structuredClone(journal);
+        ambiguousV2.schema_version = "context-mutation-journal-v2";
+        assert.throws(
+          () => validateContextMutationJournal(ambiguousV2),
+          /journal_v2_physical_path_forbidden/u,
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  await t.test(
+    "a pre-existing v2 snapshot resumes with physical path equal to its logical path",
+    async () => {
+      const root = await projectWithUnregisteredContext();
+      try {
+        const planned = await planContextRegistration(registerInput(root));
+        await assert.rejects(
+          executeContextMutationPlan(root, planned.plan, {
+            fault_after: "prepared",
+          }),
+          /fault_injected:prepared/u,
+        );
+        const journalFile = await journalSnapshotPath(root);
+        const legacy = JSON.parse(await readFile(journalFile, "utf8"));
+        legacy.schema_version = "context-mutation-journal-v2";
+        for (const file of legacy.files) delete file.physical_path;
+        await writeFile(journalFile, canonicalJson(legacy), "utf8");
+
+        const restored = await readContextMutationJournal(root);
+        assert.equal(restored.schema_version, "context-mutation-journal-v2");
+        assert.equal(restored.files[0].physical_path, undefined);
+        assert.equal((await contextMutationStatus(root)).state, "prepared");
+        await completeContextMutation(root);
+        assert.equal(
+          (await contextMutationStatus(root)).journal_present,
+          false,
+        );
+        assert.ok(
+          (await loadContextCatalog(root)).registered_contexts.some(
+            (entry) => entry.path === contextPath,
+          ),
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+});
+
 test("prepared and partially applied transactions can complete or roll back without guessing", async () => {
   const completeRoot = await projectWithUnregisteredContext();
   const rollbackRoot = await projectWithUnregisteredContext();
   try {
-    const completePlan = await planContextRegistration(registerInput(completeRoot));
+    const completePlan = await planContextRegistration(
+      registerInput(completeRoot),
+    );
     await assert.rejects(
       executeContextMutationPlan(completeRoot, completePlan.plan, {
         fault_after: "prepared",
@@ -217,7 +315,9 @@ test("prepared and partially applied transactions can complete or roll back with
       "context.toml",
     );
     const beforeRollback = await readFile(rollbackManifest);
-    const rollbackPlan = await planContextRegistration(registerInput(rollbackRoot));
+    const rollbackPlan = await planContextRegistration(
+      registerInput(rollbackRoot),
+    );
     await assert.rejects(
       executeContextMutationPlan(rollbackRoot, rollbackPlan.plan, {
         fault_after: "applied:project_context/context.toml",
@@ -265,7 +365,10 @@ test("journal recovery accepts only its exact interrupted publication hardlink",
       `.journal-${sequence}.${randomUUID()}.tmp`,
     );
     await link(recoverableSnapshot, ownedTemporary);
-    assert.equal((await contextMutationStatus(recoverableRoot)).state, "prepared");
+    assert.equal(
+      (await contextMutationStatus(recoverableRoot)).state,
+      "prepared",
+    );
     await completeContextMutation(recoverableRoot);
     assert.equal(
       (await contextMutationStatus(recoverableRoot)).journal_present,
@@ -379,7 +482,9 @@ test("recovery fails closed when journaled files match neither before nor after"
   try {
     const planned = await planContextRegistration(registerInput(root));
     await assert.rejects(
-      executeContextMutationPlan(root, planned.plan, { fault_after: "prepared" }),
+      executeContextMutationPlan(root, planned.plan, {
+        fault_after: "prepared",
+      }),
       /fault_injected:prepared/u,
     );
     const manifest = path.join(root, "project_context", "context.toml");
@@ -409,7 +514,9 @@ test("recovery rejects modification of its recorded temporary identity", async (
   try {
     const planned = await planContextRegistration(registerInput(root));
     await assert.rejects(
-      executeContextMutationPlan(root, planned.plan, { fault_after: "prepared" }),
+      executeContextMutationPlan(root, planned.plan, {
+        fault_after: "prepared",
+      }),
       /fault_injected:prepared/u,
     );
     const temporary = path.join(
@@ -432,13 +539,19 @@ test("recovery rejects mode, same-byte identity and hardlink changes", async (t)
     const root = await projectWithUnregisteredContext();
     try {
       const planned = await prepareRegistration(root, "prepared");
-      const manifest = path.join(root, ...planned.plan.files[0].path.split("/"));
+      const manifest = path.join(
+        root,
+        ...planned.plan.files[0].path.split("/"),
+      );
       const beforeMode = (await lstat(manifest)).mode & 0o777;
       await chmod(manifest, beforeMode === 0o444 ? 0o666 : 0o444);
       const afterMode = (await lstat(manifest)).mode & 0o777;
       if (afterMode === beforeMode)
         return t.skip("platform did not expose the chmod mode transition");
-      assert.equal((await contextMutationStatus(root)).files[0].state, "conflict");
+      assert.equal(
+        (await contextMutationStatus(root)).files[0].state,
+        "conflict",
+      );
       await assert.rejects(completeContextMutation(root), /recovery_conflict/u);
       await assert.rejects(rollbackContextMutation(root), /recovery_conflict/u);
     } finally {
@@ -450,7 +563,10 @@ test("recovery rejects mode, same-byte identity and hardlink changes", async (t)
     const root = await projectWithUnregisteredContext();
     try {
       const planned = await prepareRegistration(root, "prepared");
-      const manifest = path.join(root, ...planned.plan.files[0].path.split("/"));
+      const manifest = path.join(
+        root,
+        ...planned.plan.files[0].path.split("/"),
+      );
       const original = await captureMutationFileState(
         root,
         planned.plan.files[0].path,
@@ -466,7 +582,10 @@ test("recovery rejects mode, same-byte identity and hardlink changes", async (t)
       );
       assert.equal(current.sha256, original.sha256);
       assert.notEqual(current.identity.ino, original.identity.ino);
-      assert.equal((await contextMutationStatus(root)).files[0].state, "conflict");
+      assert.equal(
+        (await contextMutationStatus(root)).files[0].state,
+        "conflict",
+      );
       await assert.rejects(completeContextMutation(root), /recovery_conflict/u);
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -477,9 +596,15 @@ test("recovery rejects mode, same-byte identity and hardlink changes", async (t)
     const root = await projectWithUnregisteredContext();
     try {
       const planned = await prepareRegistration(root, "prepared");
-      const manifest = path.join(root, ...planned.plan.files[0].path.split("/"));
+      const manifest = path.join(
+        root,
+        ...planned.plan.files[0].path.split("/"),
+      );
       await link(manifest, path.join(root, "external-manifest-hardlink.toml"));
-      assert.equal((await contextMutationStatus(root)).files[0].state, "conflict");
+      assert.equal(
+        (await contextMutationStatus(root)).files[0].state,
+        "conflict",
+      );
       await assert.rejects(completeContextMutation(root), /recovery_conflict/u);
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -509,7 +634,10 @@ test("journal records the actual published endpoint and rejects later same-byte 
     await chmod(replacement, current.mode);
     await rm(manifest);
     await rename(replacement, manifest);
-    assert.equal((await contextMutationStatus(root)).files[0].state, "conflict");
+    assert.equal(
+      (await contextMutationStatus(root)).files[0].state,
+      "conflict",
+    );
     await assert.rejects(rollbackContextMutation(root), /recovery_conflict/u);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -534,7 +662,10 @@ test("the second cooperative CAS detects a same-byte replacement made after stag
       }),
       /second_cas_conflict:project_context\/context\.toml/u,
     );
-    assert.equal((await contextMutationStatus(root)).files[0].state, "conflict");
+    assert.equal(
+      (await contextMutationStatus(root)).files[0].state,
+      "conflict",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -554,7 +685,9 @@ test("recovery rejects a journal whose file target was tampered", async () => {
   try {
     const planned = await planContextRegistration(registerInput(root));
     await assert.rejects(
-      executeContextMutationPlan(root, planned.plan, { fault_after: "prepared" }),
+      executeContextMutationPlan(root, planned.plan, {
+        fault_after: "prepared",
+      }),
       /fault_injected:prepared/u,
     );
     const journalFile = path.join(

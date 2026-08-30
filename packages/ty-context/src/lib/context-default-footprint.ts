@@ -10,6 +10,7 @@ import {
   compareUtf8Paths,
   normalizeContextPath,
   normalizeContextPathSpelling,
+  resolveCatalogFile,
 } from "./context-catalog/catalog-paths.js";
 import type { ContextManifest } from "./context-manifest-schema.js";
 
@@ -38,7 +39,6 @@ export async function inspectDefaultContextFootprint(
 ): Promise<DefaultContextFootprint> {
   const projectRoot = path.resolve(projectRootInput);
   const catalog = await loadContextCatalog(projectRoot, {
-    discover_files: false,
     validate_manifest: false,
   });
   const parseErrors = catalog.diagnostics
@@ -59,10 +59,12 @@ export async function inspectDefaultContextFootprint(
   for (const [relativePath, reasons] of [...selected.entries()].sort(
     ([left], [right]) => compareUtf8Paths(left, right),
   )) {
-    const absolutePath = resolveProjectFile(
-      projectRoot,
-      physicalPaths.get(relativePath) ?? relativePath,
-    );
+    const absolutePath =
+      resolveCatalogFile(catalog, relativePath)?.absolute_path ??
+      resolveProjectFile(
+        projectRoot,
+        physicalPaths.get(relativePath) ?? relativePath,
+      );
     const metadata = await lstat(absolutePath);
     if (metadata.isSymbolicLink()) {
       throw new Error(

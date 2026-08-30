@@ -14,6 +14,8 @@ import {
 import type { ContextMutationJournal } from "./mutation-types.js";
 
 export const CONTEXT_MUTATION_JOURNAL_SCHEMA =
+  "context-mutation-journal-v3" as const;
+const LEGACY_CONTEXT_MUTATION_JOURNAL_SCHEMA =
   "context-mutation-journal-v2" as const;
 
 const MAX_MUTATION_FILES = 512;
@@ -32,7 +34,10 @@ export function validateContextMutationJournal(
     invalidJournal(
       "journal_pre_v2_manual_recovery_required:use_the_ty-context_version_that_created_the_journal_or_restore_exact_files_from_version_control",
     );
-  if (value.schema_version !== CONTEXT_MUTATION_JOURNAL_SCHEMA)
+  if (
+    value.schema_version !== CONTEXT_MUTATION_JOURNAL_SCHEMA &&
+    value.schema_version !== LEGACY_CONTEXT_MUTATION_JOURNAL_SCHEMA
+  )
     invalidJournal("journal_schema_unsupported");
   const transactionId = requiredJournalString(
     value.transaction_id,
@@ -71,6 +76,9 @@ export function validateContextMutationJournal(
     transactionId,
     MAX_MUTATION_FILES,
     MAX_STORED_BYTES,
+    value.schema_version === CONTEXT_MUTATION_JOURNAL_SCHEMA
+      ? "required-v3"
+      : "forbidden-v2",
   );
   const directories = validateDirectories(value.directories, operation);
   validateAppliedPaths(value.applied_paths, files, state);

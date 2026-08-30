@@ -18,6 +18,7 @@ import {
   validateCatalogManifestPath,
 } from "./catalog-path-validation.js";
 import type {
+  CatalogFile,
   CatalogDiagnostic,
   CatalogRegisteredContext,
 } from "./catalog-types.js";
@@ -34,6 +35,7 @@ export async function validateCatalogManifest(
   manifest: ContextManifest,
   fileOverrides: ReadonlyMap<string, Uint8Array | null> = new Map(),
   directoryOverrides: ReadonlySet<string> = new Set(),
+  contextFiles: readonly CatalogFile[] = [],
 ): Promise<CatalogManifestValidation> {
   const diagnostics: CatalogDiagnostic[] = [];
   const registeredContexts: CatalogRegisteredContext[] = [];
@@ -63,6 +65,7 @@ export async function validateCatalogManifest(
 
   const areaIds = new Map<string, string>();
   const registeredPaths = new Set<string>();
+  const filesByPath = new Map(contextFiles.map((file) => [file.path, file]));
   const registeredPathSpellings = new Map<string, string>();
   const registeredPathCases = new Map<string, string>();
   const defaultAreas = manifest.areas.filter((area) => area.default);
@@ -101,6 +104,7 @@ export async function validateCatalogManifest(
       addError,
       fileOverrides,
       directoryOverrides,
+      filesByPath,
     );
     const relative = normalizeContextPath(area.context);
     reportRegisteredPathCollision(
@@ -128,6 +132,7 @@ export async function validateCatalogManifest(
       addError,
       fileOverrides,
       directoryOverrides,
+      filesByPath,
     );
   }
 
@@ -185,6 +190,7 @@ export async function validateCatalogManifest(
       addError,
       fileOverrides,
       directoryOverrides,
+      filesByPath,
     );
   }
 
@@ -281,6 +287,7 @@ async function addRegisteredContext(
   addError: CatalogPathErrorReporter,
   fileOverrides: ReadonlyMap<string, Uint8Array | null>,
   directoryOverrides: ReadonlySet<string>,
+  filesByPath: ReadonlyMap<string, CatalogFile>,
 ): Promise<void> {
   const relative = normalizeContextPath(input.rawPath);
   if (looksLikeContextExportArtifact(relative)) {
@@ -309,6 +316,7 @@ async function addRegisteredContext(
       addError,
       fileOverrides,
       directoryOverrides,
+      filesByPath,
     ))
   ) {
     return;

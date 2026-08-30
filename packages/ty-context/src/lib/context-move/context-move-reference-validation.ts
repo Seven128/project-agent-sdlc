@@ -4,6 +4,7 @@ import type {
   ContextMarkdownReference,
 } from "../context-markdown/context-markdown-types.js";
 import type { ContextCatalog } from "../context-catalog/catalog-types.js";
+import { compareUtf8Paths } from "../context-catalog/catalog-paths.js";
 import { mutationCatalogFailure } from "../context-mutation/mutation-command-support.js";
 
 export async function validateStagedContextMoveReferences(input: {
@@ -55,7 +56,7 @@ export function issueSignatures(
   return analysis.references
     .filter((entry) => entry.status !== "valid")
     .map(referenceIssueSignature)
-    .sort();
+    .sort(compareUtf8Paths);
 }
 
 function issueCounts(

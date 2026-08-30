@@ -18,6 +18,7 @@ export interface CatalogDiagnostic {
 
 export interface CatalogFile {
   path: string;
+  physical_path: string;
   absolute_path: string;
   bytes: number;
 }

@@ -130,6 +130,7 @@ export async function loadContextCatalog(
           parsed.manifest,
           fileOverrides,
           directoryOverrides,
+          contextFiles,
         );
   diagnostics.push(...validation.diagnostics);
   const registeredPaths = new Set([

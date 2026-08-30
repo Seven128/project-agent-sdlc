@@ -142,7 +142,7 @@ function resolveLocalDestination(
       : style === "repository"
         ? decoded
         : path.posix.join(path.posix.dirname(sourcePath), decoded);
-  const normalized = path.posix.normalize(candidate);
+  const normalized = path.posix.normalize(candidate).normalize("NFC");
   if (
     !normalized ||
     normalized === ".." ||

@@ -130,7 +130,11 @@ async function executeContextMutationPlanLocked(
       change,
       options.before_second_cas,
     );
-    await checkpoint(options, `published_before_journal:${change.path}`, change);
+    await checkpoint(
+      options,
+      `published_before_journal:${change.path}`,
+      change,
+    );
     let successor = replaceJournalFile(journal, change.path, {
       published_after: published,
     });

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, rm } from "node:fs/promises";
+import { access, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { loadContextCatalog } from "../../packages/ty-context/dist/lib/context-catalog/catalog-load.js";
@@ -9,6 +9,7 @@ import {
 } from "../../packages/ty-context/dist/lib/context-register/context-register.js";
 import { executeContextMutationPlan } from "../../packages/ty-context/dist/lib/context-mutation/mutation-commit.js";
 import { readContextMutationJournal } from "../../packages/ty-context/dist/lib/context-mutation/mutation-journal.js";
+import { completeContextMutation } from "../../packages/ty-context/dist/lib/context-mutation/mutation-recovery.js";
 import { runValidator } from "../../packages/ty-context/dist/lib/validators.js";
 import { createContextProject } from "./context-manifest-fixtures.mjs";
 import {
@@ -45,7 +46,10 @@ test("context register dry-run is deterministic, byte-preserving and writes noth
 test("context register apply commits through the journal engine and validates live Catalog", async () => {
   const root = await projectWithUnregisteredContext();
   try {
-    const result = await registerContext({ ...registerInput(root), apply: true });
+    const result = await registerContext({
+      ...registerInput(root),
+      apply: true,
+    });
     assert.equal(result.applied, true);
     assert.equal(result.transaction.state, "committed");
     assert.equal(await readContextMutationJournal(root), null);
@@ -63,6 +67,84 @@ test("context register apply commits through the journal engine and validates li
     assert.deepEqual((await runValidator(root, "validate-context")).errors, []);
   } finally {
     await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("context register preserves an NFD physical parent while exposing one NFC Context identity", async (t) => {
+  const physicalPath = "project_context/areas/Cafe\u0301/weather.md";
+  const canonicalPath = physicalPath.normalize("NFC");
+  const roots = await Promise.all([
+    createContextProject({ extraFiles: { [physicalPath]: durableContext() } }),
+    createContextProject({ extraFiles: { [physicalPath]: durableContext() } }),
+    createContextProject({ extraFiles: { [physicalPath]: durableContext() } }),
+  ]);
+  const input = (root) => ({
+    project_root: root,
+    context_path: canonicalPath,
+    role: "domain",
+    read_policy: "on-demand",
+    read_when: "weather ownership changes",
+    triggers: ["weather", "天气"],
+  });
+  try {
+    if (
+      !(await hasDistinctPhysicalSpelling(
+        roots[0],
+        physicalPath,
+        canonicalPath,
+      ))
+    ) {
+      t.skip("filesystem does not preserve distinct NFC/NFD spellings");
+      return;
+    }
+
+    const first = await registerContext(input(roots[0]));
+    const second = await registerContext(input(roots[0]));
+    assert.deepEqual(second, first);
+    assert.equal(first.applied, false);
+    assert.equal(first.path, canonicalPath);
+    await access(path.join(roots[0], ...physicalPath.split("/")));
+    await assert.rejects(
+      access(path.join(roots[0], ...canonicalPath.split("/"))),
+    );
+
+    const applied = await registerContext({ ...input(roots[1]), apply: true });
+    assert.equal(applied.path, canonicalPath);
+    const appliedCatalog = await loadContextCatalog(roots[1]);
+    const appliedFile = appliedCatalog.context_files.find(
+      (entry) => entry.path === canonicalPath,
+    );
+    assert.equal(appliedFile?.physical_path, physicalPath);
+    assert.ok(
+      appliedCatalog.registered_contexts.some(
+        (entry) => entry.path === canonicalPath,
+      ),
+    );
+
+    const planned = await planContextRegistration(input(roots[2]));
+    await assert.rejects(
+      executeContextMutationPlan(roots[2], planned.plan, {
+        fault_after: "prepared",
+      }),
+      /fault_injected/u,
+    );
+    await completeContextMutation(roots[2]);
+    const recoveredCatalog = await loadContextCatalog(roots[2]);
+    assert.ok(
+      recoveredCatalog.registered_contexts.some(
+        (entry) => entry.path === canonicalPath,
+      ),
+    );
+    assert.equal(
+      recoveredCatalog.context_files.find(
+        (entry) => entry.path === canonicalPath,
+      )?.physical_path,
+      physicalPath,
+    );
+  } finally {
+    await Promise.all(
+      roots.map((root) => rm(root, { recursive: true, force: true })),
+    );
   }
 });
 
@@ -196,3 +278,13 @@ test("context register and transaction CLI expose dry-run, apply and recovery wi
     await rm(recoveryRoot, { recursive: true, force: true });
   }
 });
+
+async function hasDistinctPhysicalSpelling(root, physical, canonical) {
+  await access(path.join(root, ...physical.split("/")));
+  try {
+    await access(path.join(root, ...canonical.split("/")));
+    return false;
+  } catch {
+    return true;
+  }
+}

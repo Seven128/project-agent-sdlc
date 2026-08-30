@@ -5,6 +5,7 @@ import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { inspectContext } from "../../packages/ty-context/dist/lib/context-inspect/context-inspect.js";
+import { runDoctor } from "../../packages/ty-context/dist/lib/doctor.js";
 import {
   baseManifest,
   createContextProject,
@@ -110,8 +111,10 @@ test("context inspect supports unregistered files and produces byte-stable JSON"
 });
 
 test("context inspect uses the Catalog physical identity for an NFD file and emits one stable NFC path", async () => {
-  const physicalPath = "project_context/areas/main/Cafe\u0301.md";
+  const physicalPath = "project_context/areas/Cafe\u0301/target.md";
   const canonicalPath = physicalPath.normalize("NFC");
+  const physicalSource = "project_context/areas/Cafe\u0301/source.md";
+  const canonicalSource = physicalSource.normalize("NFC");
   const manifest = `${baseManifest()}
 [[context]]
 path = "${physicalPath}"
@@ -123,6 +126,17 @@ read_policy = "on-demand"
     extraFiles: {
       [physicalPath]:
         "# Unicode Contract\n\nConsumers must preserve this durable contract.\n",
+      [physicalSource]: `# Unicode Links
+
+[inline](./target.md)
+[encoded](./target%2Emd)
+[root](/${canonicalPath})
+[repository](${canonicalPath})
+[reference][target]
+
+[target]: ./target.md "Target"
+<./target.md>
+`,
     },
   });
   try {
@@ -137,7 +151,24 @@ read_policy = "on-demand"
     assert.equal(canonical.path, canonicalPath);
     assert.equal(canonical.registration, "registered");
     assert.equal(canonical.role, "contract");
+    assert.equal(canonical.referenced_by.length, 6);
+    assert.ok(
+      canonical.referenced_by.every(
+        (reference) =>
+          reference.source_path === canonicalSource &&
+          reference.target_path === canonicalPath &&
+          reference.status === "valid",
+      ),
+    );
     assert.equal(JSON.stringify(decomposed), JSON.stringify(canonical));
+    const doctor = await runDoctor(root);
+    assert.deepEqual(doctor.errors, []);
+    assert.ok(
+      !doctor.warnings.some(
+        (warning) =>
+          warning.includes(canonicalSource) && warning.includes("missing"),
+      ),
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

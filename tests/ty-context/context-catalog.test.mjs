@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
-import { readdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -119,6 +119,298 @@ test("managed, package and source-workspace portable rules stay byte-identical",
   );
   assert.equal(contents[1], contents[0]);
   assert.equal(contents[2], contents[0]);
+});
+
+test("managed, package and source-workspace portable validators stay byte-identical", async () => {
+  const paths = [
+    ".codex/ty-context-managed/minimal_tools/validate_context.py",
+    "packages/ty-context/assets/tools/validate_context.py",
+    "tools/validate_context.py",
+  ];
+  const contents = await Promise.all(
+    paths.map((entry) => readFile(path.join(repository, entry), "utf8")),
+  );
+  assert.equal(contents[1], contents[0]);
+  assert.equal(contents[2], contents[0]);
+});
+
+test("TypeScript and portable Python agree on NFC identity and portability collisions", async (t) => {
+  const decomposed = "project_context/areas/main/Cafe\u0301.md";
+  const composed = decomposed.normalize("NFC");
+  const upper = "project_context/areas/main/A.md";
+  const lower = "project_context/areas/main/a.md";
+  const contract = (name) =>
+    `# ${name}\n\nConsumers must preserve this durable contract.\n`;
+  const contextTable = (contextPath) => `[[context]]
+path = "${contextPath}"
+role = "contract"
+read_policy = "on-demand"
+`;
+  const cases = [
+    {
+      name: "NFC and NFD Context path aliases",
+      manifest: `${baseManifest()}\n${contextTable(decomposed)}\n${contextTable(composed)}`,
+      extraFiles: {
+        [decomposed]: contract("decomposed"),
+        [composed]: contract("composed"),
+      },
+      blocked: true,
+      pattern: /Context paths .*normalize to the same NFC repository path/u,
+    },
+    {
+      name: "case-only Context path aliases",
+      manifest: `${baseManifest()}\n${contextTable(upper)}\n${contextTable(lower)}`,
+      extraFiles: {
+        [upper]: contract("upper"),
+        [lower]: contract("lower"),
+      },
+      blocked: true,
+      pattern: /Context paths .*collide on a case-insensitive filesystem/u,
+    },
+    {
+      name: "NFC and NFD Area id aliases",
+      manifest: `[[areas]]
+id = "Cafe\u0301"
+root = "."
+context = "project_context/areas/main.md"
+kind = "repository"
+default = true
+
+[[areas]]
+id = "Café"
+root = "apps/client"
+context = "project_context/areas/client.md"
+kind = "app"
+default = false
+`,
+      extraFiles: {
+        "apps/client/.gitkeep": "",
+        "project_context/areas/client.md": areaContext("client"),
+      },
+      blocked: true,
+      pattern: /area ids .*normalize to the same NFC id/u,
+    },
+    {
+      name: "Chinese and non-ASCII distinct paths",
+      manifest: `${baseManifest()}\n${[
+        "project_context/areas/main/中文.md",
+        "project_context/areas/main/Å.md",
+        "project_context/areas/main/ä.md",
+      ]
+        .map(contextTable)
+        .join("\n")}`,
+      extraFiles: {
+        "project_context/areas/main/中文.md": contract("Chinese"),
+        "project_context/areas/main/Å.md": contract("ring"),
+        "project_context/areas/main/ä.md": contract("umlaut"),
+      },
+      blocked: false,
+    },
+  ];
+
+  for (const fixture of cases)
+    await t.test(fixture.name, async () => {
+      const root = await createContextProject(fixture);
+      try {
+        const typescript = await runValidator(root, "validate-context");
+        const portable = runPortableValidator(root);
+        assert.equal(typescript.errors.length > 0, fixture.blocked);
+        assert.equal(portable.status !== 0, fixture.blocked, portable.stderr);
+        if (fixture.pattern) {
+          assert.match(typescript.errors.join("\n"), fixture.pattern);
+          assert.match(portable.stderr, fixture.pattern);
+        }
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    });
+
+  await t.test(
+    "one NFD physical file with an NFC Manifest key",
+    async (subtest) => {
+      const root = await createContextProject({
+        manifest: `${baseManifest()}\n${contextTable(composed).replace(
+          'read_policy = "on-demand"',
+          'read_policy = "default"',
+        )}`,
+        extraFiles: { [decomposed]: contract("physical NFD") },
+      });
+      try {
+        if (!(await hasDistinctPhysicalSpelling(root, decomposed, composed))) {
+          subtest.skip(
+            "filesystem does not preserve distinct NFC/NFD spellings",
+          );
+          return;
+        }
+        const typescript = await runValidator(root, "validate-context");
+        const portable = runPortableValidator(root);
+        assert.deepEqual(typescript.errors, []);
+        assert.equal(portable.status, 0, portable.stderr);
+        assert.ok(
+          (await inspectDefaultContextFootprint(root)).files.some(
+            (entry) => entry.path === composed,
+          ),
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  await t.test(
+    "Manifest table order does not change blocking classification",
+    async () => {
+      const tables = [contextTable(decomposed), contextTable(composed)];
+      const roots = await Promise.all(
+        [tables, [...tables].reverse()].map((ordered) =>
+          createContextProject({
+            manifest: `${baseManifest()}\n${ordered.join("\n")}`,
+            extraFiles: {
+              [decomposed]: contract("decomposed"),
+              [composed]: contract("composed"),
+            },
+          }),
+        ),
+      );
+      try {
+        for (const root of roots) {
+          const typescript = await runValidator(root, "validate-context");
+          const portable = runPortableValidator(root);
+          assert.match(
+            typescript.errors.join("\n"),
+            /Context paths .*normalize to the same NFC repository path/u,
+          );
+          assert.match(
+            portable.stderr,
+            /Context paths .*normalize to the same NFC repository path/u,
+          );
+        }
+      } finally {
+        await Promise.all(
+          roots.map((root) => rm(root, { recursive: true, force: true })),
+        );
+      }
+    },
+  );
+
+  await t.test(
+    "physical aliases are grouped and uppercase Markdown is still discovered",
+    async (subtest) => {
+      const aliases = [
+        "project_context/areas/main/A\u030A\u0301.md",
+        "project_context/areas/main/Å\u0301.md",
+        "project_context/areas/main/Ǻ.md",
+      ];
+      assert.equal(
+        new Set(aliases.map((entry) => entry.normalize("NFC"))).size,
+        1,
+      );
+      const uppercase = "project_context/areas/main/UPPER.MD";
+      const root = await createContextProject({
+        extraFiles: Object.fromEntries([
+          ...aliases.map((entry) => [entry, contract("alias")]),
+          [uppercase, contract("uppercase")],
+        ]),
+      });
+      try {
+        const names = await readdir(
+          path.join(root, "project_context", "areas", "main"),
+        );
+        if (!aliases.every((entry) => names.includes(path.basename(entry)))) {
+          subtest.skip(
+            "filesystem does not preserve all canonical-equivalent spellings",
+          );
+          return;
+        }
+        const typescript = await runValidator(root, "validate-context");
+        const portable = runPortableValidator(root);
+        const collision =
+          /Context files .*normalize to the same NFC repository path/u;
+        assert.equal(
+          typescript.errors.filter((entry) => collision.test(entry)).length,
+          1,
+        );
+        assert.equal(
+          portable.stderr
+            .split(/\r?\n/u)
+            .filter((entry) => collision.test(entry)).length,
+          1,
+        );
+        assert.ok(
+          typescript.warnings?.some(
+            (entry) =>
+              entry.includes(uppercase) && entry.includes("unregistered"),
+          ),
+        );
+        assert.match(
+          portable.stderr,
+          new RegExp(`${uppercase.replace(".", "\\.")}.*unregistered`, "u"),
+        );
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
+
+  await t.test(
+    "default_children and unregistered diagnostics use canonical UTF-8 keys",
+    async () => {
+      const parent = "project_context/areas/main/parent.md";
+      const childPhysical = "project_context/areas/main/Cafe\u0301-child.md";
+      const child = childPhysical.normalize("NFC");
+      const unordered = [
+        "project_context/areas/main/中文-unregistered.md",
+        "project_context/areas/main/Å-unregistered.md",
+        "project_context/areas/main/ä-unregistered.md",
+      ];
+      const expected = unordered
+        .map((entry) => entry.normalize("NFC"))
+        .sort(compareUtf8Paths);
+      const root = await createContextProject({
+        manifest: `${baseManifest()}
+[[context]]
+path = "${parent}"
+role = "contract"
+read_policy = "default"
+default_children = ["${childPhysical}"]
+
+[[context]]
+path = "${child}"
+role = "contract"
+read_policy = "on-demand"
+`,
+        extraFiles: Object.fromEntries([
+          [parent, contract("parent")],
+          [child, contract("child")],
+          ...unordered.map((entry) => [entry, contract("unregistered")]),
+        ]),
+      });
+      try {
+        const typescript = await runValidator(root, "validate-context");
+        const portable = runPortableValidator(root);
+        assert.deepEqual(typescript.errors, []);
+        assert.equal(portable.status, 0, portable.stderr);
+        const typescriptPaths = (typescript.warnings ?? [])
+          .filter((entry) => entry.includes("unregistered Context Markdown"))
+          .map((entry) => entry.split(" is an unregistered", 1)[0])
+          .filter((entry) => expected.includes(entry));
+        const portablePaths = portable.stderr
+          .split(/\r?\n/u)
+          .filter((entry) => entry.includes("unregistered Context Markdown"))
+          .map(
+            (entry) =>
+              entry
+                .replace(/^warning: /u, "")
+                .split(" is an unregistered", 1)[0],
+          )
+          .filter((entry) => expected.includes(entry));
+        assert.deepEqual(typescriptPaths, expected);
+        assert.deepEqual(portablePaths, expected);
+      } finally {
+        await rm(root, { recursive: true, force: true });
+      }
+    },
+  );
 });
 
 test("Catalog public projections are canonical across override insertion order and UTF-8 comparator traps", async () => {
@@ -586,6 +878,18 @@ function runPortableValidator(cwd) {
     if (!result.error || result.error.code !== "ENOENT") return result;
   }
   throw new Error("portable_python_unavailable");
+}
+
+async function hasDistinctPhysicalSpelling(root, physical, canonical) {
+  const physicalFile = path.join(root, ...physical.split("/"));
+  const canonicalFile = path.join(root, ...canonical.split("/"));
+  await access(physicalFile);
+  try {
+    await access(canonicalFile);
+    return false;
+  } catch {
+    return true;
+  }
 }
 
 async function snapshotTree(root) {

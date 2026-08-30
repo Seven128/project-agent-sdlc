@@ -19,6 +19,7 @@ import type { LongTaskDesignHandoffPreflight } from "./long-task-design-resource
 import { assertProtectedRepositoryFile } from "./long-task-protected-files.js";
 import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { sha256Hex } from "./strict-codec.js";
+import type { CapturedContextGraphSnapshot } from "./context-graph-snapshot.js";
 
 export interface DesignOwnedSemanticFactProjectionV1 {
   key: string;
@@ -152,7 +153,7 @@ export async function collectDesignOwnedSemanticFactSourceItems(
 export async function validateSemanticFactInputInventory(
   repository: string,
   sourceItems: CompiledSourceItemV2[],
-  contextFiles: string[],
+  context: CapturedContextGraphSnapshot,
   manifest: SemanticFactManifestV1,
   designProjection: DesignOwnedSemanticProjectionV1,
 ): Promise<MaterialTextInputV2[]> {
@@ -181,11 +182,17 @@ export async function validateSemanticFactInputInventory(
   );
   assertSameSemanticFactClosureSet(
     contextInputs.map((item) => item.source_ref),
-    contextFiles,
+    context.snapshot.files,
     "input_context_universe",
   );
   for (const input of manifest.inputs)
-    await validateInput(repository, manifest, input, designOwnedSourceItems);
+    await validateInput(
+      repository,
+      manifest,
+      input,
+      designOwnedSourceItems,
+      context.physical_files,
+    );
   validateInputFactLineage(manifest, sourceInputs, designProjection.facts);
   validateSemanticFactProvenance(manifest, sourceItems);
   return deriveMaterialTextInputs(
@@ -228,6 +235,7 @@ async function validateInput(
   manifest: SemanticFactManifestV1,
   input: SemanticFactManifestV1["inputs"][number],
   designOwnedSourceItems: Set<string>,
+  contextPhysicalFiles: ReadonlyMap<string, string>,
 ): Promise<void> {
   const projectionInput =
     input.kind === "source_fragment" || input.kind === "semantic_anchor";
@@ -307,9 +315,18 @@ async function validateInput(
   )
     semanticFactClosureInvalid("input_scope_exclusion_missing", input.key);
   if (input.kind === "source_item" || projectionInput) return;
+  const inputPath =
+    input.kind === "context"
+      ? contextPhysicalFiles.get(input.source_ref)
+      : path.resolve(repository, ...input.source_ref.split("/"));
+  if (!inputPath)
+    semanticFactClosureInvalid(
+      "input_context_physical_file_missing",
+      `${input.key}:${input.source_ref}`,
+    );
   const file = await assertProtectedRepositoryFile(
     repository,
-    path.resolve(repository, ...input.source_ref.split("/")),
+    inputPath,
     `semantic_fact_input:${input.key}`,
   );
   const digest = sha256Hex(await readFile(file));

@@ -32,16 +32,14 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
       ),
     /long-task-windows-job-supervisor/u,
   );
-  assert.throws(
-    () =>
-      assertWindowsLevel4RuntimeJob(
-        windowsLevel4Job.replace(
-          /\s*tests\/ty-context\/long-task-final-authority-race\.test\.mjs/u,
-          "",
-        ),
-        true,
+  assert.throws(() =>
+    assertWindowsLevel4RuntimeJob(
+      windowsLevel4Job.replace(
+        "node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement",
+        "node --version",
       ),
-    /long-task-final-authority-race/u,
+      true,
+    ),
   );
   assert.match(packageWorkflow, /Typecheck package and build once/);
   assert.match(
@@ -371,8 +369,12 @@ function assertWindowsLevel4RuntimeJob(
       includePackageJobSupervisor
         ? "node --test --test-concurrency=1 tests/ty-context/long-task-windows-job-supervisor.test.mjs tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs"
         : "node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs",
-      'node --test --test-concurrency=1 --test-name-pattern="\\[critical:windows-finalization-tree-settlement\\]" tests/ty-context/long-task-final-authority-race.test.mjs',
+      "node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement",
     ],
+  );
+  assert.doesNotMatch(
+    job,
+    /--test-name-pattern|long-task-final-authority-race\.test\.mjs/u,
   );
   assert.doesNotMatch(job, /continue-on-error|\bif:\s*/u);
 }

@@ -18,8 +18,10 @@ import {
   validateContextMutationJournal,
 } from "./mutation-journal-validation.js";
 
-const journalSnapshotBindings =
-  new WeakMap<ContextMutationJournal, ContextMutationJournalSnapshot>();
+const journalSnapshotBindings = new WeakMap<
+  ContextMutationJournal,
+  ContextMutationJournalSnapshot
+>();
 
 export async function readContextMutationJournal(
   repository: string,
@@ -108,6 +110,7 @@ function immutableMutationPlan(journal: ContextMutationJournal): unknown {
     directories: journal.directories,
     files: journal.files.map((file) => ({
       path: file.path,
+      physical_path: file.physical_path,
       before: file.before,
       after: file.after,
       commit_order: file.commit_order,

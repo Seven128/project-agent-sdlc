@@ -669,11 +669,7 @@ test("fresh Long-Task Compile rejects a marked bundle whose manifest was removed
       designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
     });
     await rm(
-      path.join(
-        fixture.root,
-        "design_system",
-        "authority.manifest.json",
-      ),
+      path.join(fixture.root, "design_system", "authority.manifest.json"),
     );
 
     await assert.rejects(
@@ -681,6 +677,59 @@ test("fresh Long-Task Compile rejects a marked bundle whose manifest was removed
         require_completion_gate: false,
       }),
       /bundle_manifest_missing/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("fresh Long-Task Compile preserves a noncanonical marker leaf diagnostic", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const authority = await writeLongTaskDesignAuthorityBundle(fixture.root);
+    const handoff = await attachDesignResourceHandoff(fixture);
+    handoff.project_design_authority = {
+      kind: "repository-closure",
+      ...authority.identity,
+    };
+    await writeDesignResourceHandoff(fixture.root, handoff);
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    configureExactTargetBlockingConfirmation(fixture.contract, {
+      key: "confirm-authority-noncanonical-marker-fixture",
+    });
+    await writeContract(fixture.workdir, fixture.contract, {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+    });
+    const entryPath = path.join(fixture.root, "DESIGN.md");
+    const design = await readFile(entryPath, "utf8");
+    await writeFile(
+      entryPath,
+      design.replace(
+        "<!-- ty-context-design-authority-format: bundle-v1 -->",
+        "<!-- ty-context-design-authority-format : bundle-v1 -->",
+      ),
+      "utf8",
+    );
+
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      (error) => {
+        const detail = error instanceof Error ? error.message : String(error);
+        assert.match(
+          detail,
+          /bundle_marker_noncanonical:line=11:expected=.*:actual=.*design-authority-format : bundle-v1/u,
+        );
+        assert.doesNotMatch(
+          detail,
+          /legacy_omission|bundle_marker_missing|identity_mismatch/u,
+        );
+        return true;
+      },
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -696,8 +745,7 @@ test("Long-Task rejects conflicting project Design Authority identities across h
       DESIGN_HANDOFF_PATH,
     );
     const secondary = structuredClone(primary);
-    secondary.project_design_authority_resolution.identity.closure_digest =
-      `sha256:${"f".repeat(64)}`;
+    secondary.project_design_authority_resolution.identity.closure_digest = `sha256:${"f".repeat(64)}`;
     assert.throws(
       () => validateProjectDesignAuthoritySet([primary, secondary]),
       /project_design_authority_identity_conflict/u,
@@ -2185,12 +2233,7 @@ test("Design Fact Result impersonation fails closed through Preflight, Compile, 
       /ui_design_target_verification_claim_not_owned/u,
     );
     await assert.rejects(
-      () =>
-        runCli(fixture.root, [
-          "long-task",
-          "compile",
-          fixture.workdir,
-        ]),
+      () => runCli(fixture.root, ["long-task", "compile", fixture.workdir]),
       /ui_design_target_verification_claim_not_owned/u,
     );
     await assert.rejects(() =>

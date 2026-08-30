@@ -1,11 +1,4 @@
-import {
-  chmod,
-  link,
-  lstat,
-  open,
-  rename,
-  unlink,
-} from "node:fs/promises";
+import { chmod, link, lstat, open, rename, unlink } from "node:fs/promises";
 import path from "node:path";
 import {
   assertSafeRepositoryFilePath,
@@ -14,6 +7,7 @@ import {
 import { sha256Hex } from "../strict-codec.js";
 import {
   captureMutationFileState,
+  mutationPhysicalPath,
   mutationRecordedFileState,
   sameMutationRecordedState,
 } from "./mutation-file-state.js";
@@ -60,8 +54,7 @@ export async function stageMutationTemporary(
 ): Promise<MutationTemporaryState | null> {
   const state = change[side];
   if (!state.exists) return null;
-  if (!change.temporary_path)
-    invalid(`temporary_path_missing:${change.path}`);
+  if (!change.temporary_path) invalid(`temporary_path_missing:${change.path}`);
   const temporary = await assertSafeRepositoryFilePath(
     repository,
     change.temporary_path,
@@ -81,11 +74,7 @@ export async function stageMutationTemporary(
       return change.temporary_state;
     invalid(`temporary_collision:${change.temporary_path}`);
   }
-  const handle = await open(
-    temporary.absolute,
-    "wx",
-    state.mode ?? 0o666,
-  );
+  const handle = await open(temporary.absolute, "wx", state.mode ?? 0o666);
   try {
     await handle.writeFile(stateBytes(state));
     await handle.sync();
@@ -112,8 +101,7 @@ export async function prepareMutationTemporaryForRecovery(
   afterCreated?: MutationAfterTemporaryCreated,
 ): Promise<MutationTemporaryState | null> {
   const desired = change[side];
-  if (!change.temporary_path)
-    invalid(`temporary_path_missing:${change.path}`);
+  if (!change.temporary_path) invalid(`temporary_path_missing:${change.path}`);
   const temporary = await captureMutationFileState(
     repository,
     change.temporary_path,
@@ -178,13 +166,18 @@ export async function mutationChangeDisposition(
   change: MutationFileChange,
 ): Promise<MutationDisposition> {
   await assertNoUnrecordedTemporary(repository, change);
-  const current = await captureMutationFileState(repository, change.path, {
-    allow_hardlinks: true,
-  });
+  const current = await captureMutationFileState(
+    repository,
+    mutationPhysicalPath(change),
+    {
+      allow_hardlinks: true,
+    },
+  );
   if (matchesRecordedSide(current, change, "before")) return "before";
   if (matchesRecordedSide(current, change, "after")) return "after";
-  return (await ownedTemporaryTransition(repository, change, current)) ??
-    "conflict";
+  return (
+    (await ownedTemporaryTransition(repository, change, current)) ?? "conflict"
+  );
 }
 
 export async function cleanupMutationTemporary(
@@ -220,13 +213,12 @@ async function applyMutationState(
   let disposition = await mutationChangeDisposition(repository, change);
   if (disposition === desiredSide)
     return captureDesiredEndpoint(repository, change, desiredSide);
-  if (disposition !== expectedSide)
-    invalid(`recovery_conflict:${change.path}`);
+  if (disposition !== expectedSide) invalid(`recovery_conflict:${change.path}`);
 
   const desired = change[desiredSide];
   const target = await assertSafeRepositoryFilePath(
     repository,
-    change.path,
+    mutationPhysicalPath(change),
     "context_mutation_commit_target",
     { destinationMayBeAbsent: true, allowHardlinks: !desired.exists },
   );
@@ -274,13 +266,21 @@ async function captureDesiredEndpoint(
   change: MutationFileChange,
   side: MutationSide,
 ): Promise<MutationRecordedFileState> {
-  const current = await captureMutationFileState(repository, change.path, {
-    allow_hardlinks: true,
-  });
+  const current = await captureMutationFileState(
+    repository,
+    mutationPhysicalPath(change),
+    {
+      allow_hardlinks: true,
+    },
+  );
   const desired = change[side];
   if (!samePayload(current, desired))
     invalid(`post_commit_readback_mismatch:${change.path}`);
-  const transition = await ownedTemporaryTransition(repository, change, current);
+  const transition = await ownedTemporaryTransition(
+    repository,
+    change,
+    current,
+  );
   const recorded =
     side === "before" ? change.published_before : change.published_after;
   if (
@@ -304,13 +304,11 @@ async function assertTemporaryReady(
     change.temporary_path,
     { allow_hardlinks: true },
   );
-  if (
-    !(
-      (sameMutationRecordedState(temporary, change.temporary_state.state) &&
-        temporary.identity?.nlink === "1") ||
-      isOwnedDeletionRemainder(temporary, change.temporary_state.state)
-    )
-  )
+  if (!(
+    (sameMutationRecordedState(temporary, change.temporary_state.state) &&
+      temporary.identity?.nlink === "1") ||
+    isOwnedDeletionRemainder(temporary, change.temporary_state.state)
+  ))
     invalid(`temporary_identity_changed:${change.temporary_path}`);
 }
 
@@ -326,7 +324,9 @@ function matchesRecordedSide(
   if (semantic.exists) return sameMutationRecordedState(current, semantic);
   if (side !== "before") return false;
   const oppositePublished = change.published_after;
-  return oppositePublished === null && sameMutationRecordedState(current, semantic);
+  return (
+    oppositePublished === null && sameMutationRecordedState(current, semantic)
+  );
 }
 
 async function ownedTemporaryTransition(
@@ -403,9 +403,11 @@ async function removeOwnedTemporary(
   );
   let linkedPair = false;
   if (!exact && temporary.identity?.nlink === "2") {
-    const target = await captureMutationFileState(repository, change.path, {
-      allow_hardlinks: true,
-    });
+    const target = await captureMutationFileState(
+      repository,
+      mutationPhysicalPath(change),
+      { allow_hardlinks: true },
+    );
     linkedPair =
       target.identity?.nlink === "2" &&
       sameFileObject(target, temporary) &&
@@ -417,9 +419,11 @@ async function removeOwnedTemporary(
     !exact &&
     change.temporary_state.state.identity?.nlink === "2" &&
     isOwnedDeletionRemainder(temporary, change.temporary_state.state) &&
-    !(await captureMutationFileState(repository, change.path, {
-      allow_hardlinks: true,
-    })).exists;
+    !(
+      await captureMutationFileState(repository, mutationPhysicalPath(change), {
+        allow_hardlinks: true,
+      })
+    ).exists;
   if (!exact && !linkedPair && !deletionRemainder)
     invalid(`temporary_identity_changed:${change.temporary_path}`);
   const absolute = resolveInsideRepository(
@@ -469,18 +473,20 @@ async function stageDeletionTombstone(
   if (!change[expectedSide].exists || change[desiredSide].exists)
     invalid(`deletion_transition_invalid:${change.path}`);
   let disposition = await mutationChangeDisposition(repository, change);
-  if (disposition !== expectedSide)
-    invalid(`recovery_conflict:${change.path}`);
+  if (disposition !== expectedSide) invalid(`recovery_conflict:${change.path}`);
   await beforeSecondCas?.(change);
   disposition = await mutationChangeDisposition(repository, change);
   if (disposition !== expectedSide)
     invalid(`second_cas_conflict:${change.path}`);
-  const beforeLink = await captureMutationFileState(repository, change.path);
+  const beforeLink = await captureMutationFileState(
+    repository,
+    mutationPhysicalPath(change),
+  );
   if ((await mutationChangeDisposition(repository, change)) !== expectedSide)
     invalid(`second_cas_conflict:${change.path}`);
   const target = await assertSafeRepositoryFilePath(
     repository,
-    change.path,
+    mutationPhysicalPath(change),
     "context_mutation_deletion_target",
     { destinationMayBeAbsent: false },
   );
@@ -501,7 +507,9 @@ async function stageDeletionTombstone(
   }
   await afterCreated?.(change, expectedSide);
   const [targetState, temporaryState] = await Promise.all([
-    captureMutationFileState(repository, change.path, { allow_hardlinks: true }),
+    captureMutationFileState(repository, mutationPhysicalPath(change), {
+      allow_hardlinks: true,
+    }),
     captureMutationFileState(repository, change.temporary_path!, {
       allow_hardlinks: true,
     }),
@@ -515,7 +523,10 @@ async function stageDeletionTombstone(
   )
     invalid(`deletion_tombstone_readback_mismatch:${change.path}`);
   await syncParentDirectory(path.dirname(temporary.absolute));
-  return { side: expectedSide, state: mutationRecordedFileState(temporaryState) };
+  return {
+    side: expectedSide,
+    state: mutationRecordedFileState(temporaryState),
+  };
 }
 
 async function assertDeletionTombstoneReady(
@@ -532,7 +543,9 @@ async function assertDeletionTombstoneReady(
   )
     invalid(`deletion_tombstone_missing:${change.path}`);
   const [target, temporary] = await Promise.all([
-    captureMutationFileState(repository, change.path, { allow_hardlinks: true }),
+    captureMutationFileState(repository, mutationPhysicalPath(change), {
+      allow_hardlinks: true,
+    }),
     captureMutationFileState(repository, change.temporary_path, {
       allow_hardlinks: true,
     }),

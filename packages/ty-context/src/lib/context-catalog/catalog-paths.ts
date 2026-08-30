@@ -1,4 +1,5 @@
 import path from "node:path";
+import type { CatalogFile, ContextCatalog } from "./catalog-types.js";
 
 export function normalizeContextPath(value: string): string {
   return normalizeContextPathSpelling(value).normalize("NFC");
@@ -26,6 +27,21 @@ export function repositoryRelativePath(
   absolutePath: string,
 ): string {
   return normalizeContextPath(path.relative(projectRoot, absolutePath));
+}
+
+export function repositoryRelativePathSpelling(
+  projectRoot: string,
+  absolutePath: string,
+): string {
+  return normalizeContextPathSpelling(path.relative(projectRoot, absolutePath));
+}
+
+export function resolveCatalogFile(
+  catalog: Pick<ContextCatalog, "context_files">,
+  repositoryRelativePath: string,
+): CatalogFile | undefined {
+  const key = normalizeContextPath(repositoryRelativePath);
+  return catalog.context_files.find((file) => file.path === key);
 }
 
 export function isPathWithin(root: string, target: string): boolean {

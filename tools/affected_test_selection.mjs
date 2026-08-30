@@ -1014,13 +1014,26 @@ export function selectAffectedTests(changedPaths, options = {}) {
   let mode = "selected";
 
   for (const file of normalized) {
-    if (
-      file === "tests/ty-context/run-package-suite.mjs" ||
-      file === "tests/ty-context/test-suite-file-reporter.mjs"
-    ) {
+    if (file === "tests/ty-context/run-package-suite.mjs") {
       tests.add(testPath("test-suite-runtime.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:suite_runtime_tooling`);
+      continue;
+    }
+
+    if (file === "tests/ty-context/test-suite-file-reporter.mjs") {
+      tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
+      tests.add(testPath("test-suite-runtime.test.mjs"));
+      tests.add(testPath("workflow-test-entrypoints.test.mjs"));
+      reasons.push(`${file}:suite_runtime_tooling`);
+      continue;
+    }
+
+    if (
+      file === "tests/ty-context/required-critical-sentinel-runner-fixture.mjs"
+    ) {
+      tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
+      reasons.push(`${file}:required_critical_sentinel_runner_fixture`);
       continue;
     }
 
@@ -1078,8 +1091,18 @@ export function selectAffectedTests(changedPaths, options = {}) {
       tests.add(testPath("affected-test-selection.test.mjs"));
       if (file === "tools/package_build_fingerprint.mjs")
         tests.add(testPath("test-suite-runtime.test.mjs"));
+      if (file === "tools/test_suite_policy.mjs")
+        tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:affected_test_tooling`);
+      continue;
+    }
+
+    if (file === "tools/run_required_critical_sentinel.mjs") {
+      tests.add(testPath("affected-test-selection.test.mjs"));
+      tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
+      tests.add(testPath("workflow-test-entrypoints.test.mjs"));
+      reasons.push(`${file}:required_critical_sentinel_runner`);
       continue;
     }
 

@@ -74,11 +74,11 @@ export async function inspectDesignAuthorityClosure(
       "invalid",
       manifestExists ? "bundle" : await declaredModeHint(repository),
       [
-      {
-        severity: "error",
-        code: "design_authority_invalid",
-        detail: message(error),
-      },
+        {
+          severity: "error",
+          code: "design_authority_invalid",
+          detail: message(error),
+        },
       ],
     );
   }

@@ -787,16 +787,51 @@ test("affected tooling changes select discovery, selection, and entry-point cove
   ]) {
     const selection = selectAffectedTests([file]);
     assert.equal(selection.mode, "selected", file);
+    const runnerCoverage =
+      file === "tools/test_suite_policy.mjs"
+        ? ["tests/ty-context/required-critical-sentinel-runner.test.mjs"]
+        : [];
     assert.deepEqual(
       selection.tests,
       [
         "tests/ty-context/affected-change-discovery.test.mjs",
         "tests/ty-context/affected-test-selection.test.mjs",
+        ...runnerCoverage,
         "tests/ty-context/workflow-test-entrypoints.test.mjs",
       ],
       file,
     );
   }
+});
+
+test("required sentinel runner and reporter changes select all focused controls", () => {
+  const runner = selectAffectedTests([
+    "tools/run_required_critical_sentinel.mjs",
+  ]);
+  assert.equal(runner.mode, "selected");
+  assert.deepEqual(runner.tests, [
+    "tests/ty-context/affected-test-selection.test.mjs",
+    "tests/ty-context/required-critical-sentinel-runner.test.mjs",
+    "tests/ty-context/workflow-test-entrypoints.test.mjs",
+  ]);
+
+  const reporter = selectAffectedTests([
+    "tests/ty-context/test-suite-file-reporter.mjs",
+  ]);
+  assert.equal(reporter.mode, "selected");
+  assert.deepEqual(reporter.tests, [
+    "tests/ty-context/required-critical-sentinel-runner.test.mjs",
+    "tests/ty-context/test-suite-runtime.test.mjs",
+    "tests/ty-context/workflow-test-entrypoints.test.mjs",
+  ]);
+
+  const fixture = selectAffectedTests([
+    "tests/ty-context/required-critical-sentinel-runner-fixture.mjs",
+  ]);
+  assert.equal(fixture.mode, "selected");
+  assert.deepEqual(fixture.tests, [
+    "tests/ty-context/required-critical-sentinel-runner.test.mjs",
+  ]);
 });
 
 test("pull-request template changes select workflow policy coverage", () => {

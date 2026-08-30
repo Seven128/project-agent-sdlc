@@ -36,6 +36,7 @@ export interface MutationTemporaryState {
 
 export interface MutationFileChange {
   path: string;
+  physical_path?: string;
   before: MutationFileState;
   after: MutationFileState;
   commit_order: number;
@@ -85,7 +86,7 @@ export interface ContextMutationPlan {
 }
 
 export interface ContextMutationJournal extends ContextMutationPlan {
-  schema_version: "context-mutation-journal-v2";
+  schema_version: "context-mutation-journal-v2" | "context-mutation-journal-v3";
   journal_sequence: number;
   previous_journal_sha256: string | null;
   state: ContextMutationJournalState;

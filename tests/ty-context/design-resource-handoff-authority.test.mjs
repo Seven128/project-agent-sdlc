@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -18,8 +18,7 @@ import { writeDesignResourceSymbolicHandoffFixture } from "./design-resource-sym
 
 const LEGACY_DESIGN =
   "# Fixture Design Authority\n\nLegacy single-file test authority.\n";
-const BUNDLE_MARKER =
-  "<!-- ty-context-design-authority-format: bundle-v1 -->";
+const BUNDLE_MARKER = "<!-- ty-context-design-authority-format: bundle-v1 -->";
 
 test("V1 explicit project Authority identity is current and stale-safe", async () => {
   await withRepository(async (root) => {
@@ -28,7 +27,10 @@ test("V1 explicit project Authority identity is current and stale-safe", async (
     fixture.handoff.project_design_authority = closureBinding(current.identity);
     await writeDesignResourceHandoff(root, fixture.handoff);
 
-    const valid = await preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH);
+    const valid = await preflightDesignResourceHandoff(
+      root,
+      DESIGN_HANDOFF_PATH,
+    );
     assert.equal(
       valid.project_design_authority_resolution.compatibility_derived,
       false,
@@ -100,6 +102,40 @@ test("fresh DRA preflight rejects a marked bundle whose manifest was removed", a
     await assert.rejects(
       preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
       /bundle_manifest_missing/u,
+    );
+  });
+});
+
+test("fresh DRA binding preserves a noncanonical marker leaf diagnostic", async () => {
+  await withRepository(async (root) => {
+    const fixture = await writeDesignResourceHandoffFixture(root);
+    const authority = await createBundle(root);
+    fixture.handoff.project_design_authority = closureBinding(
+      authority.identity,
+    );
+    await writeDesignResourceHandoff(root, fixture.handoff);
+    const entryPath = path.join(root, "DESIGN.md");
+    const design = await readFile(entryPath, "utf8");
+    await writeFile(
+      entryPath,
+      design.replace(
+        BUNDLE_MARKER,
+        "<!-- TY-CONTEXT-DESIGN-AUTHORITY-FORMAT: bundle-v1 -->",
+      ),
+      "utf8",
+    );
+
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+      (error) => {
+        const detail = error instanceof Error ? error.message : String(error);
+        assert.match(
+          detail,
+          /bundle_marker_noncanonical:line=1:expected=.*:actual=.*TY-CONTEXT-DESIGN-AUTHORITY-FORMAT/u,
+        );
+        assert.doesNotMatch(detail, /legacy_omission|bundle_marker_missing/u);
+        return true;
+      },
     );
   });
 });

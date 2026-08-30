@@ -27,10 +27,7 @@ import {
 import type { AuthorityRevisionProposalV2 } from "./long-task-authority-revision-types.js";
 import { captureVerifierIdentity } from "./long-task-verifier-identity.js";
 import { verifierAuthorityDiff } from "./long-task-verifier-authority.js";
-import {
-  repoRelative,
-  repositoryRoot,
-} from "./long-task-workspace.js";
+import { repoRelative, repositoryRoot } from "./long-task-workspace.js";
 import { compileExternalConfirmationIdentityAssurances } from "./long-task-external-confirmation-attestation.js";
 import { assertNoUnfinishedContextMutationForAuthority } from "./context-mutation/mutation-journal.js";
 import { currentActiveAuthorityLockToken } from "./long-task-active-authority-lock-context.js";

@@ -81,7 +81,10 @@ export async function planContextRegistration(
     beforeCatalog,
     "context register requires a valid Catalog",
   );
-  assertRegistrationTarget(beforeCatalog, normalized.path);
+  const registrationFile = assertRegistrationTarget(
+    beforeCatalog,
+    normalized.path,
+  );
   const manifestBefore = await captureMutationFileState(
     input.project_root,
     MANIFEST_PATH,
@@ -96,7 +99,7 @@ export async function planContextRegistration(
     mutationIoFailure("Context Catalog changed while planning register");
   const contextContent = await readContextContent(
     input.project_root,
-    normalized.path,
+    registrationFile,
   );
   const recoveryErrors = validateContextRegistrationContent(
     input.project_root,
@@ -173,6 +176,7 @@ export async function planContextRegistration(
     files: [
       {
         path: MANIFEST_PATH,
+        physical_path: MANIFEST_PATH,
         before: manifestBefore,
         after: afterState,
         commit_order: 0,

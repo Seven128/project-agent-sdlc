@@ -319,7 +319,10 @@ async function releaseActiveAuthorityLock(
       );
     },
   );
-  if (!current.bytes.equals(ownerBytes) || !sameLockIdentity(current.identity, identity))
+  if (
+    !current.bytes.equals(ownerBytes) ||
+    !sameLockIdentity(current.identity, identity)
+  )
     throw new Error("active_authority_lock_release_ownership_lost");
   await unlink(lockFile);
 }
@@ -356,9 +359,9 @@ function validateActiveAuthorityLockOwner(
   const row = value as Record<string, unknown>;
   if (
     Object.keys(row).sort().join("\0") !==
-    ["created_at", "lock_id", "operation", "pid", "schema_version"]
-      .sort()
-      .join("\0") ||
+      ["created_at", "lock_id", "operation", "pid", "schema_version"]
+        .sort()
+        .join("\0") ||
     row.schema_version !== "active-authority-lock-owner-v1" ||
     typeof row.lock_id !== "string" ||
     !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(

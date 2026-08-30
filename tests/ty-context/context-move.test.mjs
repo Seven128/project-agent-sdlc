@@ -1,11 +1,5 @@
 import assert from "node:assert/strict";
-import {
-  access,
-  appendFile,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { access, appendFile, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { loadContextCatalog } from "../../packages/ty-context/dist/lib/context-catalog/catalog-load.js";
@@ -13,9 +7,11 @@ import {
   moveContext,
   planContextMove,
 } from "../../packages/ty-context/dist/lib/context-move/context-move.js";
+import { scanStagedRepositoryForContextPath } from "../../packages/ty-context/dist/lib/context-move/context-move-literal-scan.js";
 import { executeContextMutationPlan } from "../../packages/ty-context/dist/lib/context-mutation/mutation-commit.js";
 import { captureMutationFileState } from "../../packages/ty-context/dist/lib/context-mutation/mutation-cas.js";
 import { readContextMutationJournal } from "../../packages/ty-context/dist/lib/context-mutation/mutation-journal.js";
+import { validateContextMutationJournal } from "../../packages/ty-context/dist/lib/context-mutation/mutation-journal-validation.js";
 import {
   completeContextMutation,
   contextMutationStatus,
@@ -78,8 +74,168 @@ test("context move applies the deterministic target-links-Manifest-source transa
     );
     const catalog = await loadContextCatalog(root);
     assert.ok(catalog.registered_contexts.some((entry) => entry.path === to));
-    assert.ok(!catalog.registered_contexts.some((entry) => entry.path === from));
+    assert.ok(
+      !catalog.registered_contexts.some((entry) => entry.path === from),
+    );
     assert.deepEqual((await runValidator(root, "validate-context")).errors, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("context move keeps logical NFC identity separate from NFD source and reference files", async (t) => {
+  const physicalFrom = "project_context/areas/Cafe\u0301/deployment.md";
+  const logicalFrom = physicalFrom.normalize("NFC");
+  const physicalLinks = "project_context/areas/Cafe\u0301/links.md";
+  const logicalLinks = physicalLinks.normalize("NFC");
+  const logicalTo = "project_context/areas/Café/deployment/index.md";
+  const roots = await Promise.all([
+    createNfdMoveProject(physicalFrom, physicalLinks),
+    createNfdMoveProject(physicalFrom, physicalLinks),
+    createNfdMoveProject(physicalFrom, physicalLinks),
+    createNfdMoveProject(physicalFrom, physicalLinks),
+  ]);
+  const input = (root) => ({
+    project_root: root,
+    from_path: logicalFrom,
+    to_path: logicalTo,
+  });
+  try {
+    if (
+      !(await hasDistinctPhysicalSpelling(roots[0], physicalFrom, logicalFrom))
+    ) {
+      t.skip("filesystem does not preserve distinct NFC/NFD spellings");
+      return;
+    }
+
+    const first = await moveContext(input(roots[0]));
+    const second = await moveContext(input(roots[0]));
+    assert.deepEqual(second, first);
+    assert.equal(first.from_path, logicalFrom);
+    assert.equal(first.to_path, logicalTo);
+    assert.ok(first.links.files_changed.includes(logicalLinks));
+    assert.ok(
+      first.files.every((entry) => entry.path === entry.path.normalize("NFC")),
+    );
+
+    const applied = await moveContext({ ...input(roots[1]), apply: true });
+    assert.equal(applied.applied, true);
+    await assert.rejects(
+      access(path.join(roots[1], ...physicalFrom.split("/"))),
+    );
+    await access(path.join(roots[1], ...logicalTo.split("/")));
+    const moved = await readFile(
+      path.join(roots[1], ...logicalTo.split("/")),
+      "utf8",
+    );
+    assert.match(
+      moved,
+      /\[architecture\]\(\.\.\/\.\.\/\.\.\/architecture\.md\)/u,
+    );
+    const links = await readFile(
+      path.join(roots[1], ...physicalLinks.split("/")),
+      "utf8",
+    );
+    assert.equal(links.match(/deployment\/index\.md/gu)?.length, 3);
+    const appliedCatalog = await loadContextCatalog(roots[1]);
+    assert.ok(
+      appliedCatalog.registered_contexts.some(
+        (entry) => entry.path === logicalTo,
+      ),
+    );
+    assert.equal(
+      appliedCatalog.context_files.find((entry) => entry.path === logicalLinks)
+        ?.physical_path,
+      physicalLinks,
+    );
+
+    for (const [root, direction] of [
+      [roots[2], "complete"],
+      [roots[3], "rollback"],
+    ]) {
+      const planned = await planContextMove(input(root));
+      const sourceChange = planned.plan.files.find(
+        (entry) => entry.path === logicalFrom,
+      );
+      assert.equal(sourceChange?.physical_path, physicalFrom);
+      assert.equal(
+        planned.plan.files.find((entry) => entry.path === logicalLinks)
+          ?.physical_path,
+        physicalLinks,
+      );
+      await assert.rejects(
+        executeContextMutationPlan(root, planned.plan, {
+          fault_after: `published_before_journal:${logicalFrom}`,
+        }),
+        /fault_injected:published_before_journal/u,
+      );
+      const journal = await readContextMutationJournal(root);
+      const tampered = structuredClone(journal);
+      tampered.files.find((entry) => entry.path === logicalFrom).physical_path =
+        "project_context/areas/other/deployment.md";
+      assert.throws(
+        () => validateContextMutationJournal(tampered),
+        /journal_file_physical_path_identity_mismatch/u,
+      );
+      if (direction === "complete") {
+        await completeContextMutation(root);
+        await assert.rejects(
+          access(path.join(root, ...physicalFrom.split("/"))),
+        );
+        await access(path.join(root, ...logicalTo.split("/")));
+      } else {
+        await rollbackContextMutation(root);
+        await access(path.join(root, ...physicalFrom.split("/")));
+        await assert.rejects(access(path.join(root, ...logicalTo.split("/"))));
+      }
+      assert.equal((await contextMutationStatus(root)).journal_present, false);
+    }
+  } finally {
+    await Promise.all(
+      roots.map((root) => rm(root, { recursive: true, force: true })),
+    );
+  }
+});
+
+test("staged literal scan applies a logical override to the matching NFD physical file", async (t) => {
+  const physicalFile = "project_context/areas/Cafe\u0301/notes.md";
+  const logicalFile = physicalFile.normalize("NFC");
+  const searchedPath = "project_context/areas/Café/ghost.md";
+  const root = await createContextProject({
+    extraFiles: {
+      [physicalFile]: `# Notes\n\n${searchedPath}\n`,
+    },
+  });
+  try {
+    if (!(await hasDistinctPhysicalSpelling(root, physicalFile, logicalFile))) {
+      t.skip("filesystem does not preserve distinct NFC/NFD spellings");
+      return;
+    }
+    const before = await scanStagedRepositoryForContextPath({
+      repository: root,
+      context_path: searchedPath,
+      file_overrides: new Map(),
+    });
+    assert.equal(before.complete, true);
+    assert.deepEqual(
+      before.matches.map((entry) => entry.path),
+      [logicalFile],
+    );
+
+    const overrides = new Map([[logicalFile, Buffer.from("# Replaced\n")]]);
+    const first = await scanStagedRepositoryForContextPath({
+      repository: root,
+      context_path: searchedPath,
+      file_overrides: overrides,
+    });
+    const second = await scanStagedRepositoryForContextPath({
+      repository: root,
+      context_path: searchedPath,
+      file_overrides: overrides,
+    });
+    assert.deepEqual(second, first);
+    assert.equal(first.complete, true);
+    assert.deepEqual(first.matches, []);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -162,7 +318,10 @@ test("owned deletion tombstone closes publication-before-journal crashes in both
           await access(path.join(root, ...from.split("/")));
           await assert.rejects(access(path.join(root, ...to.split("/"))));
         }
-        assert.equal((await contextMutationStatus(root)).journal_present, false);
+        assert.equal(
+          (await contextMutationStatus(root)).journal_present,
+          false,
+        );
       } finally {
         await rm(root, { recursive: true, force: true });
       }
@@ -186,9 +345,7 @@ test("context move CAS protects every planned reference and unresolved literals 
 
     const blocked = await moveContext(moveInput(blockedRoot));
     assert.equal(blocked.can_apply, false);
-    assert.ok(
-      blocked.unresolved.some((entry) => entry.path === "README.md"),
-    );
+    assert.ok(blocked.unresolved.some((entry) => entry.path === "README.md"));
     await assert.rejects(
       moveContext({ ...moveInput(blockedRoot), apply: true }),
       /cannot apply until every reported unresolved reference/u,
@@ -268,11 +425,68 @@ test("context move supports the unique Area Context owner and preserves default 
       result.default_footprint.before.path_count,
       result.default_footprint.after.path_count,
     );
-    assert.equal(
-      before.default_footprint.size,
-      after.default_footprint.size,
-    );
+    assert.equal(before.default_footprint.size, after.default_footprint.size);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+async function createNfdMoveProject(physicalFrom, physicalLinks) {
+  return createContextProject({
+    manifest: `${baseManifestForMove()}
+[[context]]
+path = "${physicalFrom}"
+role = "deployment"
+read_policy = "on-demand"
+triggers = ["deploy"]
+`,
+    extraFiles: {
+      [physicalFrom]: `---
+context_role: deployment
+read_policy: on-demand
+---
+# Deployment
+
+## Responsibility
+
+- This Context owns current deployment boundaries and recovery entry points.
+
+[architecture](../../architecture.md)
+`,
+      [physicalLinks]: `# Links
+
+[inline](./deployment.md#top)
+[reference][deployment]
+[encoded](./deployment%2Emd)
+
+[deployment]: ./deployment.md "Deployment"
+`,
+    },
+  });
+}
+
+function baseManifestForMove() {
+  return `[[areas]]
+id = "main"
+root = "."
+context = "project_context/areas/main.md"
+kind = "app"
+default = true
+
+[[context]]
+path = "project_context/areas/main/verification.md"
+role = "verification"
+read_policy = "default"
+triggers = ["test"]
+`;
+}
+
+async function hasDistinctPhysicalSpelling(root, physical, canonical) {
+  await access(path.join(root, ...physical.split("/")));
+  try {
+    await access(path.join(root, ...canonical.split("/")));
+    return false;
+  } catch {
+    return true;
+  }
+}

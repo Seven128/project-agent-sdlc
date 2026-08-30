@@ -245,7 +245,9 @@ async function publishSnapshot(
     if (
       !publishedSnapshot ||
       publishedSnapshot.journal.journal_sequence !== journal.journal_sequence ||
-      !publishedSnapshot.bytes.equals(Buffer.from(canonicalJson(journal), "utf8"))
+      !publishedSnapshot.bytes.equals(
+        Buffer.from(canonicalJson(journal), "utf8"),
+      )
     )
       invalid("journal_publication_readback_mismatch");
     return publishedSnapshot;

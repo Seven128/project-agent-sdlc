@@ -1,4 +1,4 @@
-import { captureContextGraphSnapshot } from "./context-graph-snapshot.js";
+import { captureContextGraphSnapshotWithPhysicalFiles } from "./context-graph-snapshot.js";
 import { addDiagnosticError } from "./long-task-authoring-preflight-diagnostics.js";
 import type { AuthoringPreflightDiagnosticV1 } from "./long-task-authoring-preflight-types.js";
 import {
@@ -152,21 +152,22 @@ export async function validateContractForActivation(options: {
   const risk = await attempt(mode, diagnostics, () => {
     return classifyLongTaskRisk(contract);
   });
-  const context = await attempt(mode, diagnostics, () =>
-    captureContextGraphSnapshot(
+  const contextCapture = await attempt(mode, diagnostics, () =>
+    captureContextGraphSnapshotWithPhysicalFiles(
       repository,
       contract.task.context_refs,
       contract.task.context_snapshot_mode,
     ),
   );
+  const context = contextCapture?.snapshot ?? null;
   const semanticFactClosure =
-    sourceItems && context
+    sourceItems && contextCapture
       ? await attempt(mode, diagnostics, () =>
           validateLongTaskSemanticFactClosure(
             contract,
             repository,
             sourceItems,
-            context.files,
+            contextCapture,
             designHandoffs ?? undefined,
           ),
         )

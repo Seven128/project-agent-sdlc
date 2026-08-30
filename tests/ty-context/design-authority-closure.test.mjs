@@ -18,6 +18,8 @@ import {
   temporaryRepository,
 } from "./design-authority-closure-fixture.mjs";
 
+const BUNDLE_MARKER = "<!-- ty-context-design-authority-format: bundle-v1 -->";
+
 test("legacy Design Authority identity is deterministic across LF and CRLF", async () => {
   const left = await temporaryRepository();
   const right = await temporaryRepository();
@@ -67,7 +69,10 @@ test("bundle marker prevents manifest deletion or rename from becoming legacy", 
       else if (mutation === "rename")
         await rename(
           manifest,
-          path.join(repository, "design_system/authority.manifest.renamed.json"),
+          path.join(
+            repository,
+            "design_system/authority.manifest.renamed.json",
+          ),
         );
       else await writeFile(manifest, "", "utf8");
 
@@ -133,31 +138,48 @@ test("bundle marker grammar is fixed, singular, body-leading and outside example
     {
       name: "unclosed-frontmatter",
       design: DESIGN.replace("\n---\n\n<!--", "\n\n<!--"),
-      expected: /bundle_entry_frontmatter_unclosed/u,
+      expected: /bundle_marker_noncanonical:.*frontmatter_unclosed/u,
     },
     {
       name: "invalid-frontmatter",
       design: DESIGN.replace('version: "alpha"', "version: ["),
-      expected: /bundle_entry_frontmatter_invalid/u,
+      expected: /bundle_marker_noncanonical:.*frontmatter_invalid:/u,
+    },
+    {
+      name: "frontmatter-fence-like-scalar",
+      design: DESIGN.replace(
+        'description: "A deterministic authority closure fixture."',
+        "description: |\n  ```",
+      ),
+      expected: /bundle_manifest_missing/u,
+      unpaired_only: true,
     },
   ];
   for (const item of cases) {
-    const repository = await temporaryRepository();
-    try {
-      await createBundle(repository);
-      await writeFile(path.join(repository, "DESIGN.md"), item.design, "utf8");
-      const inspection = await inspectDesignAuthorityClosure(repository);
-      assert.equal(inspection.status, "invalid", item.name);
-      assert.equal(inspection.mode, "bundle", item.name);
-      assert.match(inspection.diagnostics[0].detail, item.expected, item.name);
-    } finally {
-      await cleanup(repository);
+    for (const withManifest of item.unpaired_only ? [false] : [false, true]) {
+      const repository = await markerFixture(item.design, withManifest);
+      try {
+        const inspection = await inspectDesignAuthorityClosure(repository);
+        assert.equal(inspection.status, "invalid", item.name);
+        assert.equal(inspection.mode, "bundle", item.name);
+        assert.match(
+          inspection.diagnostics[0].detail,
+          item.expected,
+          item.name,
+        );
+      } finally {
+        await cleanup(repository);
+      }
     }
   }
 
   for (const example of [
     "```md\n<!-- ty-context-design-authority-format: bundle-v1 -->\n```",
+    "~~~md\n<!-- TY-CONTEXT-DESIGN-AUTHORITY-FORMAT : bundle-v2 -->\n~~~",
     "`<!-- ty-context-design-authority-format: bundle-v1 -->`",
+    "Example: <!-- TY-CONTEXT-DESIGN-AUTHORITY-FORMAT: bundle-v2 -->",
+    "<!-- ordinary project note -->",
+    "<!-- ty-context-design-authority: bundle-v1 -->",
   ]) {
     const repository = await temporaryRepository();
     try {
@@ -174,6 +196,99 @@ test("bundle marker grammar is fixed, singular, body-leading and outside example
     }
   }
 });
+
+test("reserved format namespace candidates are noncanonical before legacy classification", async () => {
+  const malformed = [
+    ["leading line whitespace", ` ${BUNDLE_MARKER}`],
+    [
+      "internal comment whitespace",
+      "<!--  ty-context-design-authority-format: bundle-v1 -->",
+    ],
+    [
+      "internal tab",
+      "<!--\tty-context-design-authority-format:\tbundle-v1 -->",
+    ],
+    [
+      "colon spacing",
+      "<!-- ty-context-design-authority-format : bundle-v1 -->",
+    ],
+    [
+      "value leading whitespace",
+      "<!-- ty-context-design-authority-format:  bundle-v1 -->",
+    ],
+    [
+      "value trailing whitespace",
+      "<!-- ty-context-design-authority-format: bundle-v1  -->",
+    ],
+    [
+      "namespace case",
+      "<!-- TY-CONTEXT-DESIGN-AUTHORITY-FORMAT: bundle-v1 -->",
+    ],
+    ["value case", "<!-- ty-context-design-authority-format: BUNDLE-V1 -->"],
+    [
+      "unknown version",
+      "<!-- ty-context-design-authority-format: bundle-v2 -->",
+    ],
+    ["trailing line whitespace", `${BUNDLE_MARKER}\t`],
+  ];
+  for (const [name, candidate] of malformed) {
+    for (const withManifest of [false, true]) {
+      const repository = await markerFixture(
+        `${candidate}\n\n# Design System\n`,
+        withManifest,
+      );
+      try {
+        const inspection = await inspectDesignAuthorityClosure(repository);
+        assert.equal(inspection.status, "invalid", name);
+        assert.equal(inspection.mode, "bundle", name);
+        assert.equal(inspection.identity, null, name);
+        assert.match(
+          inspection.diagnostics[0].detail,
+          /bundle_marker_noncanonical:line=1:expected=.*:actual=/u,
+          name,
+        );
+        assert.doesNotMatch(
+          inspection.diagnostics[0].detail,
+          /bundle_marker_missing/u,
+          name,
+        );
+      } finally {
+        await cleanup(repository);
+      }
+    }
+  }
+});
+
+test("an exact marker plus a malformed reserved declaration fails at the concrete leaf", async () => {
+  for (const withManifest of [false, true]) {
+    const repository = await markerFixture(
+      `${BUNDLE_MARKER}\n<!-- ty-context-design-authority-format: bundle-v2 -->\n# Design System\n`,
+      withManifest,
+    );
+    try {
+      const inspection = await inspectDesignAuthorityClosure(repository);
+      assert.equal(inspection.status, "invalid");
+      assert.equal(inspection.mode, "bundle");
+      assert.match(
+        inspection.diagnostics[0].detail,
+        /bundle_marker_noncanonical:line=2:expected=.*:actual=.*bundle-v2/u,
+      );
+      assert.doesNotMatch(
+        inspection.diagnostics[0].detail,
+        /bundle_marker_duplicate|bundle_manifest_missing/u,
+      );
+    } finally {
+      await cleanup(repository);
+    }
+  }
+});
+
+async function markerFixture(design, withManifest) {
+  const repository = await temporaryRepository();
+  if (withManifest) await createBundle(repository);
+  await writeFile(path.join(repository, "DESIGN.md"), design, "utf8");
+  return repository;
+}
 
 test("orphan manifest is an invalid bundle rather than missing or legacy", async () => {
   for (const mutation of ["delete", "rename"]) {

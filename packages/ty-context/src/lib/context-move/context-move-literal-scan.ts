@@ -1,6 +1,9 @@
 import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
-import { compareUtf8Paths } from "../context-catalog/catalog-paths.js";
+import {
+  compareUtf8Paths,
+  normalizeContextPath,
+} from "../context-catalog/catalog-paths.js";
 
 const MAX_FILES = 4096;
 const MAX_FILE_BYTES = 1024 * 1024;
@@ -65,24 +68,38 @@ export async function scanStagedRepositoryForContextPath(input: {
   file_overrides: ReadonlyMap<string, Uint8Array | null>;
 }): Promise<ContextMoveLiteralScan> {
   const discovered = await discoverTextFiles(input.repository);
-  const paths = new Set(discovered.files);
-  for (const [file, bytes] of input.file_overrides) {
-    if (bytes === null) paths.delete(file);
-    else if (isTextCandidate(file)) paths.add(file);
-  }
-  const ordered = [...paths].sort(compareUtf8Paths);
+  const paths = new Map<string, string>();
   const limits = new Set<string>(discovered.limits);
+  for (const file of discovered.files) {
+    const existing = paths.get(file.path);
+    if (existing !== undefined && existing !== file.physical_path) {
+      limits.add(`path_unicode_collision:${file.path}`);
+      continue;
+    }
+    paths.set(file.path, file.physical_path);
+  }
+  for (const [file, bytes] of input.file_overrides) {
+    const logical = normalizeContextPath(file);
+    if (bytes === null) paths.delete(logical);
+    else if (isTextCandidate(logical) && !paths.has(logical))
+      paths.set(logical, file);
+  }
+  const ordered = [...paths].sort(([left], [right]) =>
+    compareUtf8Paths(left, right),
+  );
   if (ordered.length > MAX_FILES) limits.add(`file_count>${MAX_FILES}`);
   const matches: ContextMoveLiteralMatch[] = [];
   let filesScanned = 0;
   let bytesScanned = 0;
-  for (const file of ordered.slice(0, MAX_FILES)) {
+  for (const [file, physicalFile] of ordered.slice(0, MAX_FILES)) {
     const override = input.file_overrides.get(file);
     let bytes: Buffer;
     try {
       bytes =
         override === undefined
-          ? await readFile(path.join(input.repository, ...file.split("/")))
+          ? await readFile(
+              path.join(input.repository, ...physicalFile.split("/")),
+            )
           : Buffer.from(override ?? []);
     } catch (error) {
       limits.add(`read_failed:${file}:${message(error)}`);
@@ -139,10 +156,11 @@ export async function scanStagedRepositoryForContextPath(input: {
   };
 }
 
-async function discoverTextFiles(
-  repository: string,
-): Promise<{ files: string[]; limits: string[] }> {
-  const result: string[] = [];
+async function discoverTextFiles(repository: string): Promise<{
+  files: Array<{ path: string; physical_path: string }>;
+  limits: string[];
+}> {
+  const result: Array<{ path: string; physical_path: string }> = [];
   const limits = new Set<string>();
   let stopped = false;
   async function visit(relative: string): Promise<void> {
@@ -164,7 +182,10 @@ async function discoverTextFiles(
       if (entry.isDirectory()) {
         await visit(child);
       } else if (entry.isFile() && isTextCandidate(child)) {
-        result.push(child);
+        result.push({
+          path: normalizeContextPath(child),
+          physical_path: child,
+        });
         if (result.length > MAX_FILES) {
           limits.add(`file_count>${MAX_FILES}`);
           stopped = true;
