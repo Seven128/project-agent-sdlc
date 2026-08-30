@@ -1098,7 +1098,11 @@ export function selectAffectedTests(changedPaths, options = {}) {
       continue;
     }
 
-    if (file === "tools/run_required_critical_sentinel.mjs") {
+    if (
+      file === "tools/run_required_critical_sentinel.mjs" ||
+      file === "tools/test_title_inventory.mjs" ||
+      file === "tools/test_suite_selection.mjs"
+    ) {
       tests.add(testPath("affected-test-selection.test.mjs"));
       tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));

@@ -805,15 +805,23 @@ test("affected tooling changes select discovery, selection, and entry-point cove
 });
 
 test("required sentinel runner and reporter changes select all focused controls", () => {
-  const runner = selectAffectedTests([
+  for (const file of [
     "tools/run_required_critical_sentinel.mjs",
-  ]);
-  assert.equal(runner.mode, "selected");
-  assert.deepEqual(runner.tests, [
-    "tests/ty-context/affected-test-selection.test.mjs",
-    "tests/ty-context/required-critical-sentinel-runner.test.mjs",
-    "tests/ty-context/workflow-test-entrypoints.test.mjs",
-  ]);
+    "tools/test_title_inventory.mjs",
+    "tools/test_suite_selection.mjs",
+  ]) {
+    const runner = selectAffectedTests([file]);
+    assert.equal(runner.mode, "selected", file);
+    assert.deepEqual(
+      runner.tests,
+      [
+        "tests/ty-context/affected-test-selection.test.mjs",
+        "tests/ty-context/required-critical-sentinel-runner.test.mjs",
+        "tests/ty-context/workflow-test-entrypoints.test.mjs",
+      ],
+      file,
+    );
+  }
 
   const reporter = selectAffectedTests([
     "tests/ty-context/test-suite-file-reporter.mjs",

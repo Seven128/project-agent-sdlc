@@ -110,7 +110,7 @@ test("context inspect supports unregistered files and produces byte-stable JSON"
   }
 });
 
-test("context inspect uses the Catalog physical identity for an NFD file and emits one stable NFC path", async () => {
+test("context inspect preserves NFC identity but does not heal physically missing NFD/NFC Markdown destinations", async () => {
   const physicalPath = "project_context/areas/Cafe\u0301/target.md";
   const canonicalPath = physicalPath.normalize("NFC");
   const physicalSource = "project_context/areas/Cafe\u0301/source.md";
@@ -130,8 +130,10 @@ read_policy = "on-demand"
 
 [inline](./target.md)
 [encoded](./target%2Emd)
-[root](/${canonicalPath})
-[repository](${canonicalPath})
+[root-physical](/${physicalPath})
+[repository-physical](${physicalPath})
+[root-canonical-missing](/${canonicalPath})
+[repository-canonical-missing](${canonicalPath})
 [reference][target]
 
 [target]: ./target.md "Target"
@@ -161,13 +163,36 @@ read_policy = "on-demand"
       ),
     );
     assert.equal(JSON.stringify(decomposed), JSON.stringify(canonical));
+    const source = await inspectContext({
+      project_root: root,
+      context_path: canonicalSource,
+    });
+    assert.deepEqual(
+      source.references.map((reference) => reference.status),
+      [
+        "valid",
+        "valid",
+        "valid",
+        "valid",
+        "missing",
+        "missing",
+        "valid",
+        "valid",
+      ],
+    );
+    assert.ok(
+      source.references.every(
+        (reference) => reference.target_path === canonicalPath,
+      ),
+    );
     const doctor = await runDoctor(root);
     assert.deepEqual(doctor.errors, []);
-    assert.ok(
-      !doctor.warnings.some(
+    assert.equal(
+      doctor.warnings.filter(
         (warning) =>
           warning.includes(canonicalSource) && warning.includes("missing"),
-      ),
+      ).length,
+      2,
     );
   } finally {
     await rm(root, { recursive: true, force: true });

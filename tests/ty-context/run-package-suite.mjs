@@ -1,23 +1,18 @@
 import { spawn } from "node:child_process";
-import {
-  mkdir,
-  mkdtemp,
-  readdir,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readdir, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   CRITICAL_TEST_SENTINELS,
-  LONG_TASK_TRUST_TEST_FILES,
   criticalSentinelsForSuite,
   resolveLongTaskIsolatedConcurrency,
   resolveTestTimingOutput,
   resolveSuiteWallTimeBudgetMs,
   suiteWallTimeBudgetStatus,
 } from "../../tools/test_suite_policy.mjs";
+import { selectPackageTestNames } from "../../tools/test_suite_selection.mjs";
+import { assertCriticalTestTitleInventory } from "../../tools/test_title_inventory.mjs";
 import { planLongTaskSuiteLanes } from "../../tools/test_suite_lane_policy.mjs";
 import { prepareDeliveryFixtureSeed } from "./long-task-delivery-fixtures.mjs";
 import {
@@ -46,12 +41,17 @@ const longTaskTestName = /^long-task-/u;
 const availableNames = (await readdir(testRoot))
   .filter((name) => name.endsWith(".test.mjs"))
   .sort();
-const names = selectNames(availableNames, suite);
+const names = selectPackageTestNames(availableNames, suite);
 const files = names.map((name) => path.join(testRoot, name));
 const registeredCriticalSentinels = CRITICAL_TEST_SENTINELS.filter((entry) =>
   entry.required_suites.includes(suite),
 );
 const requiredCriticalSentinels = criticalSentinelsForSuite(suite);
+const titleInventory = await assertCriticalTestTitleInventory({
+  suite,
+  selectedFiles: files,
+  sentinels: registeredCriticalSentinels,
+});
 const wallTimeBudgetMs = resolveSuiteWallTimeBudgetMs(suite);
 const forwardedOptions = process.argv.slice(3);
 
@@ -80,6 +80,7 @@ const execution = {
     lanePolicy?.max_files_per_test_process ?? files.length,
   unknown_files: lanePolicy?.unknown_files ?? [],
   unknown_files_parallelized: false,
+  critical_title_inventory: titleInventory,
   fixture_seed_preparation_ms: null,
   cleanup: {
     fixture_seed_ms: null,
@@ -113,7 +114,8 @@ try {
     try {
       fixtureSeed = await prepareDeliveryFixtureSeed();
     } finally {
-      execution.fixture_seed_preparation_ms = elapsedMilliseconds(seedStartedAt);
+      execution.fixture_seed_preparation_ms =
+        elapsedMilliseconds(seedStartedAt);
     }
   }
   for (const [index, lane] of lanes.entries()) {
@@ -284,21 +286,4 @@ function assertRunnerOwnsConcurrency(options) {
     throw new Error(
       "run-package-suite owns --test-concurrency through the reviewed isolation policy; use TY_CONTEXT_LONG_TASK_ISOLATED_CONCURRENCY=1 for serial rollback.",
     );
-}
-
-function selectNames(available, selectedSuite) {
-  if (selectedSuite === "long-task-trust") {
-    const availableSet = new Set(available);
-    const missing = LONG_TASK_TRUST_TEST_FILES.filter(
-      (name) => !availableSet.has(name),
-    );
-    if (missing.length > 0)
-      throw new Error(
-        `Missing Trust Boundary test files: ${missing.join(", ")}`,
-      );
-    return [...LONG_TASK_TRUST_TEST_FILES];
-  }
-  return available.filter(
-    (name) => longTaskTestName.test(name) === (selectedSuite === "long-task"),
-  );
 }

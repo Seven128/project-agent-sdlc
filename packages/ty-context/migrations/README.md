@@ -3,10 +3,13 @@
 Schema migrations for Harness config and managed file layout belong here.
 
 The completed 0.10.x line adds opt-in, dry-run-first `context register`, `context move` and
-`context transaction status|rollback|complete`. Current mutations use the v2
-journal with complete mode/file-identity endpoint snapshots and the shared
-Active Authority lock. An unfinished pre-v2 journal is deliberately not guessed
-or rewritten: use the matching older package to recover it, inspect/restore the
+`context transaction status|rollback|complete`. Current writes use
+`context-mutation-journal-v3`, whose immutable generations bind each NFC logical
+key to its exact physical path while retaining complete mode/file-identity
+endpoint snapshots and the shared Active Authority lock.
+`context-mutation-journal-v2` remains recovery-readable with equal logical and
+physical paths. An unfinished pre-v2 journal is deliberately not guessed or
+rewritten: use the matching older package to recover it, inspect/restore the
 recorded bytes manually, or obtain project-owner recovery direction before a new
 mutation. They do not migrate existing
 projects or reinterpret legacy policies. Register losslessly appends one

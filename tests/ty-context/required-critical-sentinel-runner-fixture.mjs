@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { spawn } from "node:child_process";
 import {
   copyFile,
+  cp,
   mkdir,
   mkdtemp,
   readFile,
@@ -46,6 +47,19 @@ export async function createFixture({
   await copyFile(
     path.join(repositoryRoot, "tools", "run_required_critical_sentinel.mjs"),
     path.join(toolsRoot, "run_required_critical_sentinel.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_inventory.mjs"),
+    path.join(toolsRoot, "test_title_inventory.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_suite_selection.mjs"),
+    path.join(toolsRoot, "test_suite_selection.mjs"),
+  );
+  await cp(
+    path.join(repositoryRoot, "node_modules", "acorn"),
+    path.join(root, "node_modules", "acorn"),
+    { recursive: true },
   );
   const policySource = await readFile(
     path.join(repositoryRoot, "tools", "test_suite_policy.mjs"),

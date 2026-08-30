@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { access, appendFile, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  access,
+  appendFile,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { loadContextCatalog } from "../../packages/ty-context/dist/lib/context-catalog/catalog-load.js";
@@ -137,6 +144,7 @@ test("context move keeps logical NFC identity separate from NFD source and refer
       "utf8",
     );
     assert.equal(links.match(/deployment\/index\.md/gu)?.length, 3);
+    await assertNfdMoveLinksResolve(roots[1], physicalLinks, logicalTo, links);
     const appliedCatalog = await loadContextCatalog(roots[1]);
     assert.ok(
       appliedCatalog.registered_contexts.some(
@@ -183,10 +191,22 @@ test("context move keeps logical NFC identity separate from NFD source and refer
           access(path.join(root, ...physicalFrom.split("/"))),
         );
         await access(path.join(root, ...logicalTo.split("/")));
+        await assertNfdMoveLinksResolve(
+          root,
+          physicalLinks,
+          logicalTo,
+          await readFile(path.join(root, ...physicalLinks.split("/")), "utf8"),
+        );
       } else {
         await rollbackContextMutation(root);
         await access(path.join(root, ...physicalFrom.split("/")));
         await assert.rejects(access(path.join(root, ...logicalTo.split("/"))));
+        await assertNfdMoveLinksResolve(
+          root,
+          physicalLinks,
+          physicalFrom,
+          await readFile(path.join(root, ...physicalLinks.split("/")), "utf8"),
+        );
       }
       assert.equal((await contextMutationStatus(root)).journal_present, false);
     }
@@ -194,6 +214,74 @@ test("context move keeps logical NFC identity separate from NFD source and refer
     await Promise.all(
       roots.map((root) => rm(root, { recursive: true, force: true })),
     );
+  }
+});
+
+test("context move blocks exact NFD physical literals in code, config, prose, encoded, and Windows forms", async (t) => {
+  const physicalFrom = "project_context/areas/Cafe\u0301/deployment.md";
+  const logicalFrom = physicalFrom.normalize("NFC");
+  const physicalLinks = "project_context/areas/Cafe\u0301/links.md";
+  const logicalTo = "project_context/areas/Café/deployment/index.md";
+  const encoded = physicalFrom.split("/").map(encodeURIComponent).join("/");
+  const windows = physicalFrom.replaceAll("/", "\\");
+  const referenceFiles = {
+    "src/context-owner.ts": `export const owner = ${JSON.stringify(physicalFrom)};\n`,
+    "config/context-owner.json": `${JSON.stringify({ owner: `/${physicalFrom}` })}\n`,
+    "config/context-owner.yaml": `owner: ${windows}\n`,
+    "docs/context-owner.md": `# Owner\n\n${physicalFrom}\n`,
+    "docs/context-owner.txt": `${encoded}\n`,
+  };
+  const root = await createNfdMoveProject(
+    physicalFrom,
+    physicalLinks,
+    referenceFiles,
+  );
+  try {
+    if (!(await hasDistinctPhysicalSpelling(root, physicalFrom, logicalFrom))) {
+      t.skip("filesystem does not preserve distinct NFC/NFD spellings");
+      return;
+    }
+    const blocked = await moveContext({
+      project_root: root,
+      from_path: logicalFrom,
+      to_path: logicalTo,
+    });
+    assert.equal(blocked.can_apply, false);
+    assert.deepEqual(
+      [...new Set(blocked.unresolved.map((entry) => entry.path))].sort(),
+      Object.keys(referenceFiles).sort(),
+    );
+    assert.ok(
+      blocked.unresolved.some((entry) => entry.matched === physicalFrom),
+    );
+    assert.ok(blocked.unresolved.some((entry) => entry.matched === encoded));
+    assert.ok(blocked.unresolved.some((entry) => entry.matched === windows));
+    await assert.rejects(
+      moveContext({
+        project_root: root,
+        from_path: logicalFrom,
+        to_path: logicalTo,
+        apply: true,
+      }),
+      /cannot apply until every reported unresolved reference/u,
+    );
+
+    for (const file of Object.keys(referenceFiles))
+      await writeFile(
+        path.join(root, ...file.split("/")),
+        "resolved\n",
+        "utf8",
+      );
+    const applied = await moveContext({
+      project_root: root,
+      from_path: logicalFrom,
+      to_path: logicalTo,
+      apply: true,
+    });
+    assert.equal(applied.applied, true);
+    assert.deepEqual(applied.unresolved, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
   }
 });
 
@@ -213,7 +301,8 @@ test("staged literal scan applies a logical override to the matching NFD physica
     }
     const before = await scanStagedRepositoryForContextPath({
       repository: root,
-      context_path: searchedPath,
+      logical_context_path: searchedPath,
+      physical_context_path: searchedPath,
       file_overrides: new Map(),
     });
     assert.equal(before.complete, true);
@@ -225,12 +314,14 @@ test("staged literal scan applies a logical override to the matching NFD physica
     const overrides = new Map([[logicalFile, Buffer.from("# Replaced\n")]]);
     const first = await scanStagedRepositoryForContextPath({
       repository: root,
-      context_path: searchedPath,
+      logical_context_path: searchedPath,
+      physical_context_path: searchedPath,
       file_overrides: overrides,
     });
     const second = await scanStagedRepositoryForContextPath({
       repository: root,
-      context_path: searchedPath,
+      logical_context_path: searchedPath,
+      physical_context_path: searchedPath,
       file_overrides: overrides,
     });
     assert.deepEqual(second, first);
@@ -431,7 +522,11 @@ test("context move supports the unique Area Context owner and preserves default 
   }
 });
 
-async function createNfdMoveProject(physicalFrom, physicalLinks) {
+async function createNfdMoveProject(
+  physicalFrom,
+  physicalLinks,
+  extraFiles = {},
+) {
   return createContextProject({
     manifest: `${baseManifestForMove()}
 [[context]]
@@ -461,8 +556,32 @@ read_policy: on-demand
 
 [deployment]: ./deployment.md "Deployment"
 `,
+      ...extraFiles,
     },
   });
+}
+
+async function assertNfdMoveLinksResolve(
+  root,
+  physicalLinks,
+  targetPath,
+  content,
+) {
+  const destinations = [
+    content.match(/\[inline\]\(([^#)]+)/u)?.[1],
+    content.match(/\[encoded\]\(([^)]+)/u)?.[1],
+    content.match(/^\[deployment\]:\s+(\S+)/mu)?.[1],
+  ];
+  assert.ok(destinations.every(Boolean), "missing moved Markdown destination");
+  const expected = await realpath(path.join(root, ...targetPath.split("/")));
+  const sourceDirectory = path.dirname(
+    path.join(root, ...physicalLinks.split("/")),
+  );
+  for (const destination of destinations) {
+    const decoded = decodeURIComponent(destination).replaceAll("\\", "/");
+    const actual = await realpath(path.resolve(sourceDirectory, decoded));
+    assert.equal(actual, expected, destination);
+  }
 }
 
 function baseManifestForMove() {

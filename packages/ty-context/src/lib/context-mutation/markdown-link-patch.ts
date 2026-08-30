@@ -34,8 +34,11 @@ export interface MarkdownLinkPatchResult {
 export function patchMarkdownLinksForContextMove(input: {
   content: string;
   source_path: string;
+  source_physical_path: string;
   from_path: string;
+  from_physical_path: string;
   to_path: string;
+  to_physical_path: string;
 }): MarkdownLinkPatchResult {
   const changes: MarkdownLinkChange[] = [];
   const references: MarkdownLocalReference[] = [];
@@ -43,6 +46,7 @@ export function patchMarkdownLinksForContextMove(input: {
     const resolved = resolveLocalDestination(
       span.destination,
       input.source_path,
+      input.source_physical_path,
     );
     if (resolved.status === "ignored") continue;
     if (resolved.status !== "local") {
@@ -66,12 +70,23 @@ export function patchMarkdownLinksForContextMove(input: {
       status: "local",
     });
     const sourceMoves = input.source_path === input.from_path;
+    if (sourceMoves && input.source_physical_path !== input.from_physical_path)
+      throw new Error("context_move_source_physical_path_mismatch");
     const targetMoves = resolved.target_path === input.from_path;
     if (!targetMoves && !(sourceMoves && resolved.style === "relative"))
       continue;
     const targetAfter = targetMoves ? input.to_path : resolved.target_path;
-    const sourceAfter = sourceMoves ? input.to_path : input.source_path;
-    const next = renderDestination(resolved, sourceAfter, targetAfter);
+    const sourcePhysicalAfter = sourceMoves
+      ? input.to_physical_path
+      : input.source_physical_path;
+    const targetPhysicalAfter = targetMoves
+      ? input.to_physical_path
+      : resolved.physical_target_path;
+    const next = renderDestination(
+      resolved,
+      sourcePhysicalAfter,
+      targetPhysicalAfter,
+    );
     if (next === span.destination) continue;
     changes.push({
       kind: span.kind,
@@ -95,6 +110,7 @@ export function patchMarkdownLinksForContextMove(input: {
 type LocalDestination = {
   status: "local";
   target_path: string;
+  physical_target_path: string;
   style: "root" | "repository" | "relative";
   suffix: string;
   encoded: boolean;
@@ -110,6 +126,7 @@ type ResolvedDestination =
 function resolveLocalDestination(
   destination: string,
   sourcePath: string,
+  sourcePhysicalPath: string,
 ): ResolvedDestination {
   if (
     !destination ||
@@ -136,13 +153,20 @@ function resolveLocalDestination(
     : decoded.startsWith("project_context/")
       ? "repository"
       : "relative";
-  const candidate =
+  const logicalCandidate =
     style === "root"
       ? decoded.slice(1)
       : style === "repository"
         ? decoded
         : path.posix.join(path.posix.dirname(sourcePath), decoded);
-  const normalized = path.posix.normalize(candidate).normalize("NFC");
+  const physicalCandidate =
+    style === "root"
+      ? decoded.slice(1)
+      : style === "repository"
+        ? decoded
+        : path.posix.join(path.posix.dirname(sourcePhysicalPath), decoded);
+  const normalized = path.posix.normalize(logicalCandidate).normalize("NFC");
+  const physicalNormalized = path.posix.normalize(physicalCandidate);
   if (
     !normalized ||
     normalized === ".." ||
@@ -150,9 +174,17 @@ function resolveLocalDestination(
     path.posix.isAbsolute(normalized)
   )
     return { status: "outside", detail: "destination escapes repository" };
+  if (
+    !physicalNormalized ||
+    physicalNormalized === ".." ||
+    physicalNormalized.startsWith("../") ||
+    path.posix.isAbsolute(physicalNormalized)
+  )
+    return { status: "outside", detail: "destination escapes repository" };
   return {
     status: "local",
     target_path: normalized,
+    physical_target_path: physicalNormalized,
     style,
     suffix,
     encoded: /%[0-9A-Fa-f]{2}/u.test(rawPath),
@@ -163,16 +195,19 @@ function resolveLocalDestination(
 
 function renderDestination(
   original: LocalDestination,
-  sourceAfter: string,
-  targetAfter: string,
+  sourcePhysicalAfter: string,
+  targetPhysicalAfter: string,
 ): string {
   let rendered =
     original.style === "root"
-      ? `/${targetAfter}`
+      ? `/${targetPhysicalAfter}`
       : original.style === "repository"
-        ? targetAfter
-        : path.posix.relative(path.posix.dirname(sourceAfter), targetAfter);
-  if (!rendered) rendered = path.posix.basename(targetAfter);
+        ? targetPhysicalAfter
+        : path.posix.relative(
+            path.posix.dirname(sourcePhysicalAfter),
+            targetPhysicalAfter,
+          );
+  if (!rendered) rendered = path.posix.basename(targetPhysicalAfter);
   if (
     original.explicit_dot &&
     original.style === "relative" &&

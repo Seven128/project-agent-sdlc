@@ -160,9 +160,6 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
   const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
   assert.match(suiteRunner, /longTaskTestName/);
-  assert.match(suiteRunner, /\(selectedSuite === "long-task"\)/);
-  assert.match(suiteRunner, /\^long-task-/);
-  assert.match(suiteRunner, /LONG_TASK_TRUST_TEST_FILES/);
   assert.match(suiteRunner, /long-task-trust/);
   assert.match(suiteRunner, /test-suite-file-reporter/);
   assert.match(suiteReporter, /test-suite-timing-v2/);
@@ -173,6 +170,28 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(suiteReporter, /slowest_files/);
   assert.match(suiteRunner, /wall_time_budget_status/);
   assert.match(suiteRunner, /CI[\s\S]*--test-reporter=dot/);
+});
+
+test("complete and one-sentinel runners share parsed suite-wide critical title inventory", () => {
+  const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
+  const suitePolicy = read("tools/test_suite_policy.mjs");
+  const suiteSelection = read("tools/test_suite_selection.mjs");
+  const titleInventory = read("tools/test_title_inventory.mjs");
+  const sentinelRunner = read("tools/run_required_critical_sentinel.mjs");
+
+  assert.match(suiteRunner, /selectPackageTestNames\(availableNames, suite\)/u);
+  assert.match(suiteRunner, /assertCriticalTestTitleInventory/u);
+  assert.match(suiteRunner, /critical_title_inventory/u);
+  assert.match(suitePolicy, /LONG_TASK_TRUST_TEST_FILES/u);
+  assert.match(suiteSelection, /export function selectPackageTestNames/u);
+  assert.match(suiteSelection, /LONG_TASK_TRUST_TEST_FILES/u);
+  assert.match(suiteSelection, /\^long-task-/u);
+  assert.match(sentinelRunner, /assertCriticalTestTitleInventory/u);
+  assert.match(sentinelRunner, /selectPackageTestNames/u);
+  assert.match(titleInventory, /from "acorn"/u);
+  assert.match(titleInventory, /node\.source\?\.value !== "node:test"/u);
+  assert.match(titleInventory, /NODE_TEST_FUNCTION_EXPORTS/u);
+  assert.doesNotMatch(titleInventory, /grep|execFile|spawn/u);
 });
 
 test("publish, tarball, and consumer gates retain complete release boundaries", () => {

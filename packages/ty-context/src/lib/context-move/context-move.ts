@@ -113,6 +113,8 @@ export async function planContextMove(
   const markdownPlan = planContextMoveMarkdown({
     files: markdown,
     ...normalized,
+    from_physical_path: sourceFile.physical_path,
+    to_physical_path: normalized.to_path,
   });
   const sourceBefore = await captureMutationFileState(
     input.project_root,
@@ -126,7 +128,7 @@ export async function planContextMove(
     mutationStateBytes(sourceBefore),
     normalized.from_path,
   );
-  if (sourceText !== markdown.get(normalized.from_path))
+  if (sourceText !== markdown.get(normalized.from_path)?.content)
     mutationIoFailure("Context source changed while planning move");
   const manifestBefore = await captureMutationFileState(
     input.project_root,
@@ -187,7 +189,8 @@ export async function planContextMove(
   });
   const scan = await scanStagedRepositoryForContextPath({
     repository: input.project_root,
-    context_path: normalized.from_path,
+    logical_context_path: normalized.from_path,
+    physical_context_path: sourceFile.physical_path,
     file_overrides: overrides,
   });
   const built = await buildContextMoveTransactionPlan({

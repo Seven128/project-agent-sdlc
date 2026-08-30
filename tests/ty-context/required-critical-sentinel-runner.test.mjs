@@ -84,9 +84,9 @@ test("required sentinel runner rejects removed, renamed, and duplicate markers",
 test("required sentinel runner rejects wrong-owner, imported, and unattributed events", async () => {
   const wrongOwner = await createFixture({
     name: "wrong-owner",
-    ownerSource: 'import "./relocated.test.mjs";\n',
+    ownerSource: 'import "./long-task-relocated.test.mjs";\n',
     extraFiles: {
-      "relocated.test.mjs": passingOwner(),
+      "long-task-relocated.test.mjs": passingOwner(),
     },
   });
   const wrongOwnerResult = await runFixture(wrongOwner);
@@ -95,9 +95,12 @@ test("required sentinel runner rejects wrong-owner, imported, and unattributed e
 
   const imported = await createFixture({
     name: "imported",
-    ownerSource: `import "./imported.test.mjs";\n${passingOwner()}`,
+    ownerSource: `import "./long-task-imported.test.mjs";\n${passingOwner()}`,
     extraFiles: {
-      "imported.test.mjs": passingOwner(),
+      "long-task-imported.test.mjs": `import test from "node:test";
+const importedTitle = ["[", "critical", ":", "${sentinelId}", "] imported sentinel"].join("");
+test(importedTitle, () => {});
+`,
     },
   });
   const importedResult = await runFixture(imported);
@@ -123,6 +126,61 @@ test("required sentinel runner rejects wrong-owner, imported, and unattributed e
   assert.match(unattributedResult.stderr, /unattributed_tests_observed/u);
 });
 
+test("required sentinel runner rejects suite-wide wrong owners and unloaded duplicates", async () => {
+  const cases = [
+    {
+      name: "wrong-owner-only",
+      ownerSource: ordinaryOwner(),
+      extraFiles: {
+        "long-task-path-canonicalization.test.mjs": passingOwner(),
+      },
+      diagnostic: "critical_sentinel_misplaced",
+    },
+    {
+      name: "correct-and-wrong-owner",
+      ownerSource: passingOwner(),
+      extraFiles: {
+        "long-task-path-canonicalization.test.mjs": passingOwner(),
+      },
+      diagnostic: "critical_sentinel_duplicate",
+    },
+    {
+      name: "duplicate-in-trust-owner",
+      ownerSource: passingOwner(),
+      extraFiles: {
+        "long-task-active-authority-continuity.test.mjs": passingOwner(),
+      },
+      diagnostic: "critical_sentinel_duplicate",
+    },
+    {
+      name: "duplicate-via-node-test-it",
+      ownerSource: passingOwner(),
+      extraFiles: {
+        "long-task-path-canonicalization.test.mjs": `import { it } from "node:test";
+it("[critical:${sentinelId}] duplicate through the Node test alias", () => {});
+`,
+      },
+      diagnostic: "critical_sentinel_duplicate",
+    },
+  ];
+
+  for (const scenario of cases) {
+    const fixture = await createFixture(scenario);
+    const result = await runFixture(fixture);
+    assert.notEqual(result.code, 0, scenario.name);
+    assert.match(
+      result.stderr,
+      new RegExp(scenario.diagnostic, "u"),
+      scenario.name,
+    );
+    assert.doesNotMatch(
+      result.stdout,
+      /critical_sentinel_coverage/u,
+      scenario.name,
+    );
+  }
+});
+
 test("required sentinel runner rejects skipped and failed sentinel results", async () => {
   const skipped = await createFixture({
     name: "skipped",
@@ -146,6 +204,14 @@ test("required sentinel runner rejects skipped and failed sentinel results", asy
   assert.notEqual(failedResult.code, 0);
   assert.match(failedResult.stderr, /critical_sentinel_non_passing/u);
   assert.match(failedResult.stderr, /execution_exit_code/u);
+
+  const todo = await createFixture({
+    name: "todo",
+    ownerSource: `import test from "node:test";\ntest.todo("[critical:${sentinelId}] todo sentinel");\n`,
+  });
+  const todoResult = await runFixture(todo);
+  assert.notEqual(todoResult.code, 0);
+  assert.match(todoResult.stderr, /critical_sentinel_non_passing/u);
 });
 
 test("required sentinel runner derives and enforces current platform applicability", async () => {

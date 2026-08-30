@@ -14,6 +14,7 @@ import {
 } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { fileURLToPath } from "node:url";
 import { loadContextCatalog } from "../../packages/ty-context/dist/lib/context-catalog/catalog-load.js";
 import {
   planContextRegistration,
@@ -46,6 +47,46 @@ import {
   projectWithUnregisteredContext,
   registerInput,
 } from "./context-register-fixture.mjs";
+
+const repositoryRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+
+test("mutation journal public surfaces distinguish current v3, recovery-readable v2, and manual pre-v2", async () => {
+  assert.equal(CONTEXT_MUTATION_JOURNAL_SCHEMA, "context-mutation-journal-v3");
+  const journalOwner = await readFile(
+    path.join(
+      repositoryRoot,
+      "packages/ty-context/src/lib/context-mutation/mutation-journal-validation.ts",
+    ),
+    "utf8",
+  );
+  assert.match(
+    journalOwner,
+    /const LEGACY_CONTEXT_MUTATION_JOURNAL_SCHEMA\s*=\s*\r?\n?\s*"context-mutation-journal-v2"/u,
+  );
+  const surfaces = [
+    "README.md",
+    "README.zh-CN.md",
+    "packages/ty-context/README.md",
+    "packages/ty-context/assets/README.md",
+    "packages/ty-context/assets/README.zh-CN.md",
+    "packages/ty-context/migrations/README.md",
+  ];
+  for (const surface of surfaces) {
+    const content = await readFile(path.join(repositoryRoot, surface), "utf8");
+    assert.match(content, /context-mutation-journal-v3/u, surface);
+    assert.match(content, /context-mutation-journal-v2/u, surface);
+    assert.match(content, /pre-v2/iu, surface);
+    assert.match(content, /manual|人工|匹配版本/iu, surface);
+    assert.doesNotMatch(
+      content,
+      /no-replace v2 journal|Current mutations use the v2 journal/iu,
+      surface,
+    );
+  }
+});
 
 test("context mutation CAS aborts before journal creation when a planned input changes", async () => {
   const root = await projectWithUnregisteredContext();

@@ -53,7 +53,10 @@ export async function validateLiveContextMove(
     invalid("live_move_reference_issues_mismatch");
   const scan = await scanStagedRepositoryForContextPath({
     repository,
-    context_path: data.from_path,
+    logical_context_path: data.from_path,
+    physical_context_path:
+      journal.files.find((entry) => entry.path === data.from_path)
+        ?.physical_path ?? data.from_path,
     file_overrides: new Map(),
   });
   if (!scan.complete)

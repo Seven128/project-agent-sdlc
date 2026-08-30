@@ -28,8 +28,11 @@ project_context/deployment.md
   const result = patchMarkdownLinksForContextMove({
     content,
     source_path: "project_context/areas/main/links.md",
+    source_physical_path: "project_context/areas/main/links.md",
     from_path: from,
+    from_physical_path: from,
     to_path: to,
+    to_physical_path: to,
   });
   assert.equal(result.changes.length, 8);
   assert.match(result.content, /\.\.\/\.\.\/deployment\/index\.md#part/u);
@@ -47,7 +50,10 @@ project_context/deployment.md
   assert.match(result.content, /<\.\.\/\.\.\/deployment\/index\.md>/u);
   assert.match(result.content, /\nproject_context\/deployment\.md\n/u);
   assert.ok(result.content.includes("`project_context/deployment.md`"));
-  assert.match(result.content, /\[fenced\]\(project_context\/deployment\.md\)/u);
+  assert.match(
+    result.content,
+    /\[fenced\]\(project_context\/deployment\.md\)/u,
+  );
 });
 
 test("moving Markdown rebases its own relative links while preserving root and repository styles", () => {
@@ -63,14 +69,20 @@ test("moving Markdown rebases its own relative links while preserving root and r
   const result = patchMarkdownLinksForContextMove({
     content,
     source_path: from,
+    source_physical_path: from,
     from_path: from,
+    from_physical_path: from,
     to_path: to,
+    to_physical_path: to,
   });
   assert.equal(result.changes.length, 3);
   assert.match(result.content, /\[architecture\]\(\.\.\/architecture\.md\)/u);
   assert.match(result.content, /\[area\]\(\.\.\/areas\/main\.md#owner\)/u);
   assert.match(result.content, /<\.\.\/architecture\.md>/u);
-  assert.match(result.content, /\[repository\]\(project_context\/global\.md\)/u);
+  assert.match(
+    result.content,
+    /\[repository\]\(project_context\/global\.md\)/u,
+  );
   assert.match(result.content, /\[root\]\(\/DESIGN\.md\)/u);
   assert.match(result.content, /\[anchor\]\(#local\)/u);
 });
@@ -80,8 +92,11 @@ test("invalid and escaping destinations are reported but never rewritten", () =>
   const result = patchMarkdownLinksForContextMove({
     content,
     source_path: from,
+    source_physical_path: from,
     from_path: from,
+    from_physical_path: from,
     to_path: to,
+    to_physical_path: to,
   });
   assert.equal(result.content, content);
   assert.deepEqual(

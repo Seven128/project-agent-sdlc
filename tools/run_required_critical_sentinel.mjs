@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -8,6 +8,8 @@ import {
   TEST_ROOT,
   criticalSentinelsForSuite,
 } from "./test_suite_policy.mjs";
+import { selectPackageTestNames } from "./test_suite_selection.mjs";
+import { assertCriticalTestTitleInventory } from "./test_title_inventory.mjs";
 import {
   buildFileTimingReport,
   readReporterEvents,
@@ -26,7 +28,8 @@ const reporterPath = path.join(
 try {
   const { suite, id } = parseArguments(process.argv.slice(2));
   const sentinel = resolveSentinel(suite, id);
-  const result = await executeSentinel(suite, sentinel);
+  const titleInventory = await inventorySentinelTitles(suite, sentinel);
+  const result = await executeSentinel(suite, sentinel, titleInventory);
   console.log(JSON.stringify(result.report));
   if (result.failures.length > 0)
     throw new Error(
@@ -67,7 +70,27 @@ function resolveSentinel(suite, id) {
   return applicable[0];
 }
 
-async function executeSentinel(suite, sentinel) {
+async function inventorySentinelTitles(suite, sentinel) {
+  const testRoot = path.join(repositoryRoot, TEST_ROOT);
+  const availableNames = (await readdir(testRoot))
+    .filter((name) => name.endsWith(".test.mjs"))
+    .sort(compareUtf8);
+  const inventorySuite = sentinel.required_suites.includes("long-task")
+    ? "long-task"
+    : suite;
+  const selectedFiles = selectPackageTestNames(
+    availableNames,
+    inventorySuite,
+  ).map((name) => path.join(testRoot, name));
+  return assertCriticalTestTitleInventory({
+    suite: inventorySuite,
+    selectedFiles,
+    sentinels: [sentinel],
+    rejectUnknown: false,
+  });
+}
+
+async function executeSentinel(suite, sentinel, titleInventory) {
   const ownerFile = path.join(repositoryRoot, TEST_ROOT, sentinel.file);
   const temporaryRoot = await mkdtemp(
     path.join(os.tmpdir(), "ty-context-required-sentinel-"),
@@ -108,6 +131,7 @@ async function executeSentinel(suite, sentinel) {
     event_parse_ms: parsed.duration_ms,
     event_parse_error: parsed.error,
     cleanup_error: cleanupError,
+    critical_title_inventory: titleInventory,
     unknown_files_parallelized: false,
   };
   const executionFailed =
@@ -232,4 +256,8 @@ function failureMessage(error) {
   return error instanceof Error
     ? (error.stack ?? error.message)
     : String(error);
+}
+
+function compareUtf8(left, right) {
+  return Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8"));
 }

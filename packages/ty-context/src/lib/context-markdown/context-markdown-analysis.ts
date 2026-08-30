@@ -123,8 +123,7 @@ async function resolveReference(
       status: "outside_repository",
       detail: "local Markdown destination resolves outside the repository",
     };
-  const absolute =
-    catalogFiles.get(targetPath)?.absolute_path ?? lexicalAbsolute;
+  const catalogTarget = catalogFiles.get(targetPath);
   if (fileOverrides?.has(targetPath)) {
     if (fileOverrides.get(targetPath) === null)
       return {
@@ -133,6 +132,19 @@ async function resolveReference(
         target_path: targetPath,
         fragment: split.fragment,
         status: "missing",
+      };
+    if (
+      !catalogTarget ||
+      !sameStagedAbsolutePath(lexicalAbsolute, catalogTarget.absolute_path)
+    )
+      return {
+        ...reference,
+        source_path: sourcePath,
+        target_path: targetPath,
+        fragment: split.fragment,
+        status: "missing",
+        detail:
+          "local Markdown destination does not resolve to the staged target physical path",
       };
     return {
       ...reference,
@@ -143,7 +155,7 @@ async function resolveReference(
     };
   }
   try {
-    await lstat(absolute);
+    await lstat(lexicalAbsolute);
   } catch (error) {
     if (isMissing(error))
       return {
@@ -155,7 +167,7 @@ async function resolveReference(
       };
     throw error;
   }
-  const identity = await realpath(absolute);
+  const identity = await realpath(lexicalAbsolute);
   if (!isPathWithin(await realpath(projectRoot), identity))
     return {
       ...reference,
@@ -166,6 +178,32 @@ async function resolveReference(
       detail:
         "local Markdown destination resolves through a link outside the repository",
     };
+  if (catalogTarget) {
+    let catalogIdentity: string;
+    try {
+      catalogIdentity = await realpath(catalogTarget.absolute_path);
+    } catch (error) {
+      if (isMissing(error))
+        return {
+          ...reference,
+          source_path: sourcePath,
+          target_path: targetPath,
+          fragment: split.fragment,
+          status: "missing",
+        };
+      throw error;
+    }
+    if (!sameRealPath(identity, catalogIdentity))
+      return {
+        ...reference,
+        source_path: sourcePath,
+        target_path: targetPath,
+        fragment: split.fragment,
+        status: "invalid",
+        detail:
+          "local Markdown destination resolves to a different physical file than its Catalog identity",
+      };
+  }
   return {
     ...reference,
     source_path: sourcePath,
@@ -173,6 +211,18 @@ async function resolveReference(
     fragment: split.fragment,
     status: "valid",
   };
+}
+
+function sameStagedAbsolutePath(left: string, right: string): boolean {
+  const normalizedLeft = path.resolve(left);
+  const normalizedRight = path.resolve(right);
+  return process.platform === "win32"
+    ? normalizedLeft.toLowerCase() === normalizedRight.toLowerCase()
+    : normalizedLeft === normalizedRight;
+}
+
+function sameRealPath(left: string, right: string): boolean {
+  return path.relative(left, right) === "";
 }
 
 type SplitDestination =

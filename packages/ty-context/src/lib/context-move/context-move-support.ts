@@ -101,8 +101,13 @@ export async function missingContextMoveDirectories(
 export async function readContextMoveMarkdown(
   repository: string,
   catalog: ContextCatalog,
-): Promise<Map<string, string>> {
-  const result = new Map<string, string>();
+): Promise<
+  Map<string, { path: string; physical_path: string; content: string }>
+> {
+  const result = new Map<
+    string,
+    { path: string; physical_path: string; content: string }
+  >();
   for (const file of [...catalog.context_files].sort((left, right) =>
     compareUtf8Paths(left.path, right.path),
   )) {
@@ -112,10 +117,11 @@ export async function readContextMoveMarkdown(
         file.absolute_path,
         "context_move_markdown",
       );
-      result.set(
-        file.path,
-        decodeMutationUtf8(await readFile(absolute), file.path),
-      );
+      result.set(file.path, {
+        path: file.path,
+        physical_path: file.physical_path,
+        content: decodeMutationUtf8(await readFile(absolute), file.path),
+      });
     } catch (error) {
       mutationIoFailure(
         `unable to read Context Markdown ${file.path}: ${mutationMessage(error)}`,

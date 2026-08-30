@@ -64,7 +64,8 @@ export interface ContextMoveLiteralScan {
 
 export async function scanStagedRepositoryForContextPath(input: {
   repository: string;
-  context_path: string;
+  logical_context_path: string;
+  physical_context_path: string;
   file_overrides: ReadonlyMap<string, Uint8Array | null>;
 }): Promise<ContextMoveLiteralScan> {
   const discovered = await discoverTextFiles(input.repository);
@@ -121,7 +122,10 @@ export async function scanStagedRepositoryForContextPath(input: {
     } catch {
       continue;
     }
-    for (const literal of literals(input.context_path)) {
+    for (const literal of literals(
+      input.logical_context_path,
+      input.physical_context_path,
+    )) {
       let cursor = 0;
       while ((cursor = content.indexOf(literal, cursor)) >= 0) {
         if (!hasPathBoundaries(content, cursor, literal.length)) {
@@ -207,21 +211,26 @@ function isTextCandidate(file: string): boolean {
   );
 }
 
-function literals(contextPath: string): string[] {
-  const encoded = contextPath.split("/").map(encodeURIComponent).join("/");
-  const windows = contextPath.replaceAll("/", "\\");
-  return [
-    ...new Set([
+function literals(logicalPath: string, physicalPath: string): string[] {
+  const variants = [logicalPath, physicalPath].flatMap((contextPath) => {
+    const encoded = contextPath.split("/").map(encodeURIComponent).join("/");
+    const windows = contextPath.replaceAll("/", "\\");
+    return [
       contextPath,
       `/${contextPath}`,
       windows,
       `\\${windows}`,
       encoded,
       `/${encoded}`,
-    ]),
-  ]
+    ];
+  });
+  return [...new Set(variants)]
     .filter(Boolean)
-    .sort((left, right) => right.length - left.length);
+    .sort(
+      (left, right) =>
+        Buffer.byteLength(right, "utf8") - Buffer.byteLength(left, "utf8") ||
+        compareUtf8Paths(left, right),
+    );
 }
 
 function hasPathBoundaries(
