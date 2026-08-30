@@ -8,6 +8,7 @@ import {
   activeRecordPath,
   worktreeIdentity,
 } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import { canonicalJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
   createDeliveryFixture,
   pathExists,
@@ -81,6 +82,35 @@ test("force-corrupt-state safely abandons every unrecoverable local state", asyn
     });
 });
 
+test("a canonical dead Active Authority owner is reclaimed without force", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    const activeFile = await activeRecordPath(fixture.root);
+    await writeFile(
+      `${activeFile}.lock`,
+      canonicalJson({
+        schema_version: "active-authority-lock-owner-v1",
+        lock_id: "00000000-0000-4000-8000-000000000001",
+        pid: 2147483647,
+        operation: "commit",
+        created_at: new Date(0).toISOString(),
+      }),
+    );
+    const result = await runCli(fixture.root, [
+      "long-task",
+      "abandon",
+      fixture.workdir,
+    ]);
+    assert.equal(result.status, "abandoned");
+    assert.equal(result.force_corrupt_state, false);
+    assert.equal(await pathExists(`${activeFile}.lock`), false);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
 function corruptScenarios() {
   return [
     {
@@ -139,19 +169,6 @@ function corruptScenarios() {
             "compiled-contract.json",
           ),
           { force: true },
-        );
-      },
-    },
-    {
-      name: "stale active lock",
-      async corrupt({ activeFile }) {
-        await writeFile(
-          `${activeFile}.lock`,
-          `${JSON.stringify({
-            pid: 1,
-            operation: "commit",
-            created_at: new Date(0).toISOString(),
-          })}\n`,
         );
       },
     },

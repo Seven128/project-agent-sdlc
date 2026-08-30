@@ -5,7 +5,6 @@ import { loadContextCatalog } from "../context-catalog/catalog-load.js";
 import {
   isPathWithin,
   normalizeContextPath,
-  resolveProjectPath,
 } from "../context-catalog/catalog-paths.js";
 import { analyzeContextMarkdownCatalog } from "../context-markdown/context-markdown-analysis.js";
 import { routeContext } from "../context-router/context-route.js";
@@ -134,12 +133,10 @@ async function verifyOrdinaryInRepositoryFile(
       "Context inspect target must be an ordinary file",
     );
   const repositoryIdentity = await realpath(projectRoot);
-  const targetIdentity = await realpath(
-    resolveProjectPath(
-      projectRoot,
-      normalizeContextPath(path.relative(projectRoot, absolutePath)),
-    ),
-  );
+  // Catalog discovery owns the canonical NFC key -> physical file mapping.
+  // Re-resolving the key would lose an NFD spelling on filesystems that keep
+  // canonical-equivalent names distinct.
+  const targetIdentity = await realpath(absolutePath);
   if (!isPathWithin(repositoryIdentity, targetIdentity))
     throw new CliCommandError(
       CLI_EXIT_CODES.io,

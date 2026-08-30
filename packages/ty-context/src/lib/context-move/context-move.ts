@@ -10,7 +10,10 @@ import {
   mutationStateBytes,
 } from "../context-mutation/mutation-command-support.js";
 import { executeContextMutationPlan } from "../context-mutation/mutation-commit.js";
-import { assertContextMutationOutsideActiveLongTask } from "../context-mutation/mutation-long-task-guard.js";
+import {
+  assertContextMutationOutsideActiveLongTask,
+  contextMutationAffectedPaths,
+} from "../context-mutation/mutation-long-task-guard.js";
 import {
   replaceContextManifestPath,
   type ManifestPathReplacementResult,
@@ -37,6 +40,7 @@ import type {
   ContextMoveInput,
   ContextMoveResult,
 } from "./context-move-types.js";
+import { CliCommandError } from "../cli-exit.js";
 
 const MANIFEST_PATH = "project_context/context.toml";
 
@@ -50,9 +54,12 @@ export async function moveContext(
 ): Promise<ContextMoveResult> {
   const planned = await planContextMove(input);
   if (!input.apply) return planned.result;
+  // Preserve the established fail-fast diagnostic before evaluating a
+  // potentially inapplicable move. executeContextMutationPlan repeats this
+  // guard while holding the shared Authority interlock to close the race.
   await assertContextMutationOutsideActiveLongTask(
     input.project_root,
-    planned.plan.files.map((entry) => entry.path),
+    contextMutationAffectedPaths(planned.plan),
   );
   if (!planned.result.can_apply)
     mutationCatalogFailure(
@@ -61,6 +68,7 @@ export async function moveContext(
   try {
     await executeContextMutationPlan(input.project_root, planned.plan);
   } catch (error) {
+    if (error instanceof CliCommandError) throw error;
     mutationIoFailure(
       `context move transaction stopped: ${mutationMessage(error)}; inspect recovery with ty-context context transaction status`,
       error,

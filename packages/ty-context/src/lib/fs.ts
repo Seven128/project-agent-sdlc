@@ -34,7 +34,13 @@ export async function listFiles(root: string): Promise<string[]> {
   if (!(await pathExists(root))) {
     return [];
   }
-  const entries = await fs.readdir(root, { withFileTypes: true });
+  const entries = (await fs.readdir(root, { withFileTypes: true })).sort(
+    (left, right) =>
+      Buffer.compare(
+        Buffer.from(left.name, "utf8"),
+        Buffer.from(right.name, "utf8"),
+      ),
+  );
   const files: string[] = [];
   for (const entry of entries) {
     const fullPath = path.join(root, entry.name);

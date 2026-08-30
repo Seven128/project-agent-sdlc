@@ -822,6 +822,7 @@ const HOTSPOT_TESTS = new Map([
   [
     "packages/ty-context/src/lib/migrations.ts",
     [
+      "design-authority-migration.test.mjs",
       "legacy-upgrade.test.mjs",
       "long-task-verifier-migration.test.mjs",
       "modularity-capability-upgrade.test.mjs",

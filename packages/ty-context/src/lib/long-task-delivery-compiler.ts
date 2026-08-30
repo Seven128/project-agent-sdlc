@@ -25,23 +25,17 @@ import {
   enforceAuthorityRevision,
 } from "./long-task-authority-revision-enforcement.js";
 import type { AuthorityRevisionProposalV2 } from "./long-task-authority-revision-types.js";
-import { validateActualRiskSurfaces } from "./long-task-risk-surfaces.js";
 import { captureVerifierIdentity } from "./long-task-verifier-identity.js";
 import { verifierAuthorityDiff } from "./long-task-verifier-authority.js";
 import {
-  changedWorkspacePaths,
-  changedWorkspacePathsFromHead,
-  currentGitTree,
   repoRelative,
   repositoryRoot,
 } from "./long-task-workspace.js";
-import {
-  assertWorkspaceScope,
-  classifyWorkspaceScope,
-  firstLockManagedWorkspacePaths,
-  protectedWorkspacePaths,
-} from "./long-task-workspace-scope.js";
 import { compileExternalConfirmationIdentityAssurances } from "./long-task-external-confirmation-attestation.js";
+import { assertNoUnfinishedContextMutationForAuthority } from "./context-mutation/mutation-journal.js";
+import { currentActiveAuthorityLockToken } from "./long-task-active-authority-lock-context.js";
+import { withActiveAuthorityLock } from "./long-task-state.js";
+import { prepareCompileWorkspaceGuard } from "./long-task-delivery-compiler-preflight.js";
 
 export interface CompileDeliveryOptionsV2 {
   require_completion_gate?: boolean;
@@ -60,6 +54,21 @@ export async function compileDeliveryContract(
   options: CompileDeliveryOptionsV2 = {},
 ): Promise<CompiledDeliveryContractV2> {
   const repository = await repositoryRoot(projectRootInput);
+  const compile = () =>
+    compileDeliveryContractLocked(workdirInput, repository, options);
+  if (currentActiveAuthorityLockToken(repository)) return compile();
+  return withActiveAuthorityLock(repository, "compile", compile);
+}
+
+async function compileDeliveryContractLocked(
+  workdirInput: string,
+  repository: string,
+  options: CompileDeliveryOptionsV2,
+): Promise<CompiledDeliveryContractV2> {
+  // The shared lock stays held while every Context, Source and Design input is
+  // captured. commitActiveAuthority repeats freshness under a later lock when
+  // compilation and binding are separate calls.
+  await assertNoUnfinishedContextMutationForAuthority(repository);
   const workdir = path.resolve(workdirInput);
   const workdirRelative = repoRelative(repository, workdir);
   if (!workdirRelative)
@@ -97,39 +106,19 @@ export async function compileDeliveryContract(
     sourceItems,
     context,
   );
-  const previous = options.live_gate
-    ? null
-    : (options.previous_authority ?? null);
-  const existingInitialTaskBase =
-    options.initial_task_base ?? previous?.initial_task_base ?? null;
-  const changedPaths = existingInitialTaskBase
-    ? changedWorkspacePaths(existingInitialTaskBase.workspace_manifest, current)
-    : await changedWorkspacePathsFromHead(repository, workdir);
-  const firstLockManagedPaths = existingInitialTaskBase
-    ? []
-    : await firstLockManagedWorkspacePaths(repository, changedPaths);
-  assertWorkspaceScope(
-    classifyWorkspaceScope(
+  const { previous, initial_task_base: initialTaskBase } =
+    await prepareCompileWorkspaceGuard({
+      repository,
+      workdir,
+      options,
       contract,
-      changedPaths,
-      protectedWorkspacePaths({
-        contract_files: contractFiles,
-        source_hashes: sourceHashes,
-        context_hashes: context.sha256,
-        checks: [
-          ...globalChecks,
-          ...outcomes.flatMap((outcome) => outcome.acceptance.checks),
-        ],
-        additional_files: firstLockManagedPaths,
-      }),
-    ),
-  );
-  const initialTaskBase = existingInitialTaskBase ?? {
-    git_commit: current.git_head,
-    git_tree: await currentGitTree(repository),
-    workspace_manifest: current,
-  };
-  await validateActualRiskSurfaces(repository, changedPaths, contract);
+      contract_files: contractFiles,
+      source_hashes: sourceHashes,
+      context_snapshot: context,
+      workspace: current,
+      global_checks: globalChecks,
+      outcomes,
+    });
 
   const verifier = await captureVerifierIdentity(
     repository,

@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rename, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -10,6 +10,7 @@ import { designAuthorityManifestProjection } from "../../packages/ty-context/dis
 import {
   BUTTON,
   DESIGN,
+  LEGACY_DESIGN,
   assertDiagnostic,
   cleanup,
   createBundle,
@@ -21,10 +22,10 @@ test("legacy Design Authority identity is deterministic across LF and CRLF", asy
   const left = await temporaryRepository();
   const right = await temporaryRepository();
   try {
-    await writeFile(path.join(left, "DESIGN.md"), DESIGN, "utf8");
+    await writeFile(path.join(left, "DESIGN.md"), LEGACY_DESIGN, "utf8");
     await writeFile(
       path.join(right, "DESIGN.md"),
-      DESIGN.replaceAll("\n", "\r\n"),
+      LEGACY_DESIGN.replaceAll("\n", "\r\n"),
       "utf8",
     );
     const a = await inspectDesignAuthorityClosure(left);
@@ -38,7 +39,7 @@ test("legacy Design Authority identity is deterministic across LF and CRLF", asy
     );
     assert.equal(a.identity?.closure_digest, b.identity?.closure_digest);
 
-    const clean = DESIGN.replace(
+    const clean = LEGACY_DESIGN.replace(
       "See [button](design_system/components/button.md).",
       "No subordinate bundle is declared.",
     );
@@ -50,6 +51,202 @@ test("legacy Design Authority identity is deterministic across LF and CRLF", asy
     assert.deepEqual(valid.member_paths, ["DESIGN.md"]);
   } finally {
     await cleanup(left, right);
+  }
+});
+
+test("bundle marker prevents manifest deletion or rename from becoming legacy", async () => {
+  for (const mutation of ["delete", "rename", "empty"]) {
+    const repository = await temporaryRepository();
+    try {
+      await createBundle(repository);
+      const manifest = path.join(
+        repository,
+        "design_system/authority.manifest.json",
+      );
+      if (mutation === "delete") await rm(manifest);
+      else if (mutation === "rename")
+        await rename(
+          manifest,
+          path.join(repository, "design_system/authority.manifest.renamed.json"),
+        );
+      else await writeFile(manifest, "", "utf8");
+
+      const inspection = await inspectDesignAuthorityClosure(repository);
+      assert.equal(inspection.status, "invalid");
+      assert.equal(inspection.identity, null);
+      assert.match(
+        inspection.diagnostics[0].detail,
+        mutation === "empty"
+          ? /design_authority_manifest_invalid:json/u
+          : /bundle_manifest_missing/u,
+      );
+      await assert.rejects(
+        loadCurrentDesignAuthorityClosure(repository),
+        /design_authority_invalid/u,
+      );
+    } finally {
+      await cleanup(repository);
+    }
+  }
+});
+
+test("manifest requires the fixed DESIGN bundle marker", async () => {
+  const repository = await temporaryRepository();
+  try {
+    await createBundle(repository);
+    await writeFile(path.join(repository, "DESIGN.md"), LEGACY_DESIGN, "utf8");
+    const inspection = await inspectDesignAuthorityClosure(repository);
+    assert.equal(inspection.status, "invalid");
+    assert.equal(inspection.identity, null);
+    assert.match(inspection.diagnostics[0].detail, /bundle_marker_missing/u);
+  } finally {
+    await cleanup(repository);
+  }
+});
+
+test("bundle marker grammar is fixed, singular, body-leading and outside examples", async () => {
+  const cases = [
+    {
+      name: "moved",
+      design: DESIGN.replace(
+        "<!-- ty-context-design-authority-format: bundle-v1 -->\n\n# Design System",
+        "# Design System\n\n<!-- ty-context-design-authority-format: bundle-v1 -->",
+      ),
+      expected: /bundle_marker_misplaced/u,
+    },
+    {
+      name: "duplicate",
+      design: DESIGN.replace(
+        "# Design System",
+        "<!-- ty-context-design-authority-format: bundle-v1 -->\n\n# Design System",
+      ),
+      expected: /bundle_marker_duplicate/u,
+    },
+    {
+      name: "whitespace",
+      design: DESIGN.replace(
+        "<!-- ty-context-design-authority-format: bundle-v1 -->",
+        " <!-- ty-context-design-authority-format: bundle-v1 -->",
+      ),
+      expected: /bundle_marker_noncanonical/u,
+    },
+    {
+      name: "unclosed-frontmatter",
+      design: DESIGN.replace("\n---\n\n<!--", "\n\n<!--"),
+      expected: /bundle_entry_frontmatter_unclosed/u,
+    },
+    {
+      name: "invalid-frontmatter",
+      design: DESIGN.replace('version: "alpha"', "version: ["),
+      expected: /bundle_entry_frontmatter_invalid/u,
+    },
+  ];
+  for (const item of cases) {
+    const repository = await temporaryRepository();
+    try {
+      await createBundle(repository);
+      await writeFile(path.join(repository, "DESIGN.md"), item.design, "utf8");
+      const inspection = await inspectDesignAuthorityClosure(repository);
+      assert.equal(inspection.status, "invalid", item.name);
+      assert.equal(inspection.mode, "bundle", item.name);
+      assert.match(inspection.diagnostics[0].detail, item.expected, item.name);
+    } finally {
+      await cleanup(repository);
+    }
+  }
+
+  for (const example of [
+    "```md\n<!-- ty-context-design-authority-format: bundle-v1 -->\n```",
+    "`<!-- ty-context-design-authority-format: bundle-v1 -->`",
+  ]) {
+    const repository = await temporaryRepository();
+    try {
+      const legacy = LEGACY_DESIGN.replace(
+        "See [button](design_system/components/button.md).",
+        example,
+      );
+      await writeFile(path.join(repository, "DESIGN.md"), legacy, "utf8");
+      const inspection = await inspectDesignAuthorityClosure(repository);
+      assert.equal(inspection.status, "valid");
+      assert.equal(inspection.mode, "legacy");
+    } finally {
+      await cleanup(repository);
+    }
+  }
+});
+
+test("orphan manifest is an invalid bundle rather than missing or legacy", async () => {
+  for (const mutation of ["delete", "rename"]) {
+    const repository = await temporaryRepository();
+    try {
+      await createBundle(repository);
+      const entry = path.join(repository, "DESIGN.md");
+      if (mutation === "delete") await rm(entry);
+      else await rename(entry, path.join(repository, "DESIGN.renamed.md"));
+      const inspection = await inspectDesignAuthorityClosure(repository);
+      assert.equal(inspection.status, "invalid");
+      assert.equal(inspection.mode, "bundle");
+      assertDiagnostic(inspection, "bundle_entry_missing");
+    } finally {
+      await cleanup(repository);
+    }
+  }
+});
+
+test("bundle path spelling is portable for directory, manifest and members", async () => {
+  for (const target of ["directory", "manifest", "member"]) {
+    const repository = await temporaryRepository();
+    try {
+      await createBundle(repository);
+      if (target === "directory") {
+        await rename(
+          path.join(repository, "design_system"),
+          path.join(repository, "Design_System"),
+        );
+      } else if (target === "manifest") {
+        await rename(
+          path.join(repository, "design_system/authority.manifest.json"),
+          path.join(repository, "design_system/Authority.Manifest.Json"),
+        );
+      } else {
+        await rename(
+          path.join(repository, "design_system/components/button.md"),
+          path.join(repository, "design_system/components/Button.md"),
+        );
+      }
+      const inspection = await inspectDesignAuthorityClosure(repository);
+      assert.equal(inspection.status, "invalid", target);
+      assert.equal(inspection.mode, "bundle", target);
+      assert.match(
+        inspection.diagnostics[0].detail,
+        /(?:path_case_mismatch|bundle_manifest_missing|ENOENT)/u,
+        target,
+      );
+    } finally {
+      await cleanup(repository);
+    }
+  }
+});
+
+test("bundle marker still blocks downgrade after child and link removal", async () => {
+  const repository = await temporaryRepository();
+  try {
+    await createBundle(repository);
+    await rm(path.join(repository, "design_system/authority.manifest.json"));
+    await rm(path.join(repository, "design_system/components/button.md"));
+    await writeFile(
+      path.join(repository, "DESIGN.md"),
+      DESIGN.replace(
+        "See [button](design_system/components/button.md).",
+        "No subordinate link remains.",
+      ),
+      "utf8",
+    );
+    const inspection = await inspectDesignAuthorityClosure(repository);
+    assert.equal(inspection.status, "invalid");
+    assert.match(inspection.diagnostics[0].detail, /bundle_manifest_missing/u);
+  } finally {
+    await cleanup(repository);
   }
 });
 

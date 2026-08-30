@@ -38,11 +38,19 @@ components:
 
 The fixture has no subordinate bundle.
 `;
+const BUNDLE_DESIGN = DESIGN.replace(
+  "# Design System",
+  "<!-- ty-context-design-authority-format: bundle-v1 -->\n\n# Design System",
+);
 
 test("design-authority inspect and tokens are deterministic read-only commands", async () => {
   const repository = await mkdtemp(path.join(os.tmpdir(), "ty-design-cli-"));
   try {
-    await writeFile(path.join(repository, "DESIGN.md"), DESIGN, "utf8");
+    await writeFile(
+      path.join(repository, "DESIGN.md"),
+      DESIGN,
+      "utf8",
+    );
     const before = await readdir(repository);
     const first = run(repository, ["design-authority", "inspect", "--json"]);
     const second = run(repository, [
@@ -79,7 +87,11 @@ test("design-authority inspect and tokens are deterministic read-only commands",
 test("explicit inspection returns catalog exit 3 for an invalid claimed bundle", async () => {
   const repository = await mkdtemp(path.join(os.tmpdir(), "ty-design-cli-"));
   try {
-    await writeFile(path.join(repository, "DESIGN.md"), DESIGN, "utf8");
+    await writeFile(
+      path.join(repository, "DESIGN.md"),
+      BUNDLE_DESIGN,
+      "utf8",
+    );
     await mkdir(path.join(repository, "design_system"));
     await writeFile(
       path.join(repository, "design_system/authority.manifest.json"),
@@ -124,7 +136,11 @@ test("Doctor reports an invalid manifest closure as a structural error", async (
   const repository = await mkdtemp(path.join(os.tmpdir(), "ty-design-doctor-"));
   try {
     await runInit(repository, { adopt: false, force: false });
-    await writeFile(path.join(repository, "DESIGN.md"), DESIGN, "utf8");
+    await writeFile(
+      path.join(repository, "DESIGN.md"),
+      BUNDLE_DESIGN,
+      "utf8",
+    );
     await mkdir(path.join(repository, "design_system"));
     await writeFile(
       path.join(repository, "design_system/authority.manifest.json"),
@@ -143,6 +159,28 @@ test("Doctor reports an invalid manifest closure as a structural error", async (
         line.includes("design_authority_closure_digest_mismatch"),
       ),
       true,
+    );
+  } finally {
+    await rm(repository, { recursive: true, force: true });
+  }
+});
+
+test("Doctor reports an orphan bundle manifest as a structural error", async () => {
+  const repository = await mkdtemp(path.join(os.tmpdir(), "ty-design-doctor-"));
+  try {
+    await runInit(repository, { adopt: false, force: false });
+    await rm(path.join(repository, "DESIGN.md"));
+    await mkdir(path.join(repository, "design_system"));
+    await writeFile(
+      path.join(repository, "design_system/authority.manifest.json"),
+      "{}\n",
+      "utf8",
+    );
+    const report = await runDoctor(repository);
+    assert.equal(
+      report.errors.some((line) => line.includes("bundle_entry_missing")),
+      true,
+      JSON.stringify(report),
     );
   } finally {
     await rm(repository, { recursive: true, force: true });

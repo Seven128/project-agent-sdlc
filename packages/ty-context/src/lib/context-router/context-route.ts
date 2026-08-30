@@ -3,18 +3,17 @@ import type {
   CatalogFile,
   ContextCatalog,
 } from "../context-catalog/catalog-types.js";
+import { compareUtf8Paths } from "../context-catalog/catalog-paths.js";
 import { loadContextCatalog } from "../context-catalog/catalog-load.js";
 import {
   CONTEXT_ROUTE_BUDGETS,
   CONTEXT_ROUTE_SCHEMA_VERSION,
 } from "./context-route-budget.js";
-import {
-  defaultEntries,
-  emptyResult,
-  stableExceeded,
-} from "./context-route-candidates.js";
+import { defaultEntries, emptyResult } from "./context-route-candidates.js";
+import { stableRouteBudgetExceeded } from "./context-route-order.js";
 import {
   matchContextAreas,
+  normalizeRepositoryInputs,
   resolveManualIncludes,
 } from "./context-route-paths.js";
 import { scanContextCatalogFiles } from "./context-route-scan.js";
@@ -67,19 +66,26 @@ export async function routeContext(
     });
   }
 
-  const triggers = catalog.registered_contexts.flatMap(
-    (entry) => entry.context?.triggers ?? [],
-  );
+  const paths = normalizeRepositoryInputs(input.paths ?? [], "--path");
+  const triggers = [
+    ...new Set(
+      catalog.registered_contexts.flatMap((entry) =>
+        (entry.context?.triggers ?? []).map((trigger) =>
+          trigger.normalize("NFC"),
+        ),
+      ),
+    ),
+  ].sort(compareUtf8Paths);
   const termBuild = buildContextRouteTerms({
     task,
     explicit_terms: input.explicit_terms ?? [],
-    paths: input.paths ?? [],
+    paths,
     manifest_triggers: triggers,
     case_sensitive: caseSensitive,
   });
   inputExceeded.push(...termBuild.exceeded);
 
-  const pathResult = matchContextAreas(catalog, input.paths ?? []);
+  const pathResult = matchContextAreas(catalog, paths);
   let includes: CatalogFile[];
   try {
     includes = await resolveManualIncludes(catalog, input.includes ?? []);
@@ -121,7 +127,7 @@ export async function routeContext(
   const scan = {
     ...scanned.scan,
     budget_exceeded: scanExceeded.length > 0,
-    exceeded: stableExceeded(scanExceeded),
+    exceeded: stableRouteBudgetExceeded(scanExceeded),
   };
   return {
     schema_version: CONTEXT_ROUTE_SCHEMA_VERSION,

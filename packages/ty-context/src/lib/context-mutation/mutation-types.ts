@@ -6,12 +6,12 @@ export type ContextMutationJournalState =
   "planning" | "prepared" | "committing" | "validating";
 
 export interface MutationFileIdentity {
-  dev: number;
-  ino: number;
-  nlink: number;
-  size: number;
-  mtime_ms: number;
-  ctime_ms: number;
+  dev: string;
+  ino: string;
+  nlink: string;
+  size: string;
+  mtime_ns: string;
+  ctime_ns: string;
 }
 
 export interface MutationFileState {
@@ -22,12 +22,27 @@ export interface MutationFileState {
   identity: MutationFileIdentity | null;
 }
 
+export interface MutationRecordedFileState {
+  exists: boolean;
+  sha256: string | null;
+  mode: number | null;
+  identity: MutationFileIdentity | null;
+}
+
+export interface MutationTemporaryState {
+  side: "before" | "after";
+  state: MutationRecordedFileState;
+}
+
 export interface MutationFileChange {
   path: string;
   before: MutationFileState;
   after: MutationFileState;
   commit_order: number;
   temporary_path: string | null;
+  temporary_state: MutationTemporaryState | null;
+  published_before: MutationRecordedFileState | null;
+  published_after: MutationRecordedFileState | null;
 }
 
 export interface MutationDirectoryChange {
@@ -70,7 +85,7 @@ export interface ContextMutationPlan {
 }
 
 export interface ContextMutationJournal extends ContextMutationPlan {
-  schema_version: "context-mutation-journal-v1";
+  schema_version: "context-mutation-journal-v2";
   journal_sequence: number;
   previous_journal_sha256: string | null;
   state: ContextMutationJournalState;

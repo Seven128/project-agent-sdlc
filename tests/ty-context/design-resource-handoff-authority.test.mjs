@@ -18,6 +18,8 @@ import { writeDesignResourceSymbolicHandoffFixture } from "./design-resource-sym
 
 const LEGACY_DESIGN =
   "# Fixture Design Authority\n\nLegacy single-file test authority.\n";
+const BUNDLE_MARKER =
+  "<!-- ty-context-design-authority-format: bundle-v1 -->";
 
 test("V1 explicit project Authority identity is current and stale-safe", async () => {
   await withRepository(async (root) => {
@@ -90,6 +92,18 @@ test("omitted legacy identity cannot silently bind a new bundle", async () => {
   });
 });
 
+test("fresh DRA preflight rejects a marked bundle whose manifest was removed", async () => {
+  await withRepository(async (root) => {
+    await writeDesignResourceHandoffFixture(root);
+    await createBundle(root);
+    await rm(path.join(root, "design_system/authority.manifest.json"));
+    await assert.rejects(
+      preflightDesignResourceHandoff(root, DESIGN_HANDOFF_PATH),
+      /bundle_manifest_missing/u,
+    );
+  });
+});
+
 test("non-fidelity may be explicit not-applicable but style work may not", async () => {
   await withRepository(async (root) => {
     const valid = await resolveDesignAuthorityHandoffBinding({
@@ -133,6 +147,11 @@ test("handoff Authority binding rejects adoption claims as unknown fields", asyn
 });
 
 async function createBundle(root) {
+  await writeFile(
+    path.join(root, "DESIGN.md"),
+    `${BUNDLE_MARKER}\n\n# Fixture Design Authority\n\n[Sheet](design_system/components/sheet.md)\n`,
+    "utf8",
+  );
   await mkdir(path.join(root, "design_system/components"), { recursive: true });
   await writeFile(
     path.join(root, "design_system/components/sheet.md"),

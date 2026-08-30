@@ -38,7 +38,10 @@ import {
   createDeliveryFixture,
   prepareDeliveryFixtureSeed,
 } from "./long-task-delivery-fixtures.mjs";
-import { buildFileTimingReport } from "./test-suite-file-reporter.mjs";
+import {
+  buildFileTimingReport,
+  readReporterEvents,
+} from "./test-suite-file-reporter.mjs";
 import { createWorkspaceSnapshot } from "../../packages/ty-context/dist/lib/long-task-workspace.js";
 import { assertWorkspaceGitOrdering } from "./workspace-git-ordering-fixture.mjs";
 
@@ -247,11 +250,24 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
   const seed = await prepareDeliveryFixtureSeed();
   const first = await createDeliveryFixture({ fixtureSeedRoot: seed.root });
   const second = await createDeliveryFixture({ fixtureSeedRoot: seed.root });
+  const twoOutcomeFirst = await createDeliveryFixture({
+    fixtureSeedRoot: seed.root,
+    twoOutcomes: true,
+  });
+  const twoOutcomeSecond = await createDeliveryFixture({
+    fixtureSeedRoot: seed.root,
+    twoOutcomes: true,
+  });
   const external = await createDeliveryFixture({
     externalConfirmation: true,
     fixtureSeedRoot: seed.root,
   });
   try {
+    assert.deepEqual((await readdir(seed.root)).sort(), [
+      "default",
+      "default-two-outcomes",
+      "external",
+    ]);
     const firstCommon = await git(first.root, [
       "rev-parse",
       "--git-common-dir",
@@ -260,12 +276,26 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
       "rev-parse",
       "--git-common-dir",
     ]);
+    const twoOutcomeFirstCommon = await git(twoOutcomeFirst.root, [
+      "rev-parse",
+      "--git-common-dir",
+    ]);
+    const twoOutcomeSecondCommon = await git(twoOutcomeSecond.root, [
+      "rev-parse",
+      "--git-common-dir",
+    ]);
     assert.notEqual(
       path.resolve(first.root, firstCommon),
       path.resolve(second.root, secondCommon),
     );
+    assert.notEqual(
+      path.resolve(twoOutcomeFirst.root, twoOutcomeFirstCommon),
+      path.resolve(twoOutcomeSecond.root, twoOutcomeSecondCommon),
+    );
     assert.equal(await git(first.root, ["remote"]), "");
     assert.equal(await git(second.root, ["remote"]), "");
+    assert.equal(await git(twoOutcomeFirst.root, ["remote"]), "");
+    assert.equal(await git(twoOutcomeSecond.root, ["remote"]), "");
     assert.equal(
       await git(first.root, ["config", "--local", "core.fsync"]),
       "none",
@@ -290,6 +320,40 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
       await git(second.root, ["config", "user.email"]),
       "fixture@example.test",
     );
+    const twoOutcomeSeedRoot = path.join(seed.root, "default-two-outcomes");
+    const twoOutcomeSeedHead = await git(twoOutcomeSeedRoot, [
+      "rev-parse",
+      "HEAD",
+    ]);
+    assert.equal(
+      await git(twoOutcomeFirst.root, ["rev-parse", "HEAD"]),
+      twoOutcomeSeedHead,
+    );
+    assert.equal(
+      await git(twoOutcomeSecond.root, ["rev-parse", "HEAD"]),
+      twoOutcomeSeedHead,
+    );
+    assert.equal(twoOutcomeFirst.contract.outcomes.length, 2);
+    assert.equal(twoOutcomeSecond.contract.outcomes.length, 2);
+    const twoOutcomeSecondState = await readFile(
+      path.join(twoOutcomeSecond.root, "src", "state.json"),
+      "utf8",
+    );
+    await writeFile(
+      path.join(twoOutcomeFirst.root, "src", "state.json"),
+      '{"first":false,"second":true}\n',
+    );
+    assert.equal(
+      await readFile(
+        path.join(twoOutcomeSecond.root, "src", "state.json"),
+        "utf8",
+      ),
+      twoOutcomeSecondState,
+    );
+    assert.equal(
+      await git(twoOutcomeSeedRoot, ["rev-parse", "HEAD"]),
+      twoOutcomeSeedHead,
+    );
     assert.match(
       await readFile(path.join(external.root, "source.md"), "utf8"),
       /fixture-external/u,
@@ -298,6 +362,8 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
     await Promise.all([
       rm(first.root, { recursive: true, force: true }),
       rm(second.root, { recursive: true, force: true }),
+      rm(twoOutcomeFirst.root, { recursive: true, force: true }),
+      rm(twoOutcomeSecond.root, { recursive: true, force: true }),
       rm(external.root, { recursive: true, force: true }),
       seed.cleanup(),
     ]);
@@ -584,8 +650,8 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
 
 test("file timing diagnostics retain one terminal record for every selected file", () => {
   const selectedFiles = [
-    path.join(repositoryRoot, "tests", "ty-context", "alpha.test.mjs"),
-    path.join(repositoryRoot, "tests", "ty-context", "beta.test.mjs"),
+    path.join(repositoryRoot, "tests", "ty-context", "zeta.test.mjs"),
+    path.join(repositoryRoot, "tests", "ty-context", "é.test.mjs"),
   ];
   const report = buildFileTimingReport({
     suite: "probe",
@@ -596,12 +662,15 @@ test("file timing diagnostics retain one terminal record for every selected file
     events: [
       event("test:pass", selectedFiles[0], "alpha one", 8),
       event("test:pass", selectedFiles[0], "alpha two", 4),
-      event("test:fail", selectedFiles[1], "beta one", 5),
+      event("test:fail", selectedFiles[1], "accented one", 12),
     ],
   });
   assert.equal(report.schema_version, "test-suite-timing-v2");
   assert.equal(report.file_count, 2);
   assert.equal(report.test_count, 3);
+  assert.equal(report.selected_test_count, 3);
+  assert.equal(report.imported_test_count, 0);
+  assert.equal(report.unattributed_test_count, 0);
   assert.equal(report.files.length, 2);
   assert.deepEqual(
     report.files.map(({ file, status, test_count }) => ({
@@ -610,26 +679,135 @@ test("file timing diagnostics retain one terminal record for every selected file
       test_count,
     })),
     [
-      { file: "alpha.test.mjs", status: "passed", test_count: 2 },
-      { file: "beta.test.mjs", status: "failed", test_count: 1 },
+      { file: "zeta.test.mjs", status: "passed", test_count: 2 },
+      { file: "é.test.mjs", status: "failed", test_count: 1 },
     ],
   );
   assert.equal(report.files[1].tests[0].failure_message, "fixture failed");
   assert.equal(report.execution_error, "fixture runner startup failed");
   assert.deepEqual(report.slowest_files, [
     {
-      file: "alpha.test.mjs",
+      file: "zeta.test.mjs",
       duration_ms: 12,
       status: "passed",
       test_count: 2,
     },
     {
-      file: "beta.test.mjs",
-      duration_ms: 5,
+      file: "é.test.mjs",
+      duration_ms: 12,
       status: "failed",
       test_count: 1,
     },
   ]);
+});
+
+test("file timing diagnostics count imported and unattributed terminal tests without guessing ownership", () => {
+  const selectedFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "alpha.test.mjs",
+  );
+  const importedFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "alpha.cases.mjs",
+  );
+  const localeSensitiveImportedFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "é.cases.mjs",
+  );
+  const asciiImportedFile = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "zeta.cases.mjs",
+  );
+  const importedWrapper = event(
+    "test:pass",
+    importedFile,
+    importedFile,
+    50,
+  );
+  importedWrapper.data.nesting = 0;
+  const fileless = event("test:pass", null, "fileless skipped", 3);
+  fileless.data.skip = true;
+  const report = buildFileTimingReport({
+    suite: "probe",
+    selectedFiles: [selectedFile],
+    wallTimeMs: 25,
+    execution: { mode: "serial", isolated_concurrency: 1 },
+    events: [
+      event("test:pass", selectedFile, "selected", 8),
+      importedWrapper,
+      event("test:pass", importedFile, "imported pass", 4),
+      event("test:fail", importedFile, "imported fail", 5),
+      event("test:pass", localeSensitiveImportedFile, "accented", 2),
+      event("test:pass", asciiImportedFile, "ascii", 2),
+      fileless,
+    ],
+  });
+
+  assert.equal(report.file_count, 1);
+  assert.equal(report.schema_version, "test-suite-timing-v2");
+  assert.equal(report.imported_file_count, 3);
+  assert.equal(report.selected_test_count, 1);
+  assert.equal(report.imported_test_count, 4);
+  assert.equal(report.unattributed_test_count, 1);
+  assert.equal(report.executed_test_count, 6);
+  assert.equal(report.test_count, 6);
+  assert.equal(report.passed_count, 4);
+  assert.equal(report.failed_count, 1);
+  assert.equal(report.skipped_count, 1);
+  assert.equal(report.test_identities.length, 6);
+  assert.deepEqual(
+    report.imported_files.map(({ file, test_count }) => ({
+      file,
+      test_count,
+    })),
+    [
+      { file: "alpha.cases.mjs", test_count: 2 },
+      { file: "zeta.cases.mjs", test_count: 1 },
+      { file: "é.cases.mjs", test_count: 1 },
+    ],
+  );
+  assert.deepEqual(
+    report.unattributed_tests.map(({ name, status }) => ({ name, status })),
+    [{ name: "fileless skipped", status: "skipped" }],
+  );
+  assert.equal(report.test_status, "failed");
+});
+
+test("reporter event parsing retains partial diagnostics and fails closed on malformed NDJSON", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-events-"));
+  const eventFile = path.join(root, "events.ndjson");
+  try {
+    await writeFile(
+      eventFile,
+      '{"type":"test:pass"}\n{"type":"test:summary"}\n',
+    );
+    const parsed = await readReporterEvents(eventFile);
+    assert.equal(parsed.events.length, 2);
+    assert.equal(parsed.error, null);
+    assert.ok(parsed.duration_ms >= 0);
+
+    await writeFile(
+      eventFile,
+      '{"type":"test:pass"}\n{"type":"test:summary"\n',
+    );
+    const malformed = await readReporterEvents(eventFile);
+    assert.equal(malformed.events.length, 1);
+    assert.match(
+      malformed.error,
+      /test_reporter_event_parse_failed:events\.ndjson:2/u,
+    );
+    assert.ok(malformed.duration_ms >= 0);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("[critical:critical-policy-continuity] critical sentinel policy rejects semantic replacement while permitting reviewed evolution", async () => {
@@ -654,7 +832,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(
     new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
-    37,
+    38,
   );
   const atomicFinalization = CRITICAL_TEST_SENTINELS.find(
     (entry) => entry.id === "atomic-terminal-finalization",
@@ -665,7 +843,20 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     "long-task-final-authority-race.test.mjs",
   );
   assert.match(atomicFinalization.rationale, /Finalization Identity\/CAS/u);
-  assert.match(atomicFinalization.rationale, /Windows/u);
+  assert.equal(
+    Object.hasOwn(atomicFinalization, "required_platforms"),
+    false,
+  );
+  const windowsFinalization = CRITICAL_TEST_SENTINELS.find(
+    (entry) => entry.id === "windows-finalization-tree-settlement",
+  );
+  assert.ok(windowsFinalization);
+  assert.equal(
+    windowsFinalization.file,
+    "long-task-final-authority-race.test.mjs",
+  );
+  assert.deepEqual(windowsFinalization.required_platforms, ["win32"]);
+  assert.match(windowsFinalization.rationale, /Job process tree/u);
   const completeDeliveryBlackBox = CRITICAL_TEST_SENTINELS.find(
     (entry) => entry.id === "complete-delivery-black-box-closure",
   );
@@ -904,21 +1095,33 @@ test("critical sentinel applicability is platform-derived without weakening regi
   const registered = CRITICAL_TEST_SENTINELS.filter((entry) =>
     entry.required_suites.includes("long-task-trust"),
   );
+  const windowsOnly = registered.filter((entry) =>
+    entry.required_platforms?.includes("win32"),
+  );
+  assert.deepEqual(
+    windowsOnly.map((entry) => entry.id),
+    [
+      "windows-finalization-tree-settlement",
+      "windows-job-pre-resume-containment",
+    ],
+  );
   assert.equal(registered.length, windowsRequired.length);
-  assert.equal(linuxRequired.length, registered.length - 1);
-  assert.equal(darwinRequired.length, registered.length - 1);
-  assert.equal(
-    linuxRequired.some((entry) => entry.id === windowsSentinel.id),
-    false,
-  );
-  assert.equal(
-    darwinRequired.some((entry) => entry.id === windowsSentinel.id),
-    false,
-  );
-  assert.equal(
-    windowsRequired.some((entry) => entry.id === windowsSentinel.id),
-    true,
-  );
+  assert.equal(linuxRequired.length, registered.length - windowsOnly.length);
+  assert.equal(darwinRequired.length, registered.length - windowsOnly.length);
+  for (const sentinel of windowsOnly) {
+    assert.equal(
+      linuxRequired.some((entry) => entry.id === sentinel.id),
+      false,
+    );
+    assert.equal(
+      darwinRequired.some((entry) => entry.id === sentinel.id),
+      false,
+    );
+    assert.equal(
+      windowsRequired.some((entry) => entry.id === sentinel.id),
+      true,
+    );
+  }
   for (const required of [linuxRequired, darwinRequired, windowsRequired])
     assert.equal(
       required.some((entry) => entry.id === crossPlatformSentinel.id),

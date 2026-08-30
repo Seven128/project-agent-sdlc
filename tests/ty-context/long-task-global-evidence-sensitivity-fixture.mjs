@@ -12,7 +12,7 @@ import {
   fixtureProductRootArgv,
   fixtureProductRootPath,
 } from "./long-task-package-machine-fixture.mjs";
-import { addFixtureDomainSemanticFact } from "./long-task-semantic-fact-test-support.mjs";
+import { addFixtureDomainSemanticFacts } from "./long-task-semantic-fact-test-support.mjs";
 
 export const GLOBAL_PRODUCT_PATH = "tests/global-sensitivity-product.mjs";
 
@@ -154,14 +154,6 @@ console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1"
   await synchronizeFixtureExecutionTargetSource(fixture.root, fixture.contract);
   await writeContract(fixture.workdir, fixture.contract);
   const sourceFactRefs = facts.map((fact) => fact.factKey);
-  for (const fact of facts)
-    await addFixtureDomainSemanticFact(fixture, {
-      sourceItemRef: "global-state-source",
-      ...fact,
-      sourceFactRefs,
-      criterion: `The Global technical state constraint has an exact Semantic Fact for ${fact.outcomeKey}.`,
-      observation: `${fact.outcomeKey}_global_state_semantic_fact_result`,
-    });
   fixture.contract.global.semantic_fact_bindings = {
     manifest_ref: fixture.contract.semantic_fact_manifest.key,
     obligations: facts.map((fact) => ({
@@ -175,7 +167,16 @@ console.log(JSON.stringify({ schema_version: "ty-context-product-observation-v1"
       required_polarity: "positive",
     })),
   };
-  await writeContract(fixture.workdir, fixture.contract);
+  await addFixtureDomainSemanticFacts(
+    fixture,
+    facts.map((fact) => ({
+      sourceItemRef: "global-state-source",
+      ...fact,
+      sourceFactRefs,
+      criterion: `The Global technical state constraint has an exact Semantic Fact for ${fact.outcomeKey}.`,
+      observation: `${fact.outcomeKey}_global_state_semantic_fact_result`,
+    })),
+  );
 }
 
 export async function addGlobalCounterfactual(contract) {

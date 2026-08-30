@@ -16,6 +16,10 @@ import type {
   ContextRouteAreaCandidate,
   ContextRouteUnresolved,
 } from "./context-route-types.js";
+import {
+  compareRouteAmbiguities,
+  compareRouteUnresolved,
+} from "./context-route-order.js";
 
 export interface ContextRoutePathMatch {
   input: string;
@@ -36,19 +40,18 @@ export function matchContextAreas(
   const matches: ContextRoutePathMatch[] = [];
   const ambiguous: ContextRouteAmbiguity[] = [];
   const unresolved: ContextRouteUnresolved[] = [];
-  for (const input of inputs) {
-    const normalized = normalizeRepositoryInput(input, "--path");
+  for (const normalized of normalizeRepositoryInputs(inputs, "--path")) {
     const candidates = catalog.areas
       .map((area) => ({
-        id: area.id,
+        id: area.id.normalize("NFC"),
         root: normalizeAreaRoot(area.root),
-        context: normalizeContextPath(area.context).normalize("NFC"),
+        context: normalizeContextPath(area.context),
       }))
       .filter((area) => areaContains(area.root, normalized));
     if (candidates.length === 0) {
       unresolved.push({
         kind: "path",
-        input,
+        input: normalized,
         reason: "no Area root contains the repository-relative path",
       });
       continue;
@@ -58,22 +61,30 @@ export function matchContextAreas(
       .filter((area) => areaScore(area) === maximum)
       .sort((left, right) =>
         compareUtf8Paths(
-          `${left.root}\0${left.id}`,
-          `${right.root}\0${right.id}`,
+          `${left.root}\0${left.id}\0${left.context}`,
+          `${right.root}\0${right.id}\0${right.context}`,
         ),
       );
     if (deepest.length > 1) {
       ambiguous.push({
         kind: "area_path",
-        input,
+        input: normalized,
         candidates: deepest,
         reason: "multiple Area roots tie at the deepest matching root",
       });
       continue;
     }
-    matches.push({ input, normalized_path: normalized, area: deepest[0] });
+    matches.push({
+      input: normalized,
+      normalized_path: normalized,
+      area: deepest[0],
+    });
   }
-  return { matches, ambiguous, unresolved };
+  return {
+    matches: matches.sort(comparePathMatches),
+    ambiguous: ambiguous.sort(compareRouteAmbiguities),
+    unresolved: unresolved.sort(compareRouteUnresolved),
+  };
 }
 
 export async function resolveManualIncludes(
@@ -87,33 +98,32 @@ export async function resolveManualIncludes(
   );
   const realContextRoot = await realpath(contextRoot);
   const result = new Map<string, CatalogFile>();
-  for (const input of inputs) {
-    const normalized = normalizeRepositoryInput(input, "--include");
+  for (const normalized of normalizeRepositoryInputs(inputs, "--include")) {
     if (
       !normalized.startsWith("project_context/") ||
       !normalized.endsWith(".md")
     )
       throw new CliCommandError(
         CLI_EXIT_CODES.io,
-        `route include must name an existing Markdown file under project_context/: ${input}`,
+        `route include must name an existing Markdown file under project_context/: ${normalized}`,
       );
     const file = files.get(normalized);
     if (!file)
       throw new CliCommandError(
         CLI_EXIT_CODES.io,
-        `route include is missing or is not an eligible Context file: ${input}`,
+        `route include is missing or is not an eligible Context file: ${normalized}`,
       );
     const metadata = await lstat(file.absolute_path);
     if (!metadata.isFile() || metadata.isSymbolicLink())
       throw new CliCommandError(
         CLI_EXIT_CODES.io,
-        `route include must be a regular no-follow file: ${input}`,
+        `route include must be a regular no-follow file: ${normalized}`,
       );
     const identity = await realpath(file.absolute_path);
     if (!isPathWithin(realContextRoot, identity))
       throw new CliCommandError(
         CLI_EXIT_CODES.io,
-        `route include resolves outside project_context/: ${input}`,
+        `route include resolves outside project_context/: ${normalized}`,
       );
     result.set(normalized, file);
   }
@@ -123,14 +133,15 @@ export async function resolveManualIncludes(
 }
 
 export function normalizeRepositoryInput(value: string, flag: string): string {
-  const normalized = normalizeContextPath(value.trim()).normalize("NFC");
+  const normalized = normalizeContextPath(value.trim());
   if (!normalized)
     throw new CliCommandError(
       CLI_EXIT_CODES.arguments,
       `route ${flag} requires a non-empty repository-relative path`,
     );
   if (
-    path.isAbsolute(value) ||
+    path.posix.isAbsolute(normalized) ||
+    path.win32.isAbsolute(normalized) ||
     normalized.split("/").includes("..") ||
     /^[A-Za-z]:/u.test(normalized)
   )
@@ -141,11 +152,32 @@ export function normalizeRepositoryInput(value: string, flag: string): string {
   return normalized;
 }
 
+export function normalizeRepositoryInputs(
+  values: readonly string[],
+  flag: string,
+): string[] {
+  return [
+    ...new Set(values.map((value) => normalizeRepositoryInput(value, flag))),
+  ].sort(compareUtf8Paths);
+}
+
 function normalizeAreaRoot(value: string): string {
-  const normalized = normalizeContextPath(value.trim()).normalize("NFC");
+  const normalized = normalizeContextPath(value.trim());
   return normalized === "" || normalized === "."
     ? "."
     : normalized.replace(/\/$/u, "");
+}
+
+function comparePathMatches(
+  left: ContextRoutePathMatch,
+  right: ContextRoutePathMatch,
+): number {
+  return (
+    compareUtf8Paths(left.normalized_path, right.normalized_path) ||
+    compareUtf8Paths(left.area.root, right.area.root) ||
+    compareUtf8Paths(left.area.id, right.area.id) ||
+    compareUtf8Paths(left.area.context, right.area.context)
+  );
 }
 
 function areaContains(root: string, candidate: string): boolean {

@@ -98,6 +98,8 @@ jobs:
         run: npm run build --workspace project-tiny-context-harness
       - name: Verify Windows Job and Level 4 runtime boundaries
         run: node --test --test-concurrency=1 tests/ty-context/long-task-windows-job-supervisor.test.mjs tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs
+      - name: Verify Windows finalization tree settlement
+        run: node --test --test-concurrency=1 --test-name-pattern="\[critical:windows-finalization-tree-settlement\]" tests/ty-context/long-task-final-authority-race.test.mjs
 
   pull-request:
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main') }}

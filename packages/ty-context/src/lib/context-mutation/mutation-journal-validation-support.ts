@@ -6,6 +6,11 @@ export function validateJournalFileState(
   label: string,
 ): number {
   if (!isJournalRecord(value)) invalidJournal(`${label}_object_required`);
+  assertExactFields(
+    value,
+    ["exists", "sha256", "bytes_base64", "mode", "identity"],
+    label,
+  );
   if (typeof value.exists !== "boolean")
     invalidJournal(`${label}_exists_invalid`);
   if (!value.exists) {
@@ -29,6 +34,43 @@ export function validateJournalFileState(
   if (mode > 0o777) invalidJournal(`${label}_mode_invalid`);
   if (value.identity !== null) validateIdentity(value.identity, label);
   return bytes.length;
+}
+
+export function validateJournalRecordedFileState(
+  value: unknown,
+  label: string,
+): void {
+  if (!isJournalRecord(value)) invalidJournal(`${label}_object_required`);
+  assertExactFields(value, ["exists", "sha256", "mode", "identity"], label);
+  if (typeof value.exists !== "boolean")
+    invalidJournal(`${label}_exists_invalid`);
+  if (!value.exists) {
+    if (
+      value.sha256 !== null ||
+      value.mode !== null ||
+      value.identity !== null
+    )
+      invalidJournal(`${label}_absent_shape`);
+    return;
+  }
+  validateJournalDigest(value.sha256, `${label}.sha256`);
+  const mode = requiredJournalInteger(value.mode, `${label}.mode`);
+  if (mode > 0o777) invalidJournal(`${label}_mode_invalid`);
+  if (value.identity === null)
+    invalidJournal(`${label}_identity_required`);
+  validateIdentity(value.identity, label);
+}
+
+export function sameJournalRecordedPayload(
+  recorded: unknown,
+  semantic: unknown,
+): boolean {
+  if (!isJournalRecord(recorded) || !isJournalRecord(semantic)) return false;
+  return (
+    recorded.exists === semantic.exists &&
+    recorded.sha256 === semantic.sha256 &&
+    recorded.mode === semantic.mode
+  );
 }
 
 export function sameJournalFileState(left: unknown, right: unknown): boolean {
@@ -115,26 +157,37 @@ export function invalidJournal(reason: string): never {
   throw new Error(`context_mutation_invalid:${reason}`);
 }
 
-function validateIdentity(value: unknown, label: string): void {
+export function validateIdentity(value: unknown, label: string): void {
   if (!isJournalRecord(value)) invalidJournal(`${label}_identity_invalid`);
-  for (const field of ["dev", "ino"])
-    requiredPlatformInteger(value[field], `${label}.identity.${field}`);
-  for (const field of ["nlink", "size"])
-    requiredJournalInteger(value[field], `${label}.identity.${field}`);
-  for (const field of ["mtime_ms", "ctime_ms"]) {
+  const fields = [
+    "dev",
+    "ino",
+    "nlink",
+    "size",
+    "mtime_ns",
+    "ctime_ns",
+  ];
+  if (
+    Object.keys(value).sort().join("\0") !== [...fields].sort().join("\0")
+  )
+    invalidJournal(`${label}_identity_fields_invalid`);
+  for (const field of ["dev", "ino", "nlink", "size"]) {
     const item = value[field];
-    if (typeof item !== "number" || !Number.isFinite(item) || item < 0)
-      invalidJournal(`${label}_identity_${field}_invalid`);
+    if (typeof item !== "string" || !/^(?:0|[1-9][0-9]*)$/u.test(item))
+      invalidJournal(`${label}.identity.${field}_decimal_required`);
+  }
+  for (const field of ["mtime_ns", "ctime_ns"]) {
+    const item = value[field];
+    if (typeof item !== "string" || !/^(?:0|-?[1-9][0-9]*)$/u.test(item))
+      invalidJournal(`${label}.identity.${field}_decimal_required`);
   }
 }
 
-function requiredPlatformInteger(value: unknown, label: string): number {
-  if (
-    typeof value !== "number" ||
-    !Number.isFinite(value) ||
-    !Number.isInteger(value) ||
-    value < 0
-  )
-    invalidJournal(`${label}_integer_required`);
-  return value;
+function assertExactFields(
+  value: Record<string, unknown>,
+  fields: string[],
+  label: string,
+): void {
+  if (Object.keys(value).sort().join("\0") !== [...fields].sort().join("\0"))
+    invalidJournal(`${label}_fields_invalid`);
 }

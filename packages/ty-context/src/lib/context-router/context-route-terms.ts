@@ -1,4 +1,5 @@
 import { CONTEXT_ROUTE_BUDGETS } from "./context-route-budget.js";
+import { stableRouteBudgetExceeded } from "./context-route-order.js";
 import type {
   ContextRouteBudgetExceeded,
   ContextRouteTerm,
@@ -126,7 +127,7 @@ export function buildContextRouteTerms(input: {
   ))
     add(entry.value, entry.source);
 
-  return { terms, exceeded: dedupeExceeded(exceeded) };
+  return { terms, exceeded: stableRouteBudgetExceeded(exceeded) };
 }
 
 export function normalizeRouteText(
@@ -237,16 +238,4 @@ function isAsciiLetter(value: string): boolean {
 
 function codePointLength(value: string): number {
   return Array.from(value).length;
-}
-
-function dedupeExceeded(
-  values: ContextRouteBudgetExceeded[],
-): ContextRouteBudgetExceeded[] {
-  const result = new Map<string, ContextRouteBudgetExceeded>();
-  for (const value of values) {
-    const key = `${value.budget}:${value.path ?? ""}`;
-    const current = result.get(key);
-    if (!current || value.observed > current.observed) result.set(key, value);
-  }
-  return [...result.values()];
 }

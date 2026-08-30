@@ -102,7 +102,25 @@ export function addFixtureCustomConditionAxis(manifest) {
   return customAxis;
 }
 
-export async function addFixtureDomainSemanticFact(
+export async function addFixtureDomainSemanticFact(fixture, specification) {
+  return addFixtureDomainSemanticFacts(fixture, [specification]);
+}
+
+export async function addFixtureDomainSemanticFacts(
+  fixture,
+  specifications,
+) {
+  assert.ok(
+    Array.isArray(specifications) && specifications.length > 0,
+    "fixture semantic Fact specifications are required",
+  );
+  const mutations = specifications.map((specification) =>
+    prepareFixtureDomainSemanticFactMutation(fixture, specification),
+  );
+  return mutateFixtureSemanticManifestBulk(fixture, mutations);
+}
+
+function prepareFixtureDomainSemanticFactMutation(
   fixture,
   {
     sourceItemRef,
@@ -168,7 +186,7 @@ export async function addFixtureDomainSemanticFact(
   counterfactual.claims.push(claimRef);
   counterfactual.expected_assertion_failures.push(assertionKey);
 
-  return mutateFixtureSemanticManifest(fixture, (manifest) => {
+  return (manifest) => {
     const fragmentBasisRefs = remapFixtureSourceFactsInManifest(
       manifest,
       sourceItemRef,
@@ -266,7 +284,7 @@ export async function addFixtureDomainSemanticFact(
         basis_refs: [sourceItemRef],
       },
     });
-  });
+  };
 }
 
 export async function remapFixtureSourceFacts(
@@ -317,6 +335,18 @@ function remapFixtureSourceFactsInManifest(manifest, sourceItemRef, factRefs) {
 }
 
 export async function mutateFixtureSemanticManifest(fixture, mutate) {
+  return mutateFixtureSemanticManifestBulk(fixture, [mutate]);
+}
+
+export async function mutateFixtureSemanticManifestBulk(fixture, mutates) {
+  assert.ok(
+    Array.isArray(mutates) && mutates.length > 0,
+    "fixture semantic manifest mutations are required",
+  );
+  assert.ok(
+    mutates.every((mutate) => typeof mutate === "function"),
+    "fixture semantic manifest mutations must be functions",
+  );
   const sourcePath = path.join(fixture.root, "source.md");
   const source = await readFile(sourcePath, "utf8");
   const match = source.match(
@@ -324,7 +354,7 @@ export async function mutateFixtureSemanticManifest(fixture, mutate) {
   );
   assert.ok(match);
   const manifest = YAML.parse(match[1]);
-  mutate(manifest);
+  for (const mutate of mutates) mutate(manifest);
   refreshFixtureSemanticManifest(manifest);
   const serialized = YAML.stringify(JSON.parse(JSON.stringify(manifest)), {
     lineWidth: 0,

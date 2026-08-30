@@ -110,7 +110,10 @@ export async function assertSafeRepositoryFilePath(
   repositoryInput: string,
   relativeInput: string,
   label: string,
-  options: { destinationMayBeAbsent?: boolean } = {},
+  options: {
+    destinationMayBeAbsent?: boolean;
+    allowHardlinks?: boolean;
+  } = {},
 ): Promise<SafeRepositoryPath & { status: Stats | null }> {
   const repositoryPath = path.resolve(repositoryInput);
   const repository = await realpath(repositoryPath);
@@ -126,7 +129,12 @@ export async function assertSafeRepositoryFilePath(
       `protected_input_not_found:${label}:${display(relativeInput)}`,
     );
   if (status) {
-    assertRegularNoFollow(status, label, relativeInput);
+    assertRegularNoFollow(
+      status,
+      label,
+      relativeInput,
+      options.allowHardlinks === true,
+    );
     assertInside(repository, await realpath(absolute), label, relativeInput);
   }
   return {
@@ -205,6 +213,7 @@ function assertRegularNoFollow(
   info: Stats,
   label: string,
   original: string,
+  allowHardlinks = false,
 ): void {
   if (info.isSymbolicLink())
     throw new Error(
@@ -214,7 +223,7 @@ function assertRegularNoFollow(
     throw new Error(
       `protected_input_not_regular_file:${label}:${display(original)}`,
     );
-  if (typeof info.nlink === "number" && info.nlink > 1)
+  if (!allowHardlinks && typeof info.nlink === "number" && info.nlink > 1)
     throw new Error(
       `protected_input_hardlink_not_allowed:${label}:${display(original)}`,
     );

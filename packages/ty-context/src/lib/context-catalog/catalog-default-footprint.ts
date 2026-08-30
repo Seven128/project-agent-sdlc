@@ -1,5 +1,9 @@
 import type { ContextManifest } from "../context-manifest-schema.js";
-import { normalizeContextPath } from "./catalog-paths.js";
+import {
+  compareUtf8Paths,
+  normalizeContextPath,
+  sortedContextMap,
+} from "./catalog-paths.js";
 
 export type DefaultContextSelectionReason =
   "core" | "default_area" | "default_role" | "default_child";
@@ -58,5 +62,10 @@ export function selectDefaultContextPaths(
       enqueue(child);
     }
   }
-  return selected;
+  return sortedContextMap(
+    [...selected].map(([contextPath, reasons]) => [
+      contextPath,
+      new Set([...reasons].sort(compareUtf8Paths)),
+    ]),
+  );
 }

@@ -8,6 +8,7 @@ import {
   inspectDefaultContextFootprint,
   selectDefaultContextPaths,
 } from "../../packages/ty-context/dist/lib/context-default-footprint.js";
+import { compareUtf8Paths } from "../../packages/ty-context/dist/lib/context-catalog/catalog-paths.js";
 
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 
@@ -54,20 +55,60 @@ test("default Context selection includes only core, default areas and default-ro
     ],
   });
 
-  assert.deepEqual([...selected.keys()].sort(), [
-    "project_context/architecture.md",
-    "project_context/areas/main.md",
-    "project_context/areas/main/checks.md",
-    "project_context/areas/main/verification.md",
-    "project_context/context.toml",
-    "project_context/global.md",
-  ]);
+  assert.deepEqual(
+    [...selected.keys()],
+    [
+      "project_context/architecture.md",
+      "project_context/areas/main.md",
+      "project_context/areas/main/checks.md",
+      "project_context/areas/main/verification.md",
+      "project_context/context.toml",
+      "project_context/global.md",
+    ],
+  );
   assert.deepEqual(
     [...selected.get("project_context/areas/main/checks.md")],
     ["default_child"],
   );
   assert.equal(selected.has("project_context/areas/secondary.md"), false);
   assert.equal(selected.has("project_context/areas/main/archive.md"), false);
+});
+
+test("default Context projection uses canonical NFC keys and UTF-8 byte order independent of Manifest order", () => {
+  const privateUse = "project_context/areas/main/\uE000.md";
+  const supplementary = "project_context/areas/main/\u{10000}.md";
+  const decomposed = "project_context/areas/main/Cafe\u0301.md";
+  const selected = selectDefaultContextPaths({
+    areas: [
+      {
+        id: "main",
+        root: ".",
+        context: "project_context/areas/main.md",
+        default: true,
+      },
+    ],
+    contexts: [supplementary, privateUse, decomposed].map((contextPath) => ({
+      path: contextPath,
+      role: "contract",
+      read_policy: "default",
+      triggers: [],
+      default_children: [],
+    })),
+  });
+
+  assert.deepEqual(
+    [...selected.keys()],
+    [
+      "project_context/architecture.md",
+      "project_context/areas/main.md",
+      "project_context/areas/main/Café.md",
+      privateUse,
+      supplementary,
+      "project_context/context.toml",
+      "project_context/global.md",
+    ],
+  );
+  assert.ok(compareUtf8Paths(privateUse, supplementary) < 0);
 });
 
 test("Schema v4 legacy policies retain current direct and default-child selection semantics", () => {
@@ -293,12 +334,15 @@ test("repository-common defaults keep sparse workspace Context on-demand", () =>
     ],
   });
 
-  assert.deepEqual([...selected.keys()].sort(), [
-    "project_context/architecture.md",
-    "project_context/areas/repository.md",
-    "project_context/context.toml",
-    "project_context/global.md",
-  ]);
+  assert.deepEqual(
+    [...selected.keys()],
+    [
+      "project_context/architecture.md",
+      "project_context/areas/repository.md",
+      "project_context/context.toml",
+      "project_context/global.md",
+    ],
+  );
   assert.equal(
     selected.has("project_context/workspaces/mobile/areas/product.md"),
     false,
@@ -359,6 +403,64 @@ triggers = ["test"]
     assert.deepEqual(report.duplicate_groups, [
       ["project_context/areas/main.md", "project_context/global.md"],
     ]);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("default Context footprint resolves an NFD physical file while emitting its canonical NFC key", async () => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-footprint-nfd-"),
+  );
+  const physicalPath = "project_context/areas/main/Cafe\u0301.md";
+  const canonicalPath = physicalPath.normalize("NFC");
+  try {
+    await mkdir(path.join(root, "project_context", "areas", "main"), {
+      recursive: true,
+    });
+    await writeFile(
+      path.join(root, "project_context", "context.toml"),
+      `[[areas]]
+id = "main"
+root = "."
+context = "project_context/areas/main.md"
+kind = "repository"
+default = true
+
+[[context]]
+path = "${physicalPath}"
+role = "contract"
+read_policy = "default"
+`,
+      "utf8",
+    );
+    await writeFile(
+      path.join(root, "project_context", "global.md"),
+      "global\n",
+    );
+    await writeFile(
+      path.join(root, "project_context", "architecture.md"),
+      "architecture\n",
+    );
+    await writeFile(
+      path.join(root, "project_context", "areas", "main.md"),
+      "main\n",
+    );
+    const physicalContent = "NFD physical Context\n";
+    await writeFile(
+      path.join(root, ...physicalPath.split("/")),
+      physicalContent,
+      "utf8",
+    );
+
+    const report = await inspectDefaultContextFootprint(root);
+    const selected = report.files.find((entry) => entry.path === canonicalPath);
+    assert.ok(selected);
+    assert.equal(selected.bytes, Buffer.byteLength(physicalContent, "utf8"));
+    assert.equal(
+      report.files.some((entry) => entry.path === physicalPath),
+      false,
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

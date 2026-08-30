@@ -95,7 +95,15 @@ export async function resolveDesignAuthorityHandoffBinding(input: {
   if (!input.binding) {
     const inspection = await inspectDesignAuthorityClosure(input.repository);
     if (inspection.status !== "valid" || !inspection.identity)
-      invalid("legacy_omission_without_current_authority");
+      invalid(
+        `legacy_omission_without_current_authority:${
+          inspection.diagnostics.length
+            ? inspection.diagnostics
+                .map((item) => `${item.code}:${item.detail}`)
+                .join("|")
+            : inspection.status
+        }`,
+      );
     if (inspection.mode !== "legacy")
       invalid("legacy_omission_bundle_not_allowed");
     return {

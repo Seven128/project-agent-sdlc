@@ -19,7 +19,6 @@ import {
   mutationStateBytes,
   sameMutationArray,
 } from "../context-mutation/mutation-command-support.js";
-import { assertContextMutationOutsideActiveLongTask } from "../context-mutation/mutation-long-task-guard.js";
 import {
   contextCatalogIdentity,
   contextFootprintState,
@@ -27,6 +26,7 @@ import {
 } from "../context-mutation/mutation-staged-fs.js";
 import type { ContextMutationPlan } from "../context-mutation/mutation-types.js";
 import { canonicalValueJson, sha256Hex } from "../strict-codec.js";
+import { CliCommandError } from "../cli-exit.js";
 import { validateContextRegistrationContent } from "../validators.js";
 import { normalizeContextRegisterInput } from "./context-register-input.js";
 import {
@@ -47,13 +47,10 @@ export async function registerContext(
 ): Promise<ContextRegisterResult> {
   const planned = await planContextRegistration(input);
   if (!input.apply) return planned.result;
-  await assertContextMutationOutsideActiveLongTask(input.project_root, [
-    ...planned.plan.files.map((entry) => entry.path),
-    planned.result.path,
-  ]);
   try {
     await executeContextMutationPlan(input.project_root, planned.plan);
   } catch (error) {
+    if (error instanceof CliCommandError) throw error;
     mutationIoFailure(
       `context register transaction stopped: ${mutationMessage(error)}; inspect recovery with ty-context context transaction status`,
       error,
@@ -180,6 +177,9 @@ export async function planContextRegistration(
         after: afterState,
         commit_order: 0,
         temporary_path: mutationTemporaryPath(MANIFEST_PATH, transactionId, 0),
+        temporary_state: null,
+        published_before: null,
+        published_after: null,
       },
     ],
     operation_data: operationData,

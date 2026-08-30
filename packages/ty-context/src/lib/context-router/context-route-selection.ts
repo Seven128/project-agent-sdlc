@@ -138,7 +138,12 @@ function addTriggerCandidates(
   const normalizedTask = normalizeRouteText(task, caseSensitive);
   for (const entry of catalog.registered_contexts)
     for (const trigger of entry.context?.triggers ?? []) {
-      if (!normalizedTask.includes(normalizeRouteText(trigger, caseSensitive)))
+      const normalizedTrigger = trigger.normalize("NFC");
+      if (
+        !normalizedTask.includes(
+          normalizeRouteText(normalizedTrigger, caseSensitive),
+        )
+      )
         continue;
       addReason(
         candidates,
@@ -148,7 +153,7 @@ function addTriggerCandidates(
         entry.path,
         {
           kind: "trigger",
-          input: trigger,
+          input: normalizedTrigger,
           detail: "Manifest trigger occurs literally in task text",
         },
         "trigger_candidates",

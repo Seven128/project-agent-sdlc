@@ -94,7 +94,7 @@ export async function snapshotTree(root) {
 async function visit(root, relative, values) {
   const absolute = relative ? path.join(root, relative) : root;
   const entries = await readdir(absolute, { withFileTypes: true });
-  entries.sort((left, right) => left.name.localeCompare(right.name));
+  entries.sort((left, right) => compareUtf8(left.name, right.name));
   for (const entry of entries) {
     const child = relative ? path.join(relative, entry.name) : entry.name;
     if (entry.isDirectory()) await visit(root, child, values);

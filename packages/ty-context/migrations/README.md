@@ -3,15 +3,22 @@
 Schema migrations for Harness config and managed file layout belong here.
 
 The completed 0.10.x line adds opt-in, dry-run-first `context register`, `context move` and
-`context transaction status|rollback|complete`. They do not migrate existing
+`context transaction status|rollback|complete`. Current mutations use the v2
+journal with complete mode/file-identity endpoint snapshots and the shared
+Active Authority lock. An unfinished pre-v2 journal is deliberately not guessed
+or rewritten: use the matching older package to recover it, inspect/restore the
+recorded bytes manually, or obtain project-owner recovery direction before a new
+mutation. They do not migrate existing
 projects or reinterpret legacy policies. Register losslessly appends one
 recoverable Context node. Move preserves one registered Context/Area owner,
 structured default-child references and explicit local Context-Markdown links;
 unstructured exact references or an incomplete bounded scan block apply. Both
-use current-byte/file-identity CAS, candidate-tree validation and one logical
-recoverable journal published as immutable digest-linked generations. There is
-no automatic policy conversion, force bypass, hidden TOML
-normalization or claim of cross-file physical atomicity.
+use current-byte/mode/file-identity endpoint comparison, candidate-tree
+validation and one logical recoverable journal published as immutable
+digest-linked generations. Recovery and Long-Task Authority changes serialize
+through the existing Active Authority lock. There is no automatic policy
+conversion, force bypass, hidden TOML normalization, hostile-writer mutex or
+claim of cross-file physical atomicity.
 
 Version 0.10.1 adds `ty-context context create --path <path> --role <role>`.
 It writes one TODO-only, unregistered Markdown scaffold and does not modify
@@ -23,14 +30,21 @@ scaffold intentionally does not satisfy registered-Context recoverability.
 This is a new opt-in command and requires no consumer migration.
 
 Version 0.11.0 adds an opt-in sparse Design Authority bundle. Existing projects
-with only root `DESIGN.md` remain valid one-file closures and are not rewritten.
-Creating `design_system/authority.manifest.json`, generated
-`design_system/tokens.json` or subordinate owners is an explicit DSA
-adoption/revision action, not an upgrade migration. Once a manifest exists,
-DRA recovery/handoff and Long-Task bindings use the complete entry plus closure
+with only an unmarked root `DESIGN.md` remain valid one-file closures and are
+not rewritten. Adoption inserts the exact
+`<!-- ty-context-design-authority-format: bundle-v1 -->` declaration as the
+first non-empty Markdown body line after supported YAML front matter and creates
+`design_system/authority.manifest.json` in the same explicit DSA/Authority
+Revision. Generated `design_system/tokens.json` and subordinate owners remain
+explicit adoption outputs, not upgrade migration. Marker and manifest are a
+strict pair: either half missing, renamed, empty or invalid fails closure. DRA
+recovery/handoff and Long-Task bindings use the complete entry plus closure
 digest; a raw-file-only legacy binding fails closed and must be regenerated or
-rebound. Upgrade never infers Token values, owner splits, candidate selection,
-adoption or a human revision.
+rebound. A deliberate return to one-file Authority removes both halves only
+through explicit DSA adoption/Authority Revision. Static inspection can enforce
+the current pair and stale bindings, but a fresh checkout containing neither
+half has no authenticated historical adoption registry. Upgrade never infers
+Token values, owner splits, candidate selection, adoption or a human revision.
 
 Version 0.10.0 includes `context-units-to-context`. Explicit `upgrade` applies
 only when every retired `[[context_units]]` table is a provably simple

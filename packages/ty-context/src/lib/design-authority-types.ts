@@ -1,6 +1,8 @@
 export const DESIGN_AUTHORITY_MANIFEST_PATH =
   "design_system/authority.manifest.json";
 export const DESIGN_AUTHORITY_ENTRY_PATH = "DESIGN.md";
+export const DESIGN_AUTHORITY_BUNDLE_MARKER =
+  "<!-- ty-context-design-authority-format: bundle-v1 -->";
 export const DESIGN_AUTHORITY_MANIFEST_SCHEMA_VERSION = 1;
 export const DESIGN_AUTHORITY_IDENTITY_FORMAT_VERSION = 1;
 

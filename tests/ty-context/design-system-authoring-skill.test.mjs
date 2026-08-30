@@ -61,6 +61,7 @@ test("design-system workflow separates provider output, selection, adoption and 
     /supported front matter remains the editable exact Token authority/iu,
     /`design_system\/tokens\.json` is deterministic generated output/iu,
     /sparse `design_system\/authority\.manifest\.json` owns closure membership\/digest only/iu,
+    /<!-- ty-context-design-authority-format: bundle-v1 -->[\s\S]*first non-empty Markdown body position/iu,
     /DRA `authority_delta_candidate` is non-authoritative input[\s\S]*explicitly start `reconcile` mode/iu,
     /Require explicit user\/team selection, or explicit delegated selection/iu,
     /Stop for separate adoption confirmation/iu,
@@ -89,6 +90,14 @@ test("design-system workflow separates provider output, selection, adoption and 
   assert.match(adoption, /project_context\/\*\*/u);
   assert.match(adoption, /root `DESIGN\.md`/u);
   assert.match(adoption, /sole revision and editable exact-Token owner/iu);
+  assert.match(
+    adoption,
+    /<!-- ty-context-design-authority-format: bundle-v1 -->[\s\S]*first non-empty Markdown body line/iu,
+  );
+  assert.match(
+    adoption,
+    /bundle-to-one-file adoption removes both marker and manifest[\s\S]*explicit Authority Revision/iu,
+  );
   assert.match(
     adoption,
     /generated `tokens\.json` exactly matches deterministic projection/iu,
@@ -147,6 +156,10 @@ test("base profile, public docs and owning Context expose the same design-system
   assert.match(
     readmes,
     /Root `DESIGN\.md` is the unique Authority entry[\s\S]*`design_system\/authority\.manifest\.json`[\s\S]*`design_system\/tokens\.json`/iu,
+  );
+  assert.match(
+    readmes,
+    /ty-context-design-authority-format: bundle-v1[\s\S]*first non-empty Markdown body line/iu,
   );
   assert.match(
     readmes,

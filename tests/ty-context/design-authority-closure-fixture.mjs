@@ -28,10 +28,17 @@ components:
     rounded: "{rounded.sm}"
 ---
 
+<!-- ty-context-design-authority-format: bundle-v1 -->
+
 # Design System
 
 See [button](design_system/components/button.md).
 `;
+
+export const LEGACY_DESIGN = DESIGN.replace(
+  "<!-- ty-context-design-authority-format: bundle-v1 -->\n\n",
+  "",
+);
 
 export const BUTTON = `# Button
 

@@ -14,6 +14,8 @@ import {
 import { CURRENT_SCHEMA_VERSION } from "./constants.js";
 import { defaultConfig, readConfig } from "./config.js";
 import { createDesignMdIfMissing, DESIGN_MD_PATH } from "./design-md.js";
+import { declaredDesignAuthorityFormat } from "./design-authority-format.js";
+import { DESIGN_AUTHORITY_MANIFEST_PATH } from "./design-authority-types.js";
 import {
   ensureDir,
   listFiles,
@@ -220,6 +222,18 @@ export const migrations: Migration[] = [
       "Review the starter design baseline and replace it with project-specific visual facts when available.",
     detect: detectDesignMdBaseline,
     apply: migrateDesignMd,
+    verify: verifyNoop,
+  },
+  {
+    id: "design-authority-bundle-marker-v1",
+    introducedIn: "0.11.0",
+    description:
+      "Require the canonical DESIGN.md bundle-v1 marker and Design Authority manifest to be adopted or removed as one explicit Authority-format change.",
+    scope: "DESIGN.md and design_system/authority.manifest.json",
+    risk: "manual",
+    manualMessage:
+      "Do not infer adoption or downgrade from file presence. Through explicit DSA adoption/Authority Revision, either add the canonical body-leading bundle-v1 marker and validate the manifest, or deliberately remove both marker and manifest for a true one-file Authority; then rebind affected DRA and Long-Task identities.",
+    detect: detectDesignAuthorityBundleMarker,
     verify: verifyNoop,
   },
   {
@@ -862,6 +876,41 @@ async function detectDesignMdBaseline(
           "DESIGN.md is missing and can be created with the package baseline.",
         ),
       ];
+}
+
+async function detectDesignAuthorityBundleMarker(
+  projectRoot: string,
+  _root: string,
+  migration: string,
+): Promise<UpgradePlanItem[]> {
+  const entry = path.join(projectRoot, DESIGN_MD_PATH);
+  const manifest = path.join(projectRoot, DESIGN_AUTHORITY_MANIFEST_PATH);
+  const [entryExists, manifestExists] = await Promise.all([
+    pathExists(entry),
+    pathExists(manifest),
+  ]);
+  if (!entryExists && !manifestExists) return [];
+  let marked = false;
+  let markerIssue: string | null = null;
+  if (entryExists)
+    try {
+      marked =
+        declaredDesignAuthorityFormat(await readText(entry)) === "bundle-v1";
+    } catch (error) {
+      markerIssue = error instanceof Error ? error.message : String(error);
+    }
+  if (markerIssue === null && entryExists && marked === manifestExists)
+    return [];
+  return [
+    item(
+      migration,
+      "manual_required",
+      DESIGN_AUTHORITY_MANIFEST_PATH,
+      markerIssue
+        ? `The Design Authority bundle declaration is invalid (${markerIssue}). Repair the canonical marker and manifest as one explicit DSA/Authority Revision.`
+        : `Design Authority bundle marker/manifest mismatch: entry=${entryExists}, marker=${marked}, manifest=${manifestExists}. Adopt or remove the pair only through explicit DSA/Authority Revision, then rebind affected identities.`,
+    ),
+  ];
 }
 
 async function detectCompositeCodexProfile(

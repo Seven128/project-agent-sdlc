@@ -1,4 +1,4 @@
-import { lstat, readFile } from "node:fs/promises";
+import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import {
   assertProtectedRepositoryDirectory,
@@ -45,6 +45,7 @@ export async function acquireDesignAuthorityText(
     path.resolve(repository, ...relative.split("/")),
     label,
   );
+  await assertExactDesignAuthorityPath(repository, relative, label);
   const bytes = await readFile(absolute);
   if (bytes.length > DESIGN_AUTHORITY_LIMITS.max_file_bytes)
     invalid(`file_limit_exceeded:${relative}:${bytes.length}`);
@@ -62,6 +63,20 @@ export async function acquireDesignAuthorityText(
     normalized: Buffer.from(content.replace(/\r\n?/gu, "\n"), "utf8"),
     raw: bytes,
   };
+}
+
+async function assertExactDesignAuthorityPath(
+  repository: string,
+  relative: string,
+  label: string,
+): Promise<void> {
+  let parent = path.resolve(repository);
+  for (const segment of relative.split("/")) {
+    const entries = await readdir(parent);
+    if (!entries.includes(segment))
+      invalid(`${label}_path_case_mismatch:${relative}`);
+    parent = path.join(parent, segment);
+  }
 }
 
 export async function designAuthorityPathExists(

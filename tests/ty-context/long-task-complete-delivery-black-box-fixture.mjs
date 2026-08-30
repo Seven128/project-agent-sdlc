@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { externalConfirmationRecordV2Hash } from "../../packages/ty-context/dist/index.js";
 import { activeRecordPath } from "../../packages/ty-context/dist/lib/long-task-state.js";
@@ -21,6 +21,7 @@ import {
   buildPassingRecord,
   writeSubmissionRecord,
 } from "./long-task-external-confirmation-record-fixture.mjs";
+import { FIXTURE_LEGACY_ORACLE_PATH } from "./long-task-package-machine-fixture.mjs";
 
 const incidentCatalogUrl = new URL(
   "./fixtures/long-task-complete-delivery-incidents.json",
@@ -383,10 +384,10 @@ export async function applyScenarioSourceAndContract(fixture, scenario) {
 }
 
 export async function assertCompileAttackMatrix(fixture, scenario) {
-  const legal = structuredClone(fixture.contract);
+  const legal = await captureSynchronizedLegalContract(fixture);
   await assertSourceOmissionAttack(fixture, scenario, legal);
 
-  const weak = structuredClone(legal);
+  const weak = structuredClone(legal.contract);
   weak.outcomes[1].acceptance.checks[0].positive_assertions.find(
     (row) => row.key === scenario.wrong_contract_projection.weak_assertion_ref,
   ).evidence_capabilities = [
@@ -398,7 +399,7 @@ export async function assertCompileAttackMatrix(fixture, scenario) {
   ]);
   await restoreLegalContract(fixture, legal);
 
-  const overlap = structuredClone(legal);
+  const overlap = structuredClone(legal.contract);
   overlap.task.target_profile.completion_authority = "declared_authorities";
   const overlapOutcome = overlap.outcomes[1];
   const machineCheck = overlapOutcome.acceptance.checks[0];
@@ -466,9 +467,10 @@ export async function assertSourceOmissionAttack(
   scenario,
   legalOverride = null,
 ) {
-  const legal = legalOverride ?? structuredClone(fixture.contract);
+  const legal =
+    legalOverride ?? (await captureSynchronizedLegalContract(fixture));
   const omitted = scenario.wrong_contract_projection.omitted_source_item_ref;
-  const broad = structuredClone(legal);
+  const broad = structuredClone(legal.contract);
   broad.source_claims = broad.source_claims.filter(
     (claim) => claim.key !== omitted,
   );
@@ -582,9 +584,60 @@ function replaceSourceItemKind(source, key, kind) {
   return source.replace(marker, updated);
 }
 
-async function restoreLegalContract(fixture, legal) {
-  fixture.contract = structuredClone(legal);
+async function captureSynchronizedLegalContract(fixture) {
   await writeContract(fixture.workdir, fixture.contract);
+  const root = path.dirname(fixture.workdir);
+  const synchronizedPaths = [
+    path.join(
+      root,
+      ...fixture.contract.semantic_fact_manifest.source_path.split("/"),
+    ),
+    path.join(root, "tests", "oracle.mjs"),
+    path.join(root, ...FIXTURE_LEGACY_ORACLE_PATH.split("/")),
+    path.join(root, ...FIXTURE_EXTERNAL_PUBLIC_KEY_REF.split("/")),
+  ];
+  return {
+    contract: structuredClone(fixture.contract),
+    bytes: Buffer.from(
+      await readFile(path.join(fixture.workdir, "delivery-contract.yaml")),
+    ),
+    synchronized_files: await Promise.all(
+      synchronizedPaths.map(async (file) => ({
+        file,
+        bytes: await readOptionalBytes(file),
+      })),
+    ),
+  };
+}
+
+async function restoreLegalContract(fixture, legal) {
+  fixture.contract = structuredClone(legal.contract);
+  for (const entry of legal.synchronized_files) {
+    if (entry.bytes === null) await rm(entry.file, { force: true });
+    else await writeFile(entry.file, entry.bytes);
+  }
+  const contractPath = path.join(fixture.workdir, "delivery-contract.yaml");
+  await writeFile(contractPath, legal.bytes);
+  assert.deepEqual(
+    await readFile(contractPath),
+    legal.bytes,
+    "legal Contract bytes must be restored exactly between attacks",
+  );
+  for (const entry of legal.synchronized_files)
+    assert.deepEqual(
+      await readOptionalBytes(entry.file),
+      entry.bytes,
+      `synchronized legal fixture bytes must be restored exactly: ${path.basename(entry.file)}`,
+    );
+}
+
+async function readOptionalBytes(file) {
+  try {
+    return Buffer.from(await readFile(file));
+  } catch (error) {
+    if (error?.code === "ENOENT") return null;
+    throw error;
+  }
 }
 
 async function expectCompileRejection(fixture, expected) {

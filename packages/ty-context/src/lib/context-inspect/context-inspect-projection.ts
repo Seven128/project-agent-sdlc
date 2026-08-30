@@ -29,7 +29,7 @@ export function projectContextInspection(input: {
   const coreRole = CORE_ROLES.get(input.context_path);
   const reasons = [
     ...(input.catalog.default_footprint.get(input.context_path) ?? []),
-  ].sort();
+  ].sort(compareUtf8Paths);
   const declarationKeys = new Set(
     fileAnalysis.declarations.map((entry) => `${entry.type}\0${entry.id}`),
   );

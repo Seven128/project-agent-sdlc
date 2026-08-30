@@ -14,6 +14,7 @@ import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { validateDeliveryContractStructure } from "../../packages/ty-context/dist/lib/long-task-delivery-validation.js";
 import { deliveryCompileFreshness } from "../../packages/ty-context/dist/lib/long-task-freshness.js";
+import { activateDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import {
   createLongTaskDesignHandoffConsumer,
@@ -626,10 +627,60 @@ test("Long-Task binds the complete project Design Authority closure and detects 
       true,
     );
     await assert.rejects(
+      activateDeliveryContract(compiled),
+      /active_authority_candidate_stale:.*project_design_authority_changed_after_compile/u,
+    );
+    await assert.rejects(
       compileDeliveryContract(fixture.workdir, fixture.root, {
         require_completion_gate: false,
       }),
       /project_design_authority:identity_mismatch:closure_digest/u,
+    );
+    await rm(manifestPath);
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /bundle_manifest_missing/u,
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("fresh Long-Task Compile rejects a marked bundle whose manifest was removed", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const authority = await writeLongTaskDesignAuthorityBundle(fixture.root);
+    const handoff = await attachDesignResourceHandoff(fixture);
+    handoff.project_design_authority = {
+      kind: "repository-closure",
+      ...authority.identity,
+    };
+    await writeDesignResourceHandoff(fixture.root, handoff);
+    const preflight = await preflightDesignResourceHandoff(
+      fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    configureExactTargetBlockingConfirmation(fixture.contract, {
+      key: "confirm-authority-missing-manifest-fixture",
+    });
+    await writeContract(fixture.workdir, fixture.contract, {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+    });
+    await rm(
+      path.join(
+        fixture.root,
+        "design_system",
+        "authority.manifest.json",
+      ),
+    );
+
+    await assert.rejects(
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
+      /bundle_manifest_missing/u,
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
@@ -3607,6 +3658,8 @@ colors:
 spacing:
   sm: 8px
 ---
+
+<!-- ty-context-design-authority-format: bundle-v1 -->
 
 # Project Design Authority
 

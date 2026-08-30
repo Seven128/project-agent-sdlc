@@ -109,6 +109,40 @@ test("context inspect supports unregistered files and produces byte-stable JSON"
   }
 });
 
+test("context inspect uses the Catalog physical identity for an NFD file and emits one stable NFC path", async () => {
+  const physicalPath = "project_context/areas/main/Cafe\u0301.md";
+  const canonicalPath = physicalPath.normalize("NFC");
+  const manifest = `${baseManifest()}
+[[context]]
+path = "${physicalPath}"
+role = "contract"
+read_policy = "on-demand"
+`;
+  const root = await createContextProject({
+    manifest,
+    extraFiles: {
+      [physicalPath]:
+        "# Unicode Contract\n\nConsumers must preserve this durable contract.\n",
+    },
+  });
+  try {
+    const canonical = await inspectContext({
+      project_root: root,
+      context_path: canonicalPath,
+    });
+    const decomposed = await inspectContext({
+      project_root: root,
+      context_path: physicalPath,
+    });
+    assert.equal(canonical.path, canonicalPath);
+    assert.equal(canonical.registration, "registered");
+    assert.equal(canonical.role, "contract");
+    assert.equal(JSON.stringify(decomposed), JSON.stringify(canonical));
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("context inspect classifies argument, Catalog and path-safety failures", async () => {
   const root = await createContextProject();
   try {

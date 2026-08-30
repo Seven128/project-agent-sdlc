@@ -4,10 +4,22 @@ import { CONTEXT_MANIFEST_PATH } from "../context-manifest.js";
 import { parseContextManifest } from "../context-manifest-schema.js";
 import { pathExists } from "../fs.js";
 import { selectDefaultContextPaths } from "./catalog-default-footprint.js";
-import { catalogDiagnostic } from "./catalog-diagnostics.js";
+import {
+  catalogDiagnostic,
+  sortCatalogDiagnostics,
+} from "./catalog-diagnostics.js";
 import { discoverContextMarkdownFiles } from "./catalog-discovery.js";
-import { normalizeContextPath } from "./catalog-paths.js";
-import type { ContextCatalog } from "./catalog-types.js";
+import {
+  compareUtf8Paths,
+  normalizeContextPath,
+  normalizeContextPathSpelling,
+  sortedContextMap,
+} from "./catalog-paths.js";
+import type {
+  CatalogDiagnostic,
+  CatalogRegisteredContext,
+  ContextCatalog,
+} from "./catalog-types.js";
 import { validateCatalogManifest } from "./catalog-validation.js";
 
 export interface LoadContextCatalogOptions {
@@ -28,14 +40,18 @@ export async function loadContextCatalog(
     ...manifestPath.split("/"),
   );
   const diagnostics = [];
-  const fileOverrides = normalizeFileOverrides(options.file_overrides);
+  const normalizedOverrides = normalizeFileOverrides(options.file_overrides);
+  const fileOverrides = normalizedOverrides.values;
+  diagnostics.push(...normalizedOverrides.diagnostics);
   const directoryOverrides = normalizeDirectoryOverrides(
     options.directory_overrides,
   );
-  const contextFiles =
+  const discovery =
     options.discover_files === false
-      ? []
+      ? { files: [], diagnostics: [] }
       : await discoverContextMarkdownFiles(projectRoot, fileOverrides);
+  const contextFiles = discovery.files;
+  diagnostics.push(...discovery.diagnostics);
   const withoutCoreFiles = contextFiles.filter(
     (entry) =>
       entry.path !== "project_context/global.md" &&
@@ -68,7 +84,7 @@ export async function loadContextCatalog(
       default_footprint: new Map(),
       roles_by_path: new Map(),
       read_policies_by_path: new Map(),
-      diagnostics,
+      diagnostics: sortCatalogDiagnostics(diagnostics),
     };
   }
 
@@ -97,7 +113,7 @@ export async function loadContextCatalog(
       default_footprint: new Map(),
       roles_by_path: new Map(),
       read_policies_by_path: new Map(),
-      diagnostics,
+      diagnostics: sortCatalogDiagnostics(diagnostics),
     };
   }
 
@@ -134,14 +150,16 @@ export async function loadContextCatalog(
     manifest_path: manifestPath,
     manifest_content: manifestContent,
     manifest: parsed.manifest,
-    areas: parsed.manifest.areas,
-    registered_contexts: validation.registered_contexts,
+    areas: projectAreas(parsed.manifest.areas),
+    registered_contexts: projectRegisteredContexts(
+      validation.registered_contexts,
+    ),
     context_files: contextFiles,
     unregistered_context_files: unregisteredContextFiles,
     default_footprint: selectDefaultContextPaths(parsed.manifest),
-    roles_by_path: validation.roles_by_path,
-    read_policies_by_path: validation.read_policies_by_path,
-    diagnostics,
+    roles_by_path: sortedContextMap(validation.roles_by_path),
+    read_policies_by_path: sortedContextMap(validation.read_policies_by_path),
+    diagnostics: sortCatalogDiagnostics(diagnostics),
   };
 }
 
@@ -154,16 +172,41 @@ function normalizeDirectoryOverrides(
 
 function normalizeFileOverrides(
   values: ReadonlyMap<string, Uint8Array | null> | undefined,
-): ReadonlyMap<string, Uint8Array | null> {
-  if (!values) return new Map();
+): {
+  values: ReadonlyMap<string, Uint8Array | null>;
+  diagnostics: CatalogDiagnostic[];
+} {
+  if (!values) return { values: new Map(), diagnostics: [] };
   const normalized = new Map<string, Uint8Array | null>();
-  for (const [file, bytes] of values) {
+  const diagnostics: CatalogDiagnostic[] = [];
+  const spellings = new Map<string, string[]>();
+  const entries = [...values].sort(([left], [right]) =>
+    compareUtf8Paths(
+      normalizeContextPathSpelling(left),
+      normalizeContextPathSpelling(right),
+    ),
+  );
+  for (const [file, bytes] of entries) {
     const relative = normalizeContextPath(file);
-    if (normalized.has(relative))
-      throw new Error(`context_catalog_override_duplicate:${relative}`);
-    normalized.set(relative, bytes === null ? null : Buffer.from(bytes));
+    const valuesForPath = spellings.get(relative) ?? [];
+    valuesForPath.push(normalizeContextPathSpelling(file));
+    spellings.set(relative, valuesForPath);
+    if (!normalized.has(relative))
+      normalized.set(relative, bytes === null ? null : Buffer.from(bytes));
   }
-  return normalized;
+  for (const [relative, rawSpellings] of spellings) {
+    const unique = [...new Set(rawSpellings)].sort(compareUtf8Paths);
+    if (unique.length < 2) continue;
+    diagnostics.push(
+      catalogDiagnostic(
+        "context_override_path_unicode_collision",
+        "error",
+        `Context file overrides ${unique.join(", ")} normalize to the same NFC repository path ${relative}`,
+        { path: relative },
+      ),
+    );
+  }
+  return { values: normalized, diagnostics };
 }
 
 function addUnregisteredDiagnostics(
@@ -180,4 +223,66 @@ function addUnregisteredDiagnostics(
       ),
     );
   }
+}
+
+function projectAreas(areas: ContextCatalog["areas"]): ContextCatalog["areas"] {
+  return areas
+    .map((area) => ({
+      ...area,
+      id: area.id.normalize("NFC"),
+      root: normalizeContextPath(area.root),
+      context: normalizeContextPath(area.context),
+      forbidden_runtime_dependencies: [...area.forbidden_runtime_dependencies]
+        .map((entry) => entry.normalize("NFC"))
+        .sort(compareUtf8Paths),
+    }))
+    .sort(
+      (left, right) =>
+        compareUtf8Paths(left.root, right.root) ||
+        compareUtf8Paths(left.id, right.id) ||
+        compareUtf8Paths(left.context, right.context) ||
+        left.line - right.line,
+    );
+}
+
+function projectRegisteredContexts(
+  entries: CatalogRegisteredContext[],
+): CatalogRegisteredContext[] {
+  return entries
+    .map((entry) => ({
+      ...entry,
+      path: normalizeContextPath(entry.path),
+      area: entry.area
+        ? {
+            ...entry.area,
+            id: entry.area.id.normalize("NFC"),
+            root: normalizeContextPath(entry.area.root),
+            context: normalizeContextPath(entry.area.context),
+            forbidden_runtime_dependencies: [
+              ...entry.area.forbidden_runtime_dependencies,
+            ]
+              .map((value) => value.normalize("NFC"))
+              .sort(compareUtf8Paths),
+          }
+        : undefined,
+      context: entry.context
+        ? {
+            ...entry.context,
+            path: normalizeContextPath(entry.context.path),
+            triggers: [...entry.context.triggers]
+              .map((value) => value.normalize("NFC"))
+              .sort(compareUtf8Paths),
+            default_children: [...entry.context.default_children]
+              .map(normalizeContextPath)
+              .sort(compareUtf8Paths),
+          }
+        : undefined,
+    }))
+    .sort(
+      (left, right) =>
+        compareUtf8Paths(left.path, right.path) ||
+        compareUtf8Paths(left.source, right.source) ||
+        compareUtf8Paths(left.role, right.role) ||
+        left.line - right.line,
+    );
 }

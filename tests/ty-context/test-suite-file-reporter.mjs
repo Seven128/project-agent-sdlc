@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,6 +8,38 @@ export default async function* fileEventReporter(source) {
   for await (const event of source) {
     const serialized = serializeEvent(event);
     if (serialized) yield `${JSON.stringify(serialized)}\n`;
+  }
+}
+
+export async function readReporterEvents(file) {
+  const startedAt = performance.now();
+  const events = [];
+  try {
+    const text = await readFile(file, "utf8");
+    const lines = text.split(/\r?\n/u);
+    for (const [index, line] of lines.entries()) {
+      if (line.length === 0) continue;
+      try {
+        events.push(JSON.parse(line));
+      } catch (error) {
+        throw new Error(
+          `test_reporter_event_parse_failed:${path.basename(file)}:${index + 1}:${error instanceof Error ? error.message : String(error)}`,
+        );
+      }
+    }
+    return {
+      events,
+      duration_ms: elapsedMilliseconds(startedAt),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      events,
+      duration_ms: elapsedMilliseconds(startedAt),
+      error: boundedFailureMessage(
+        error instanceof Error ? (error.stack ?? error.message) : String(error),
+      ),
+    };
   }
 }
 
@@ -24,9 +57,12 @@ export function buildFileTimingReport({
   executionError = null,
 }) {
   const selected = selectedFiles.map((file) => path.resolve(file));
+  const selectedRoot = commonDirectory(selected);
   const stateByFile = new Map(
     selected.map((file) => [fileKey(file), createFileState(file)]),
   );
+  const importedStateByFile = new Map();
+  const unattributedTests = [];
   for (const event of events) {
     if (event?.type === "test:summary") {
       const file = selectedEventFile(event.data, stateByFile);
@@ -34,17 +70,17 @@ export function buildFileTimingReport({
       continue;
     }
     if (!terminalTypes.has(event?.type)) continue;
-    const file = selectedEventFile(event.data, stateByFile);
-    if (!file) continue;
-    const state = stateByFile.get(fileKey(file));
+    const file = terminalEventFile(event.data, stateByFile);
     const status = terminalStatus(event);
     const durationMs = numericDuration(event.data?.details?.duration_ms);
-    if (isFileWrapper(event.data, file)) {
+    if (file && isFileWrapper(event.data, file)) {
+      const state = stateByFile.get(fileKey(file));
+      if (!state) continue;
       state.wrapper_status = status;
       state.wrapper_duration_ms = durationMs;
       continue;
     }
-    state.tests.push({
+    const record = {
       name: String(event.data?.name ?? "<unnamed>"),
       status,
       duration_ms: durationMs,
@@ -53,26 +89,52 @@ export function buildFileTimingReport({
       failure_message: boundedFailureMessage(
         event.data?.details?.failure_message,
       ),
-    });
+    };
+    if (!file) {
+      unattributedTests.push(record);
+      continue;
+    }
+    const selectedState = stateByFile.get(fileKey(file));
+    if (selectedState) {
+      selectedState.tests.push(record);
+      continue;
+    }
+    const key = fileKey(file);
+    const importedState =
+      importedStateByFile.get(key) ?? createFileState(file, "imported");
+    importedState.tests.push(record);
+    importedStateByFile.set(key, importedState);
   }
 
   const files = selected.map((file) =>
-    finalizeFile(stateByFile.get(fileKey(file))),
+    finalizeFile(stateByFile.get(fileKey(file)), selectedRoot),
   );
-  const counts = countStatuses(files.flatMap((entry) => entry.tests));
+  const importedFiles = [...importedStateByFile.values()]
+    .map((state) => finalizeFile(state, selectedRoot))
+    .sort((left, right) => compareUtf8(left.file, right.file));
+  const selectedTests = files.flatMap((entry) => entry.tests);
+  const importedTests = importedFiles.flatMap((entry) => entry.tests);
+  const executedTests = [
+    ...selectedTests,
+    ...importedTests,
+    ...unattributedTests,
+  ];
+  const counts = countStatuses(executedTests);
   const missingFileCount = files.filter(
     (entry) => entry.status === "missing",
   ).length;
   const criticalSentinelCoverage = buildCriticalSentinelCoverage(
-    files,
+    [
+      ...files,
+      ...importedFiles,
+      { file: "<unattributed>", tests: unattributedTests },
+    ],
     registeredCriticalSentinels,
     requiredCriticalSentinels,
   );
   const executionStatus =
     testStatus ??
-    (files.some(
-      (entry) => entry.status === "failed" || entry.status === "cancelled",
-    )
+    (counts.failed > 0 || counts.cancelled > 0
       ? "failed"
       : missingFileCount > 0
         ? "failed"
@@ -89,7 +151,12 @@ export function buildFileTimingReport({
     schema_version: "test-suite-timing-v2",
     suite,
     file_count: files.length,
-    test_count: files.reduce((total, entry) => total + entry.test_count, 0),
+    imported_file_count: importedFiles.length,
+    selected_test_count: selectedTests.length,
+    imported_test_count: importedTests.length,
+    unattributed_test_count: unattributedTests.length,
+    executed_test_count: executedTests.length,
+    test_count: executedTests.length,
     passed_count: counts.passed,
     failed_count: counts.failed,
     skipped_count: counts.skipped,
@@ -109,7 +176,7 @@ export function buildFileTimingReport({
       .sort(
         (left, right) =>
           right.duration_ms - left.duration_ms ||
-          left.file.localeCompare(right.file),
+          compareUtf8(left.file, right.file),
       )
       .slice(0, 10)
       .map(({ file, duration_ms, status: fileStatus, test_count }) => ({
@@ -118,12 +185,16 @@ export function buildFileTimingReport({
         status: fileStatus,
         test_count,
       })),
-    test_identities: files.flatMap((entry) =>
-      entry.tests.map(
+    test_identities: [
+      ...testIdentities(files),
+      ...testIdentities(importedFiles),
+      ...unattributedTests.map(
         (record, index) =>
-          `${entry.file}::${record.name}::${record.line ?? ""}:${record.column ?? ""}::${index + 1}`,
+          `<unattributed>::${record.name}::${record.line ?? ""}:${record.column ?? ""}::${index + 1}`,
       ),
-    ),
+    ],
+    imported_files: importedFiles,
+    unattributed_tests: unattributedTests,
     files,
   };
 }
@@ -244,9 +315,10 @@ function serializeEvent(event) {
   return null;
 }
 
-function createFileState(file) {
+function createFileState(file, sourceKind = "selected") {
   return {
     absolute: file,
+    source_kind: sourceKind,
     tests: [],
     summary: null,
     wrapper_status: null,
@@ -254,7 +326,7 @@ function createFileState(file) {
   };
 }
 
-function finalizeFile(state) {
+function finalizeFile(state, selectedRoot) {
   const counts = countStatuses(state.tests);
   const status =
     counts.failed > 0 || state.wrapper_status === "failed"
@@ -271,12 +343,27 @@ function finalizeFile(state) {
     state.wrapper_duration_ms ||
     state.tests.reduce((total, record) => total + record.duration_ms, 0);
   return {
-    file: path.basename(state.absolute),
+    file: displayFile(state.absolute, selectedRoot),
+    source_kind: state.source_kind,
     status,
     duration_ms: durationMs,
     test_count: state.tests.length,
+    summary_counts: state.summary?.counts ?? null,
     tests: state.tests,
   };
+}
+
+function terminalEventFile(data, stateByFile) {
+  if (typeof data?.file === "string" && data.file.length > 0) {
+    const resolved = resolveCandidate(data.file);
+    if (resolved) return resolved;
+    const selected = selectedFileByBasename(data.file, stateByFile);
+    if (selected) return selected;
+  }
+  if (data?.nesting !== 0 || typeof data?.name !== "string") return null;
+  const resolved = resolveCandidate(data.name);
+  if (resolved) return resolved;
+  return selectedFileByBasename(data.name, stateByFile);
 }
 
 function selectedEventFile(data, stateByFile) {
@@ -284,12 +371,17 @@ function selectedEventFile(data, stateByFile) {
     if (typeof candidate !== "string" || candidate.length === 0) continue;
     const resolved = resolveCandidate(candidate);
     if (resolved && stateByFile.has(fileKey(resolved))) return resolved;
-    const byName = [...stateByFile.values()].filter(
-      (state) => path.basename(state.absolute) === path.basename(candidate),
-    );
-    if (byName.length === 1) return byName[0].absolute;
+    const byName = selectedFileByBasename(candidate, stateByFile);
+    if (byName) return byName;
   }
   return null;
+}
+
+function selectedFileByBasename(candidate, stateByFile) {
+  const byName = [...stateByFile.values()].filter(
+    (state) => path.basename(state.absolute) === path.basename(candidate),
+  );
+  return byName.length === 1 ? byName[0].absolute : null;
 }
 
 function resolveCandidate(candidate) {
@@ -331,6 +423,50 @@ function numericDuration(value) {
 
 function integerOrNull(value) {
   return Number.isInteger(value) ? value : null;
+}
+
+function elapsedMilliseconds(startedAt) {
+  return Math.max(0, Math.round(performance.now() - startedAt));
+}
+
+function compareUtf8(left, right) {
+  return Buffer.compare(Buffer.from(left, "utf8"), Buffer.from(right, "utf8"));
+}
+
+function testIdentities(files) {
+  return files.flatMap((entry) =>
+    entry.tests.map(
+      (record, index) =>
+        `${entry.file}::${record.name}::${record.line ?? ""}:${record.column ?? ""}::${index + 1}`,
+    ),
+  );
+}
+
+function commonDirectory(files) {
+  if (files.length === 0) return process.cwd();
+  let common = path.dirname(files[0]);
+  for (const file of files.slice(1)) {
+    const candidate = path.dirname(file);
+    while (
+      fileKey(candidate) !== fileKey(common) &&
+      !fileKey(candidate).startsWith(`${fileKey(common)}${path.sep}`)
+    ) {
+      const parent = path.dirname(common);
+      if (parent === common) return path.dirname(files[0]);
+      common = parent;
+    }
+  }
+  return common;
+}
+
+function displayFile(file, selectedRoot) {
+  const relative = path.relative(selectedRoot, file);
+  return relative.length > 0 &&
+    !path.isAbsolute(relative) &&
+    relative !== ".." &&
+    !relative.startsWith(`..${path.sep}`)
+    ? relative.split(path.sep).join("/")
+    : path.basename(file);
 }
 
 function boundedFailureMessage(value) {

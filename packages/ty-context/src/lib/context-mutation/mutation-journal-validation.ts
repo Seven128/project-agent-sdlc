@@ -14,7 +14,7 @@ import {
 import type { ContextMutationJournal } from "./mutation-types.js";
 
 export const CONTEXT_MUTATION_JOURNAL_SCHEMA =
-  "context-mutation-journal-v1" as const;
+  "context-mutation-journal-v2" as const;
 
 const MAX_MUTATION_FILES = 512;
 const MAX_MUTATION_DIRECTORIES = 64;
@@ -25,6 +25,13 @@ export function validateContextMutationJournal(
   value: unknown,
 ): ContextMutationJournal {
   if (!isJournalRecord(value)) invalidJournal("journal_object_required");
+  if (
+    typeof value.schema_version === "string" &&
+    /^context-mutation-journal-v(?:0|1)$/u.test(value.schema_version)
+  )
+    invalidJournal(
+      "journal_pre_v2_manual_recovery_required:use_the_ty-context_version_that_created_the_journal_or_restore_exact_files_from_version_control",
+    );
   if (value.schema_version !== CONTEXT_MUTATION_JOURNAL_SCHEMA)
     invalidJournal("journal_schema_unsupported");
   const transactionId = requiredJournalString(
@@ -186,6 +193,16 @@ function validateAppliedPaths(
     invalidJournal("journal_applied_paths_state_mismatch");
   if (state === "validating" && value.length !== ordered.length)
     invalidJournal("journal_applied_paths_state_mismatch");
+  for (const file of files) {
+    const applied = value.includes(file.path);
+    if (applied && file.published_after === null)
+      invalidJournal("journal_applied_path_endpoint_missing");
+    if (
+      (state === "planning" || state === "prepared") &&
+      (file.published_before !== null || file.published_after !== null)
+    )
+      invalidJournal("journal_published_state_phase_mismatch");
+  }
 }
 
 function validateOperationData(

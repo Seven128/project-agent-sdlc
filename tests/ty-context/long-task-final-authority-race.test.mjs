@@ -439,7 +439,7 @@ test("failure after provisional Authority clear restores Authority and rejects R
   }
 });
 
-test("concurrent Final Gates serialize at the existing finalization lock", async () => {
+test("[critical:atomic-terminal-finalization] concurrent Final Gates serialize at the existing finalization lock", async () => {
   const fixture = await createDeliveryFixture();
   const signal = await finalizationSignal("after_finalization_evaluation");
   try {
@@ -474,7 +474,7 @@ test("concurrent Final Gates serialize at the existing finalization lock", async
 });
 
 test(
-  "[critical:atomic-terminal-finalization] Finalization waits for the Windows Job process tree to settle",
+  "[critical:windows-finalization-tree-settlement] Finalization waits for the Windows Job process tree to settle",
   { skip: process.platform !== "win32" },
   async () => {
     const fixture = await createDeliveryFixture();

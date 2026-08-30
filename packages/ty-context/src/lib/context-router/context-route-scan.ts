@@ -2,6 +2,7 @@ import { open } from "node:fs/promises";
 import { compareUtf8Paths } from "../context-catalog/catalog-paths.js";
 import type { CatalogFile } from "../context-catalog/catalog-types.js";
 import { CONTEXT_ROUTE_BUDGETS } from "./context-route-budget.js";
+import { stableRouteBudgetExceeded } from "./context-route-order.js";
 import type {
   ContextRouteBudgetExceeded,
   ContextRouteMatch,
@@ -113,7 +114,7 @@ export async function scanContextCatalogFiles(input: {
       files_scanned: filesScanned,
       bytes_scanned: bytesScanned,
       budget_exceeded: exceeded.length > 0,
-      exceeded: stableExceeded(exceeded),
+      exceeded: stableRouteBudgetExceeded(exceeded),
     },
     matches_by_path: matchesByPath,
     output_truncated: outputTruncated,
@@ -208,16 +209,4 @@ function lineAndColumn(
     line: low + 1,
     column: Array.from(value.slice(starts[low], offset)).length + 1,
   };
-}
-
-function stableExceeded(
-  values: ContextRouteBudgetExceeded[],
-): ContextRouteBudgetExceeded[] {
-  const seen = new Set<string>();
-  return values.filter((value) => {
-    const key = `${value.budget}:${value.path ?? ""}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 }

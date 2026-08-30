@@ -6,7 +6,12 @@ import {
   type DefaultContextSelectionReason,
 } from "./context-catalog/catalog-default-footprint.js";
 import { loadContextCatalog } from "./context-catalog/catalog-load.js";
-import { normalizeContextPath } from "./context-catalog/catalog-paths.js";
+import {
+  compareUtf8Paths,
+  normalizeContextPath,
+  normalizeContextPathSpelling,
+} from "./context-catalog/catalog-paths.js";
+import type { ContextManifest } from "./context-manifest-schema.js";
 
 export {
   selectDefaultContextPaths,
@@ -50,10 +55,14 @@ export async function inspectDefaultContextFootprint(
   const selected = catalog.default_footprint;
   const files: DefaultContextFileFootprint[] = [];
   const hashes = new Map<string, string[]>();
+  const physicalPaths = physicalDefaultPaths(catalog.manifest);
   for (const [relativePath, reasons] of [...selected.entries()].sort(
-    ([left], [right]) => left.localeCompare(right),
+    ([left], [right]) => compareUtf8Paths(left, right),
   )) {
-    const absolutePath = resolveProjectFile(projectRoot, relativePath);
+    const absolutePath = resolveProjectFile(
+      projectRoot,
+      physicalPaths.get(relativePath) ?? relativePath,
+    );
     const metadata = await lstat(absolutePath);
     if (metadata.isSymbolicLink()) {
       throw new Error(
@@ -71,7 +80,7 @@ export async function inspectDefaultContextFootprint(
     files.push({
       path: relativePath,
       bytes: content.byteLength,
-      reasons: [...reasons].sort(),
+      reasons: [...reasons].sort(compareUtf8Paths),
     });
   }
 
@@ -80,15 +89,53 @@ export async function inspectDefaultContextFootprint(
     total_bytes: files.reduce((total, file) => total + file.bytes, 0),
     duplicate_groups: [...hashes.values()]
       .filter((group) => group.length > 1)
-      .map((group) => [...group].sort())
-      .sort(([left], [right]) => left.localeCompare(right)),
+      .map((group) => [...group].sort(compareUtf8Paths))
+      .sort(comparePathGroups),
   };
+}
+
+function physicalDefaultPaths(manifest: ContextManifest): Map<string, string> {
+  const physical = new Map<string, string>();
+  const addOwner = (rawPath: string): void => {
+    const canonical = normalizeContextPath(rawPath);
+    const spelling = normalizeContextPathSpelling(rawPath);
+    const previous = physical.get(canonical);
+    if (previous !== undefined && previous !== spelling)
+      throw new Error(
+        `default_context_path_unicode_collision:${canonical}:${[previous, spelling].sort(compareUtf8Paths).join(",")}`,
+      );
+    physical.set(canonical, spelling);
+  };
+  for (const core of [
+    "project_context/context.toml",
+    "project_context/global.md",
+    "project_context/architecture.md",
+  ])
+    addOwner(core);
+  for (const area of manifest.areas) addOwner(area.context);
+  for (const context of manifest.contexts) addOwner(context.path);
+  for (const context of manifest.contexts)
+    for (const child of context.default_children) {
+      const canonical = normalizeContextPath(child);
+      if (!physical.has(canonical))
+        physical.set(canonical, normalizeContextPathSpelling(child));
+    }
+  return physical;
+}
+
+function comparePathGroups(left: string[], right: string[]): number {
+  const length = Math.min(left.length, right.length);
+  for (let index = 0; index < length; index += 1) {
+    const comparison = compareUtf8Paths(left[index], right[index]);
+    if (comparison !== 0) return comparison;
+  }
+  return left.length - right.length;
 }
 
 function resolveProjectFile(projectRoot: string, relativePath: string): string {
   const absolutePath = path.resolve(
     projectRoot,
-    ...normalizeContextPath(relativePath).split("/"),
+    ...normalizeContextPathSpelling(relativePath).split("/"),
   );
   const relative = path.relative(projectRoot, absolutePath);
   if (

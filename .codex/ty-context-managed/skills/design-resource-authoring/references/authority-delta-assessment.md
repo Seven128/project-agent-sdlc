@@ -4,7 +4,7 @@ Run this lightweight assessment only after the task resource direction is select
 
 ## Bind the current Authority
 
-Read the complete current project Design Authority closure. A new style-bearing or mixed handoff binds the exact `repository-closure` identity: `format_version`, root `DESIGN.md`, optional `design_system/authority.manifest.json`, closure digest and human revision diagnostic. Legacy omission is only backward compatibility for a true one-file project. Never compare revision alone.
+Read the complete current project Design Authority closure. A new style-bearing or mixed handoff binds the exact `repository-closure` identity: `format_version`, root `DESIGN.md`, optional `design_system/authority.manifest.json`, closure digest and human revision diagnostic. Bundle format additionally requires the exact body-leading `<!-- ty-context-design-authority-format: bundle-v1 -->` declaration; marker/manifest mismatch is invalid rather than legacy. Legacy omission is only backward compatibility for a true unmarked one-file project. Never compare revision alone.
 
 If the closure changed after resource selection, re-read it and reassess the selected task design. Do not reuse a stale assessment.
 

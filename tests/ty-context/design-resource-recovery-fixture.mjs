@@ -98,6 +98,11 @@ export async function createRecoveryFixture(options = {}) {
     raw_byte_digest: sha256(designBytes),
   };
   if (options.authorityMode === "closure-bundle") {
+    await writeFile(
+      path.join(root, designLocator),
+      "<!-- ty-context-design-authority-format: bundle-v1 -->\n\n# Design Authority\nstatus: adopted\n",
+      "utf8",
+    );
     await mkdir(path.join(root, "design_system/components"), {
       recursive: true,
     });

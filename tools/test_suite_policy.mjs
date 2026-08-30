@@ -95,7 +95,14 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "atomic-terminal-finalization",
     "long-task-final-authority-race.test.mjs",
     ["long-task", "long-task-trust"],
-    "Positive controls publish one Finalization Identity/CAS-bound Receipt and keep Final Gate advisory unless stop/close requests the same locked close transaction. Negative controls mutate Authority, Contract, Source, controlling Context, runner/verification inputs, workdir fragments, candidate, External Records/Artifacts and Receipt phases; concurrent finalize/submit/revoke calls serialize on the existing Active Authority lock, every mismatch returns needs_work with Authority retained, and Windows cannot enter final publication before the assigned Job process tree settles.",
+    "Cross-platform positive controls publish one Finalization Identity/CAS-bound Receipt and keep Final Gate advisory unless stop/close requests the same locked close transaction. Negative controls mutate Authority, Contract, Source, controlling Context, runner/verification inputs, workdir fragments, candidate, External Records/Artifacts and Receipt phases; concurrent finalize/submit/revoke calls serialize on the existing Active Authority lock and every mismatch returns needs_work with Authority retained.",
+  ),
+  criticalSentinel(
+    "windows-finalization-tree-settlement",
+    "long-task-final-authority-race.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Windows-only positive control proves that terminal Finalization Identity evaluation and Receipt publication cannot proceed until the assigned Job process tree has fully settled; it remains distinct from the cross-platform finalization lock/CAS sentinel.",
+    { requiredPlatforms: ["win32"] },
   ),
   criticalSentinel(
     "external-fulfillment-current-authority",

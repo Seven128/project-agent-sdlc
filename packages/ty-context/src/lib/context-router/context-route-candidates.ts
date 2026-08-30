@@ -6,6 +6,11 @@ import type {
 } from "../context-catalog/catalog-types.js";
 import { CONTEXT_LEGACY_READ_POLICY_SET } from "../context-catalog/catalog-portable-contract.js";
 import { CONTEXT_ROUTE_SCHEMA_VERSION } from "./context-route-budget.js";
+import {
+  compareRouteReasons,
+  sortRouteGroups,
+  stableRouteBudgetExceeded,
+} from "./context-route-order.js";
 import type {
   ContextRouteBudgetExceeded,
   ContextRouteCandidate,
@@ -61,7 +66,8 @@ export function projectCandidates(
     cumulative += entry.bytes;
     return {
       ...entry,
-      groups: [...group_set],
+      groups: sortRouteGroups(group_set),
+      reasons: [...entry.reasons].sort(compareRouteReasons),
       matched_paths: [...entry.matched_paths].sort(compareUtf8Paths),
       cumulative_bytes: cumulative,
     };
@@ -86,7 +92,7 @@ export function defaultEntries(
     cumulative += bytes;
     return {
       path: contextPath,
-      reasons: [...reasons].sort(),
+      reasons: [...reasons].sort(compareUtf8Paths),
       bytes,
       cumulative_bytes: cumulative,
     };
@@ -116,7 +122,7 @@ export function emptyResult(input: {
       files_scanned: 0,
       bytes_scanned: 0,
       budget_exceeded: input.exceeded.length > 0,
-      exceeded: stableExceeded(input.exceeded),
+      exceeded: stableRouteBudgetExceeded(input.exceeded),
     },
     output_truncated: false,
     default_context: input.defaultContext,
@@ -126,18 +132,6 @@ export function emptyResult(input: {
     unresolved: [],
     diagnostics: input.catalog.diagnostics,
   };
-}
-
-export function stableExceeded(
-  values: ContextRouteBudgetExceeded[],
-): ContextRouteBudgetExceeded[] {
-  const seen = new Set<string>();
-  return values.filter((entry) => {
-    const key = `${entry.budget}:${entry.path ?? ""}`;
-    if (seen.has(key)) return false;
-    seen.add(key);
-    return true;
-  });
 }
 
 function createCandidate(

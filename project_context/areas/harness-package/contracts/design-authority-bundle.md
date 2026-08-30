@@ -13,6 +13,20 @@ Root `DESIGN.md` is the only Design Authority entry, the only human revision own
 
 Projects may remain a legacy single-file authority with only `DESIGN.md`. A bundle is sparse: subordinate files are created only for real reusable foundations, typography, iconography, motion, component, pattern, platform or migration rules. Empty category mirrors and a mandatory complete directory tree are forbidden.
 
+## Persistent Bundle Format Marker
+
+A true legacy authority has no bundle marker and no manifest. Adopting Bundle V1 writes this exact line as the first non-empty Markdown body line after supported YAML front matter (or as the first non-empty line when front matter is absent):
+
+```markdown
+<!-- ty-context-design-authority-format: bundle-v1 -->
+```
+
+The position is fixed so code examples, inline code and later comments cannot impersonate the durable format fact, while an ordinary HTML comment remains compatible with the local `@google/design.md` parser/export boundary. The line is part of `DESIGN.md` bytes and therefore part of closure identity; it owns only the format choice and duplicates neither revision nor Token semantics.
+
+Marker and manifest are an exact current-snapshot pair. Marker plus missing, renamed, empty or invalid manifest is a hard Authority error. A manifest without the marker is also invalid and receives migration guidance to complete the same explicit bundle adoption; it is never treated as a legacy project. A missing or renamed root entry with a retained manifest is an invalid orphan bundle, not `missing` or `legacy`. A marker outside the fixed position, a duplicate or whitespace-variant machine declaration, malformed marked front matter, or physical path casing that differs from its canonical repository-relative spelling also fails closed.
+
+Removing the marker or changing Bundle V1 back to legacy is an Authority-format change that requires explicit DSA selection/adoption and the existing Authority Revision/rebinding flow; the managed adoption guidance creates or removes marker and manifest together. The package enforces the current pair and stales any existing DRA/Long-Task binding because `DESIGN.md` bytes and closure identity change. It does not create a second historical registry: if both marker and manifest have already been removed before a fresh unbound checkout is observed, current bytes alone cannot authenticate whether that repository was always legacy or underwent an authorized downgrade. Preventing deliberate coordinated deletion beyond Git/owner review would require a separately authorized external history/trust owner and is outside Bundle V1; no static validator may claim otherwise.
+
 ## Manifest V1
 
 The strict JSON shape is:
@@ -45,7 +59,7 @@ The implementation bounds one load to at most 4,096 closure members, 8 MiB per f
 
 Every path is repository-relative POSIX text, Unicode NFC, non-empty, non-absolute and contains no `.` or `..` segment. Backslashes, drive prefixes, UNC forms and NUL are rejected rather than rewritten. Normalized duplicate paths and case-fold collisions are rejected so one manifest has one portable meaning on case-sensitive and case-insensitive filesystems.
 
-Every closure member is a contained ordinary UTF-8 text file. UTF-8 BOM, invalid UTF-8, symlinks, a symlinked parent, non-regular files and hard-linked files are rejected. Resolved paths must remain inside the repository, and no two members may resolve to the same file identity. These rules apply to `DESIGN.md`, the manifest and every declared file.
+Every closure member is a contained ordinary UTF-8 text file whose physical path segment spelling exactly equals the declared repository-relative spelling. UTF-8 BOM, invalid UTF-8, symlinks, a symlinked parent, non-regular files and hard-linked files are rejected. Resolved paths must remain inside the repository, and no two members may resolve to the same file identity. These rules apply to `DESIGN.md`, the manifest and every declared file.
 
 ## Canonical Projection And Closure Digest
 
@@ -56,7 +70,7 @@ A manifest-backed closure has these members:
 - every declared `generated_files` member; and
 - `design_system/authority.manifest.json` represented by the canonical manifest projection below.
 
-For a legacy project without the manifest, the closure contains only `DESIGN.md` and uses the same framing and text rules.
+For a true legacy project without both marker and manifest, the closure contains only `DESIGN.md` and uses the same framing and text rules. Manifest presence is not inferred solely from directory existence, and marker/manifest mismatch fails before a one-file identity can be issued.
 
 Each text member is decoded as strict UTF-8, then CRLF and lone CR are converted to LF. No text is trimmed, reordered or Unicode-normalized after decoding. The manifest projection removes `closure_digest`, recursively orders object keys by Unicode code-point order, sorts both file arrays by normalized path UTF-8 byte order, emits compact UTF-8 JSON with no trailing whitespace or environment field, and is used as the manifest member content. The manifest's presentation bytes are therefore not a second semantic input.
 
@@ -91,7 +105,7 @@ The complete machine identity is:
 }
 ```
 
-For a legacy single-file closure, `manifest_path` is `null`. `entry_path + closure_digest` is freshness authority; `revision` is diagnostic only. A subordinate/generated member change invalidates an old identity even if `DESIGN.md` and its `version` text are unchanged. The old raw-file identity shape remains readable only for a real legacy single-file project and is rejected as an attempted bundle binding when a manifest exists.
+For a legacy single-file closure, `manifest_path` is `null`. `entry_path + closure_digest` is freshness authority; `revision` is diagnostic only. A subordinate/generated member change invalidates an old identity even if `DESIGN.md` and its `version` text are unchanged. The old raw-file identity shape remains readable only for a real unmarked single-file project and is rejected as an attempted bundle binding when either the Bundle V1 marker or manifest exists.
 
 ## Consumers And Staleness
 
@@ -115,6 +129,6 @@ Open Design generation remains in explicit Skills. `design-system-authoring` own
 
 ## Verification And Evolution
 
-Tests cover legacy and sparse bundles; strict schema/unknown fields; path normalization, ordering, duplicates and case collisions; CRLF/LF digest equality; whitespace and child-byte sensitivity; UTF-8/BOM; symlink, parent-link, hardlink and file-identity rejection; generated Token equality; extra-file warning and linked-extra failure; deterministic JSON and read-only CLI output; recovery/handoff stale binding; Long-Task protected-member binding; all three assessment shapes and forbidden adoption fields; and explicit Skill/adoption wording.
+Tests cover true unmarked legacy and marked sparse bundles; missing, renamed, empty, invalid and unmarked manifests; missing/renamed entry with an orphan manifest; subordinate/link deletion downgrade attempts while the durable marker remains; fixed marker placement, duplicate/non-canonical declarations, fenced/inline examples, malformed/unclosed front matter; strict schema/unknown fields; path normalization, ordering, duplicates, physical spelling and case collisions; CRLF/LF digest equality; whitespace and child-byte sensitivity; UTF-8/BOM; symlink, parent-link, hardlink and file-identity rejection; generated Token equality; extra-file warning and linked-extra failure; deterministic JSON and read-only CLI output; current-pair DRA and Long-Task binding plus recovery/handoff staleness; Long-Task protected-member binding; all three assessment shapes and forbidden adoption fields; migration diagnostics; and explicit Skill/adoption wording. Bundle V1 does not claim a fresh current snapshot can prove deleted historical markers.
 
 Any new generated source, authority kind, Token ownership direction, workspace-local Design Authority, Provider runtime or digest algorithm requires a separately versioned reviewed change. Existing V1 identities never change meaning in place.

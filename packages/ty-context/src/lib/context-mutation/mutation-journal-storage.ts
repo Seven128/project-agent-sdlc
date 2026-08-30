@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import type { Stats } from "node:fs";
+import type { BigIntStats } from "node:fs";
 import { lstat, readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -27,15 +27,20 @@ const MAX_JOURNAL_BYTES = 96 * 1024 * 1024;
 export interface ContextMutationJournalSnapshot {
   absolute: string;
   bytes: Buffer;
+  identity: BigIntStats;
   journal: ContextMutationJournal;
   relative: string;
+}
+
+export interface ContextMutationJournalReadOptions {
+  after_snapshot_read?: (absolute: string) => Promise<void>;
 }
 
 interface JournalFileEntry {
   absolute: string;
   name: string;
   sequence: number;
-  status: Stats;
+  status: BigIntStats;
 }
 
 interface JournalInventory {
@@ -46,16 +51,17 @@ interface JournalInventory {
 
 export async function readLatestJournalSnapshot(
   repository: string,
+  options: ContextMutationJournalReadOptions = {},
 ): Promise<ContextMutationJournalSnapshot | null> {
   const inventory = await readJournalInventory(repository);
-  const snapshots = await readSnapshotChain(inventory);
+  const snapshots = await readSnapshotChain(inventory, options);
   return snapshots.at(-1) ?? null;
 }
 
 export async function publishInitialJournalSnapshot(
   repository: string,
   journal: ContextMutationJournal,
-): Promise<void> {
+): Promise<ContextMutationJournalSnapshot> {
   await ensureSafeRepositoryDirectory(
     repository,
     CONTEXT_MUTATION_JOURNAL_DIRECTORY,
@@ -64,40 +70,40 @@ export async function publishInitialJournalSnapshot(
   const inventory = await readJournalInventory(repository);
   if ((await readSnapshotChain(inventory)).length)
     invalid("unfinished_transaction_exists");
-  await removeJournalTemporaries(inventory.temporaries);
-  await publishSnapshot(repository, journal);
+  await removeJournalTemporaries(inventory);
+  return publishSnapshot(repository, journal);
 }
 
 export async function publishNextJournalSnapshot(
   repository: string,
   journal: ContextMutationJournal,
   expected: ContextMutationJournalSnapshot,
-): Promise<void> {
+): Promise<ContextMutationJournalSnapshot> {
   let inventory = await readJournalInventory(repository);
   let current = (await readSnapshotChain(inventory)).at(-1);
-  assertExpectedSnapshot(current, expected);
-  await removeJournalTemporaries(inventory.temporaries);
+  assertExpectedJournalSnapshot(current, expected);
+  await removeJournalTemporaries(inventory);
   inventory = await readJournalInventory(repository);
   current = (await readSnapshotChain(inventory)).at(-1);
-  assertExpectedSnapshot(current, expected);
-  await publishSnapshot(repository, journal);
+  assertExpectedJournalSnapshotAfterOwnedTemporaryCleanup(current, expected);
+  return publishSnapshot(repository, journal);
 }
 
 export async function removeJournalSnapshotChain(
   repository: string,
-  transactionId: string,
+  expected: ContextMutationJournalSnapshot,
 ): Promise<void> {
   let inventory = await readJournalInventory(repository);
   const snapshots = await readSnapshotChain(inventory);
   const current = snapshots.at(-1);
-  if (!current) return;
-  if (current.journal.transaction_id !== transactionId)
-    invalid("journal_transaction_changed");
-  await removeJournalTemporaries(inventory.temporaries);
+  assertExpectedJournalSnapshot(current, expected);
+  await removeJournalTemporaries(inventory);
   inventory = await readJournalInventory(repository);
   const confirmed = await readSnapshotChain(inventory);
-  if (confirmed.at(-1)?.journal.transaction_id !== transactionId)
-    invalid("journal_transaction_changed");
+  assertExpectedJournalSnapshotAfterOwnedTemporaryCleanup(
+    confirmed.at(-1),
+    expected,
+  );
   for (const snapshot of [...inventory.snapshots].reverse())
     await unlinkJournalPath(snapshot.absolute);
   await syncJournalDirectory(inventory.directory);
@@ -134,9 +140,11 @@ async function readJournalInventory(
     const temporary = TEMPORARY_PATTERN.exec(entry.name);
     if (!snapshot && !temporary) invalid(`journal_entry_unowned:${entry.name}`);
     const absolute = path.join(directory, entry.name);
-    const status = await lstat(absolute);
+    const status = await lstat(absolute, { bigint: true });
     if (!status.isFile() || status.isSymbolicLink())
       invalid(`journal_entry_unsafe:${entry.name}`);
+    if (status.ino === 0n)
+      invalid(`journal_identity_unavailable:${entry.name}`);
     const target = snapshot ? snapshots : temporaries;
     target.push({
       absolute,
@@ -156,13 +164,27 @@ async function readJournalInventory(
 
 async function readSnapshotChain(
   inventory: JournalInventory,
+  options: ContextMutationJournalReadOptions = {},
 ): Promise<ContextMutationJournalSnapshot[]> {
+  for (const snapshot of inventory.snapshots)
+    assertSafeJournalLink(snapshot, inventory.temporaries);
+  for (const temporary of inventory.temporaries)
+    assertSafeJournalTemporary(temporary, inventory.snapshots);
   const snapshots: ContextMutationJournalSnapshot[] = [];
   for (const entry of inventory.snapshots) {
-    assertSafeJournalLink(entry, inventory.temporaries);
-    if (entry.status.size > MAX_JOURNAL_BYTES)
+    if (entry.status.size > BigInt(MAX_JOURNAL_BYTES))
       invalid("journal_snapshot_too_large");
     const bytes = await readFile(entry.absolute);
+    await options.after_snapshot_read?.(entry.absolute);
+    const afterRead = await lstat(entry.absolute, { bigint: true }).catch(
+      (error: NodeJS.ErrnoException) => {
+        if (error.code === "ENOENT")
+          invalid(`journal_changed_during_read:${entry.name}`);
+        throw error;
+      },
+    );
+    if (!sameJournalIdentity(entry.status, afterRead))
+      invalid(`journal_changed_during_read:${entry.name}`);
     let value: unknown;
     try {
       value = JSON.parse(bytes.toString("utf8"));
@@ -186,6 +208,7 @@ async function readSnapshotChain(
     snapshots.push({
       absolute: entry.absolute,
       bytes,
+      identity: afterRead,
       journal,
       relative: `${CONTEXT_MUTATION_JOURNAL_DIRECTORY}/${entry.name}`,
     });
@@ -196,7 +219,7 @@ async function readSnapshotChain(
 async function publishSnapshot(
   repository: string,
   journal: ContextMutationJournal,
-): Promise<void> {
+): Promise<ContextMutationJournalSnapshot> {
   validateContextMutationJournal(journal);
   const directory = resolveInsideRepository(
     repository,
@@ -215,8 +238,17 @@ async function publishSnapshot(
     await linkJournalTemporary(temporary, finalPath);
     published = true;
     await unlinkJournalPath(temporary);
+    await syncJournalDirectory(directory);
     await removeSupersededSnapshots(repository, journal.journal_sequence);
     await syncJournalDirectory(directory);
+    const publishedSnapshot = await readLatestJournalSnapshot(repository);
+    if (
+      !publishedSnapshot ||
+      publishedSnapshot.journal.journal_sequence !== journal.journal_sequence ||
+      !publishedSnapshot.bytes.equals(Buffer.from(canonicalJson(journal), "utf8"))
+    )
+      invalid("journal_publication_readback_mismatch");
+    return publishedSnapshot;
   } catch (error) {
     if (!published) await unlinkJournalPath(temporary).catch(() => undefined);
     if ((error as NodeJS.ErrnoException).code === "EEXIST")
@@ -225,37 +257,167 @@ async function publishSnapshot(
   }
 }
 
-function assertExpectedSnapshot(
+export function assertExpectedJournalSnapshot(
   current: ContextMutationJournalSnapshot | undefined,
   expected: ContextMutationJournalSnapshot,
 ): void {
   if (!current) invalid("journal_missing");
   if (
     current.relative !== expected.relative ||
-    sha256Hex(current.bytes) !== sha256Hex(expected.bytes)
+    !current.bytes.equals(expected.bytes) ||
+    !sameJournalIdentity(current.identity, expected.identity)
   )
     invalid("journal_compare_and_swap_failed");
+}
+
+function assertExpectedJournalSnapshotAfterOwnedTemporaryCleanup(
+  current: ContextMutationJournalSnapshot | undefined,
+  expected: ContextMutationJournalSnapshot,
+): void {
+  if (!current) invalid("journal_missing");
+  if (
+    current.relative === expected.relative &&
+    current.bytes.equals(expected.bytes) &&
+    (sameJournalIdentity(current.identity, expected.identity) ||
+      (expected.identity.nlink === 2n &&
+        current.identity.nlink === 1n &&
+        sameStableJournalIdentity(current.identity, expected.identity)))
+  )
+    return;
+  invalid("journal_compare_and_swap_failed");
 }
 
 function assertSafeJournalLink(
   snapshot: JournalFileEntry,
   temporaries: JournalFileEntry[],
 ): void {
-  if (snapshot.status.nlink === 1) return;
+  if (snapshot.status.nlink === 1n) return;
   const ownedLinks = temporaries.filter(
     (entry) =>
+      entry.sequence === snapshot.sequence &&
       entry.status.dev === snapshot.status.dev &&
-      entry.status.ino === snapshot.status.ino,
+      entry.status.ino === snapshot.status.ino &&
+      sameJournalIdentity(entry.status, snapshot.status),
   );
-  if (snapshot.status.nlink !== 2 || ownedLinks.length !== 1)
-    invalid(`journal_hardlink_unowned:${snapshot.name}`);
+  if (snapshot.status.nlink !== 2n || ownedLinks.length !== 1)
+    invalid(
+      `journal_hardlink_unowned_manual_recovery_required:${snapshot.name}`,
+    );
+}
+
+function assertSafeJournalTemporary(
+  temporary: JournalFileEntry,
+  snapshots: JournalFileEntry[],
+): void {
+  const ownedSnapshots = snapshots.filter(
+    (entry) =>
+      entry.sequence === temporary.sequence &&
+      entry.status.dev === temporary.status.dev &&
+      entry.status.ino === temporary.status.ino &&
+      entry.status.nlink === 2n &&
+      temporary.status.nlink === 2n &&
+      sameJournalIdentity(entry.status, temporary.status),
+  );
+  if (ownedSnapshots.length !== 1)
+    invalid(
+      `journal_temporary_unowned_manual_recovery_required:${temporary.name}`,
+    );
+}
+
+function sameJournalIdentity(left: BigIntStats, right: BigIntStats): boolean {
+  return (
+    sameStableJournalIdentity(left, right) &&
+    left.nlink === right.nlink &&
+    left.ctimeNs === right.ctimeNs
+  );
+}
+
+function sameStableJournalIdentity(
+  left: BigIntStats,
+  right: BigIntStats,
+): boolean {
+  return (
+    left.dev === right.dev &&
+    left.ino === right.ino &&
+    left.size === right.size &&
+    left.mode === right.mode &&
+    left.mtimeNs === right.mtimeNs
+  );
 }
 
 async function removeJournalTemporaries(
-  temporaries: JournalFileEntry[],
+  inventory: JournalInventory,
 ): Promise<void> {
-  for (const temporary of temporaries)
-    await unlinkJournalPath(temporary.absolute);
+  if (inventory.temporaries.length === 0) return;
+  const claimedSnapshots = new Set<string>();
+  for (const temporary of inventory.temporaries) {
+    const candidates = inventory.snapshots.filter(
+      (snapshot) =>
+        snapshot.sequence === temporary.sequence &&
+        snapshot.status.dev === temporary.status.dev &&
+        snapshot.status.ino === temporary.status.ino,
+    );
+    const snapshot = candidates.length === 1 ? candidates[0] : undefined;
+    if (
+      !snapshot ||
+      claimedSnapshots.has(snapshot.name) ||
+      snapshot.status.nlink !== 2n ||
+      temporary.status.nlink !== 2n ||
+      !sameJournalIdentity(snapshot.status, temporary.status)
+    )
+      invalid(
+        `journal_temporary_unowned_manual_recovery_required:${temporary.name}`,
+      );
+    claimedSnapshots.add(snapshot.name);
+
+    const [currentSnapshot, currentTemporary] = await Promise.all([
+      lstatOwnedJournalEntry(snapshot),
+      lstatOwnedJournalEntry(temporary),
+    ]);
+    if (
+      !sameJournalIdentity(snapshot.status, currentSnapshot) ||
+      !sameJournalIdentity(temporary.status, currentTemporary) ||
+      !sameJournalIdentity(currentSnapshot, currentTemporary)
+    )
+      invalid(
+        `journal_temporary_identity_changed_manual_recovery_required:${temporary.name}`,
+      );
+    try {
+      await unlinkJournalPath(temporary.absolute);
+    } catch (error) {
+      invalid(
+        `journal_temporary_cleanup_failed_manual_recovery_required:${temporary.name}:${message(error)}`,
+      );
+    }
+    const afterSnapshot = await lstatOwnedJournalEntry(snapshot);
+    const remainingTemporary = await lstat(temporary.absolute, {
+      bigint: true,
+    }).catch((error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") return null;
+      throw error;
+    });
+    if (
+      remainingTemporary ||
+      afterSnapshot.nlink !== 1n ||
+      !sameStableJournalIdentity(currentSnapshot, afterSnapshot)
+    )
+      invalid(
+        `journal_temporary_cleanup_transition_invalid_manual_recovery_required:${temporary.name}`,
+      );
+  }
+  await syncJournalDirectory(inventory.directory);
+}
+
+async function lstatOwnedJournalEntry(
+  entry: JournalFileEntry,
+): Promise<BigIntStats> {
+  return lstat(entry.absolute, { bigint: true }).catch(
+    (error: NodeJS.ErrnoException) => {
+      invalid(
+        `journal_temporary_identity_changed_manual_recovery_required:${entry.name}:${message(error)}`,
+      );
+    },
+  );
 }
 
 async function removeSupersededSnapshots(

@@ -197,31 +197,40 @@ export async function createDeliveryFixture(options = {}) {
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-delivery-"));
   try {
     const seedRoot = await resolveFixtureSeedRoot(options.fixtureSeedRoot);
-    const variant = options.externalConfirmation ? "external" : "default";
-    const template = path.join(seedRoot, variant);
-    await assertSeedRepository(template);
-    await cp(template, root, { recursive: true, force: true });
+    const externalConfirmation = Boolean(options.externalConfirmation);
+    const twoOutcomes = Boolean(options.twoOutcomes);
     const externalConfirmationCount = options.externalConfirmation
       ? (options.externalConfirmationCount ?? 1)
       : 0;
-    if (options.twoOutcomes || externalConfirmationCount > 1) {
+    const variant = externalConfirmation
+      ? "external"
+      : twoOutcomes
+        ? "default-two-outcomes"
+        : "default";
+    const template = path.join(seedRoot, variant);
+    await assertSeedRepository(template);
+    await cp(template, root, { recursive: true, force: true });
+    if (
+      externalConfirmation &&
+      (twoOutcomes || externalConfirmationCount !== 1)
+    ) {
       const manifest = packageAdmittedFixtureSemanticManifest({
-        twoOutcomes: Boolean(options.twoOutcomes),
-        externalConfirmation: Boolean(options.externalConfirmation),
+        twoOutcomes,
+        externalConfirmation,
         externalConfirmationCount,
       });
       await writeFixtureSourceAndOracle(
         root,
         {
-          twoOutcomes: Boolean(options.twoOutcomes),
-          externalConfirmation: Boolean(options.externalConfirmation),
+          twoOutcomes,
+          externalConfirmation,
           externalConfirmationCount,
           executionTarget: fixtureProcessExecutionTarget(),
         },
         manifest,
       );
       await installPackageMachineFixture(root, manifest);
-      if (options.twoOutcomes) {
+      if (twoOutcomes) {
         const statePath = path.join(root, "src", "state.json");
         const state = JSON.parse(await readFile(statePath, "utf8"));
         state.first = true;
@@ -279,8 +288,13 @@ export async function prepareDeliveryFixtureSeed() {
     path.join(os.tmpdir(), "ty-context-delivery-seed-"),
   );
   try {
-    await initializeSeedRepository(path.join(root, "default"), false);
-    await initializeSeedRepository(path.join(root, "external"), true);
+    await initializeSeedRepository(path.join(root, "default"));
+    await initializeSeedRepository(path.join(root, "default-two-outcomes"), {
+      twoOutcomes: true,
+    });
+    await initializeSeedRepository(path.join(root, "external"), {
+      externalConfirmation: true,
+    });
   } catch (error) {
     await rm(root, { recursive: true, force: true });
     throw error;
@@ -299,7 +313,10 @@ export async function prepareDeliveryFixtureSeed() {
   };
 }
 
-async function initializeSeedRepository(root, externalConfirmation) {
+async function initializeSeedRepository(
+  root,
+  { externalConfirmation = false, twoOutcomes = false } = {},
+) {
   await mkdir(path.join(root, "src"), { recursive: true });
   await mkdir(path.join(root, "tests"), { recursive: true });
   await mkdir(path.join(root, "artifacts"), { recursive: true });
@@ -319,11 +336,13 @@ async function initializeSeedRepository(root, externalConfirmation) {
   );
   const manifest = packageAdmittedFixtureSemanticManifest({
     externalConfirmation,
+    twoOutcomes,
   });
   await writeFixtureSourceAndOracle(
     root,
     {
       externalConfirmation,
+      twoOutcomes,
       executionTarget: fixtureProcessExecutionTarget(),
     },
     manifest,

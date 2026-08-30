@@ -40,7 +40,14 @@ export async function buildContextMoveTransactionPlan(input: {
   projections: ContextMoveFileProjection[];
 }> {
   const raw: Array<
-    Omit<MutationFileChange, "commit_order" | "temporary_path">
+    Omit<
+      MutationFileChange,
+      | "commit_order"
+      | "temporary_path"
+      | "temporary_state"
+      | "published_before"
+      | "published_after"
+    >
   > = [];
   raw.push({
     path: input.normalized.to_path,
@@ -110,6 +117,9 @@ export async function buildContextMoveTransactionPlan(input: {
       transactionId,
       commitOrder,
     ),
+    temporary_state: null,
+    published_before: null,
+    published_after: null,
   }));
   return {
     plan: {

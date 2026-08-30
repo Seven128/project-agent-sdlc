@@ -10,6 +10,7 @@ import {
   acquireDesignAuthorityText,
   designAuthorityPathExists,
 } from "./design-authority-files.js";
+import { declaredDesignAuthorityFormat } from "./design-authority-format.js";
 import {
   designAuthorityManifestProjection,
   parseDesignAuthorityManifest,
@@ -35,11 +36,22 @@ export async function inspectDesignAuthorityClosure(
   repositoryInput: string,
 ): Promise<DesignAuthorityInspection> {
   const repository = path.resolve(repositoryInput);
-  if (
-    !(await designAuthorityPathExists(
-      path.join(repository, DESIGN_AUTHORITY_ENTRY_PATH),
-    ))
-  )
+  const entryExists = await designAuthorityPathExists(
+    path.join(repository, DESIGN_AUTHORITY_ENTRY_PATH),
+  );
+  const manifestExists = await designAuthorityPathExists(
+    path.join(repository, DESIGN_AUTHORITY_MANIFEST_PATH),
+  );
+  if (!entryExists && manifestExists)
+    return emptyInspection("invalid", "bundle", [
+      {
+        severity: "error",
+        code: "bundle_entry_missing",
+        path: DESIGN_AUTHORITY_ENTRY_PATH,
+        detail: `${DESIGN_AUTHORITY_MANIFEST_PATH} exists without the canonical DESIGN.md entry`,
+      },
+    ]);
+  if (!entryExists)
     return emptyInspection("missing", "missing", [
       {
         severity: "warning",
@@ -58,13 +70,17 @@ export async function inspectDesignAuthorityClosure(
       ...snapshot,
     };
   } catch (error) {
-    return emptyInspection("invalid", "legacy", [
+    return emptyInspection(
+      "invalid",
+      manifestExists ? "bundle" : await declaredModeHint(repository),
+      [
       {
         severity: "error",
         code: "design_authority_invalid",
         detail: message(error),
       },
-    ]);
+      ],
+    );
   }
 }
 
@@ -100,7 +116,11 @@ async function buildDesignAuthorityClosure(
     DESIGN_AUTHORITY_ENTRY_PATH,
     "design_authority_entry",
   );
+  const declaredFormat = declaredDesignAuthorityFormat(entry.content);
   const manifest = await acquireDesignAuthorityManifest(repository);
+  if (declaredFormat === "bundle-v1" && !manifest)
+    invalid("bundle_manifest_missing");
+  if (declaredFormat === null && manifest) invalid("bundle_marker_missing");
   const digestMembers: DesignAuthorityDigestMember[] = [
     { ...entry, kind: "entry" },
   ];
@@ -206,7 +226,9 @@ function compareDiagnostic(
   left: DesignAuthorityDiagnostic,
   right: DesignAuthorityDiagnostic,
 ): number {
-  const severity = left.severity.localeCompare(right.severity);
+  const severity = Buffer.from(left.severity, "utf8").compare(
+    Buffer.from(right.severity, "utf8"),
+  );
   if (severity) return severity;
   return Buffer.from(
     `${left.path ?? ""}\0${left.code}\0${left.detail}`,
@@ -215,7 +237,7 @@ function compareDiagnostic(
 
 function emptyInspection(
   status: "missing" | "invalid",
-  mode: "missing" | "legacy",
+  mode: "missing" | "legacy" | "bundle",
   diagnostics: DesignAuthorityDiagnostic[],
 ): DesignAuthorityInspection {
   return {
@@ -230,6 +252,25 @@ function emptyInspection(
     generated_tokens: null,
     diagnostics,
   };
+}
+
+async function declaredModeHint(
+  repository: string,
+): Promise<"legacy" | "bundle"> {
+  try {
+    const entry = await acquireDesignAuthorityText(
+      repository,
+      DESIGN_AUTHORITY_ENTRY_PATH,
+      "design_authority_entry",
+    );
+    return declaredDesignAuthorityFormat(entry.content) === "bundle-v1"
+      ? "bundle"
+      : "legacy";
+  } catch (error) {
+    return /bundle_(?:marker|entry)/u.test(message(error))
+      ? "bundle"
+      : "legacy";
+  }
 }
 
 function message(error: unknown): string {

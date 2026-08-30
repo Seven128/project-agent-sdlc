@@ -739,6 +739,7 @@ test("design authoring profile and provider changes select focused coverage", ()
     "packages/ty-context/src/lib/migrations.ts",
   ]);
   assert.deepEqual(migrationRegistry.tests, [
+    "tests/ty-context/design-authority-migration.test.mjs",
     "tests/ty-context/legacy-upgrade.test.mjs",
     "tests/ty-context/long-task-verifier-migration.test.mjs",
     "tests/ty-context/modularity-capability-upgrade.test.mjs",

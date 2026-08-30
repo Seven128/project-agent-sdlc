@@ -2,7 +2,6 @@ import { spawn } from "node:child_process";
 import {
   mkdir,
   mkdtemp,
-  readFile,
   readdir,
   rm,
   writeFile,
@@ -21,7 +20,10 @@ import {
 } from "../../tools/test_suite_policy.mjs";
 import { planLongTaskSuiteLanes } from "../../tools/test_suite_lane_policy.mjs";
 import { prepareDeliveryFixtureSeed } from "./long-task-delivery-fixtures.mjs";
-import { buildFileTimingReport } from "./test-suite-file-reporter.mjs";
+import {
+  buildFileTimingReport,
+  readReporterEvents,
+} from "./test-suite-file-reporter.mjs";
 
 const suite = process.argv[2];
 if (
@@ -78,10 +80,24 @@ const execution = {
     lanePolicy?.max_files_per_test_process ?? files.length,
   unknown_files: lanePolicy?.unknown_files ?? [],
   unknown_files_parallelized: false,
+  fixture_seed_preparation_ms: null,
+  cleanup: {
+    fixture_seed_ms: null,
+    fixture_seed_error: null,
+    timing_temporary_root_ms: null,
+    timing_temporary_root_error: null,
+    total_ms: null,
+  },
   lanes: lanes.map((lane) => ({
     key: lane.key,
     file_count: lane.names.length,
     concurrency: lane.concurrency,
+    wall_time_ms: null,
+    event_parse_ms: null,
+    event_count: 0,
+    event_parse_error: null,
+    exit_code: null,
+    signal: null,
   })),
 };
 const events = [];
@@ -92,30 +108,63 @@ let executionError = null;
 const startedAt = performance.now();
 
 try {
-  if (lanePolicy) fixtureSeed = await prepareDeliveryFixtureSeed();
+  if (lanePolicy) {
+    const seedStartedAt = performance.now();
+    try {
+      fixtureSeed = await prepareDeliveryFixtureSeed();
+    } finally {
+      execution.fixture_seed_preparation_ms = elapsedMilliseconds(seedStartedAt);
+    }
+  }
   for (const [index, lane] of lanes.entries()) {
+    const laneExecution = execution.lanes[index];
     const eventFile = path.join(
       timingTemporaryRoot,
       `${String(index).padStart(2, "0")}-${lane.key}.ndjson`,
     );
     const completion = await runLane(lane, eventFile, fixtureSeed?.root);
     completions.push(completion);
-    events.push(...(await readReporterEvents(eventFile)));
+    laneExecution.wall_time_ms = completion.wall_time_ms;
+    laneExecution.exit_code = completion.code;
+    laneExecution.signal = completion.signal;
+    const parsed = await readReporterEvents(eventFile);
+    laneExecution.event_parse_ms = parsed.duration_ms;
+    laneExecution.event_count = parsed.events.length;
+    laneExecution.event_parse_error = parsed.error;
+    events.push(...parsed.events);
+    if (parsed.error)
+      throw new Error(`lane_event_parse_failed:${lane.key}:${parsed.error}`);
     if (completion.signal || completion.code !== 0) break;
   }
 } catch (error) {
   executionError =
     error instanceof Error ? (error.stack ?? error.message) : String(error);
 } finally {
+  const cleanupStartedAt = performance.now();
+  const fixtureSeedCleanupStartedAt = performance.now();
   try {
     if (fixtureSeed) await fixtureSeed.cleanup();
   } catch (error) {
     cleanupError = error instanceof Error ? error.message : String(error);
+    execution.cleanup.fixture_seed_error = cleanupError;
+  } finally {
+    if (fixtureSeed)
+      execution.cleanup.fixture_seed_ms = elapsedMilliseconds(
+        fixtureSeedCleanupStartedAt,
+      );
   }
+  const timingRootCleanupStartedAt = performance.now();
   try {
     await rm(timingTemporaryRoot, { recursive: true, force: true });
   } catch (error) {
-    cleanupError ??= error instanceof Error ? error.message : String(error);
+    const message = error instanceof Error ? error.message : String(error);
+    cleanupError ??= message;
+    execution.cleanup.timing_temporary_root_error = message;
+  } finally {
+    execution.cleanup.timing_temporary_root_ms = elapsedMilliseconds(
+      timingRootCleanupStartedAt,
+    );
+    execution.cleanup.total_ms = elapsedMilliseconds(cleanupStartedAt);
   }
 }
 
@@ -170,6 +219,7 @@ else if (timing.test_status !== "passed") {
 }
 
 async function runLane(lane, eventFile, fixtureSeedRoot) {
+  const startedAt = performance.now();
   const customReporterOptions = [
     `--test-reporter=${reporterModule}`,
     `--test-reporter-destination=${eventFile}`,
@@ -209,20 +259,18 @@ async function runLane(lane, eventFile, fixtureSeedRoot) {
       },
     );
     child.once("error", reject);
-    child.once("exit", (code, signal) => resolve({ code, signal }));
+    child.once("exit", (code, signal) =>
+      resolve({
+        code,
+        signal,
+        wall_time_ms: elapsedMilliseconds(startedAt),
+      }),
+    );
   });
 }
 
-async function readReporterEvents(file) {
-  try {
-    const text = await readFile(file, "utf8");
-    return text
-      .split(/\r?\n/u)
-      .filter(Boolean)
-      .map((line) => JSON.parse(line));
-  } catch {
-    return [];
-  }
+function elapsedMilliseconds(startedAt) {
+  return Math.max(0, Math.round(performance.now() - startedAt));
 }
 
 function assertRunnerOwnsConcurrency(options) {

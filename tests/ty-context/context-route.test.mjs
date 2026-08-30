@@ -25,7 +25,7 @@ test("Router source never compiles task terms or Manifest triggers as regular ex
     await Promise.all(
       (await readdir(sourceRoot))
         .filter((name) => name.endsWith(".ts"))
-        .sort()
+        .sort(compareUtf8)
         .map((name) => readFile(path.join(sourceRoot, name), "utf8")),
     )
   ).join("\n");
@@ -75,7 +75,7 @@ test("experimental Router combines deepest Area, Chinese trigger, literal and un
     );
     assert.ok(unregistered);
     assert.equal(unregistered.role, null);
-    assert.deepEqual(unregistered.groups.slice(0, 1), ["unregistered"]);
+    assert.ok(unregistered.groups.includes("unregistered"));
     assert.ok(
       result.diagnostics.some(
         (entry) => entry.code === "context_file_unregistered",
@@ -177,6 +177,185 @@ test("Router JSON is byte-stable and output truncation is not scan incompletenes
   }
 });
 
+test("Router JSON uses UTF-8 byte order for non-ASCII and case-varied Context paths", async () => {
+  const root = await createRouteProject();
+  const contextDirectory = path.join(
+    root,
+    "project_context",
+    "areas",
+    "client",
+  );
+  const physicalPaths = [
+    "project_context/areas/client/A-upper.md",
+    "project_context/areas/client/a-lower.md",
+    "project_context/areas/client/combining-Cafe\u0301.md",
+    "project_context/areas/client/precomposed-Café.md",
+    "project_context/areas/client/Å.md",
+    "project_context/areas/client/ä.md",
+    "project_context/areas/client/中文.md",
+    "project_context/areas/client/\uE000.md",
+    "project_context/areas/client/\u{10000}.md",
+  ];
+  const expectedPaths = physicalPaths
+    .map((entry) => entry.normalize("NFC"))
+    .sort(compareUtf8);
+  try {
+    await Promise.all(
+      physicalPaths.map((relative) =>
+        writeFile(
+          path.join(contextDirectory, path.basename(relative)),
+          "# Unicode order\n\nunicode-order-needle\n",
+          "utf8",
+        ),
+      ),
+    );
+    const input = {
+      project_root: root,
+      task: "none",
+      explicit_terms: ["unicode-order-needle"],
+    };
+    const first = await routeContext(input);
+    const second = await routeContext(input);
+    assert.equal(JSON.stringify(second), JSON.stringify(first));
+    assert.deepEqual(
+      first.unregistered_matches.map((entry) => entry.path),
+      expectedPaths,
+    );
+    assert.deepEqual(
+      first.diagnostics
+        .filter(
+          (entry) =>
+            entry.code === "context_file_unregistered" &&
+            expectedPaths.includes(entry.path),
+        )
+        .map((entry) => entry.path),
+      expectedPaths,
+    );
+    assert.ok(
+      expectedPaths.indexOf("project_context/areas/client/\uE000.md") <
+        expectedPaths.indexOf("project_context/areas/client/\u{10000}.md"),
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Router JSON is invariant to file creation order, path input order and separator aliases", async () => {
+  const roots = await Promise.all([
+    createRouteProject({ duplicateClientRoot: true }),
+    createRouteProject({ duplicateClientRoot: true }),
+  ]);
+  const names = ["z-last.md", "Å-middle.md", "\uE000.md", "\u{10000}.md"];
+  try {
+    for (const [index, root] of roots.entries()) {
+      const ordered = index === 0 ? names : [...names].reverse();
+      for (const name of ordered)
+        await writeFile(
+          path.join(root, "project_context", "areas", "client", name),
+          "# Permutation\n\npermutation-needle\n",
+          "utf8",
+        );
+    }
+    const first = await routeContext({
+      project_root: roots[0],
+      task: "permutation",
+      explicit_terms: ["permutation-needle"],
+      paths: [
+        "outside/file.ts",
+        "apps\\client\\src\\map.ts",
+        "apps/client/src/map.ts",
+      ],
+    });
+    const second = await routeContext({
+      project_root: roots[1],
+      task: "permutation",
+      explicit_terms: ["permutation-needle"],
+      paths: ["apps/client/src/map.ts", "outside\\file.ts"],
+    });
+    assert.equal(JSON.stringify(second), JSON.stringify(first));
+    assert.deepEqual(
+      first.ambiguous.map((entry) => entry.input),
+      ["apps/client/src/map.ts"],
+    );
+    for (const entry of [...first.candidates, ...first.unregistered_matches]) {
+      assert.deepEqual([...entry.groups].sort(compareUtf8), entry.groups);
+      assert.deepEqual([...entry.reasons].sort(compareReasons), entry.reasons);
+    }
+  } finally {
+    await Promise.all(
+      roots.map((root) => rm(root, { recursive: true, force: true })),
+    );
+  }
+});
+
+test("Router resolves an NFC manual include to an NFD physical file and emits only the canonical key", async () => {
+  const root = await createRouteProject();
+  const decomposed = "project_context/areas/client/Cafe\u0301.md";
+  const canonical = decomposed.normalize("NFC");
+  try {
+    const manifestPath = path.join(root, "project_context", "context.toml");
+    await writeFile(
+      manifestPath,
+      `${await readFile(manifestPath, "utf8")}
+[[context]]
+path = "${decomposed}"
+role = "contract"
+read_policy = "on-demand"
+`,
+      "utf8",
+    );
+    await writeFile(
+      path.join(root, ...decomposed.split("/")),
+      "# Unicode Contract\n\nConsumers must preserve this contract.\n",
+      "utf8",
+    );
+    const result = await routeContext({
+      project_root: root,
+      task: "none",
+      includes: [canonical],
+    });
+    const included = candidate(result, canonical);
+    assert.ok(included.groups.includes("manual_includes"));
+    assert.ok(
+      included.reasons.some(
+        (reason) =>
+          reason.kind === "manual_include" && reason.input === canonical,
+      ),
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("Router preserves source-position then explicit-term order inside file matches", async () => {
+  const root = await createRouteProject();
+  try {
+    const target = path.join(
+      root,
+      "project_context",
+      "areas",
+      "client",
+      "match-order.md",
+    );
+    await writeFile(target, "# Match order\n\nalpha beta\n", "utf8");
+    const result = await routeContext({
+      project_root: root,
+      task: "none",
+      explicit_terms: ["beta", "alpha", "alp"],
+    });
+    const entry = result.unregistered_matches.find((value) =>
+      value.path.endsWith("match-order.md"),
+    );
+    assert.ok(entry);
+    assert.deepEqual(
+      entry.matches.map((match) => match.term),
+      ["alpha", "alp", "beta"],
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("Router reports task and per-file budget overruns as incomplete", async () => {
   const root = await createRouteProject();
   try {
@@ -210,7 +389,25 @@ test("Router reports task and per-file budget overruns as incomplete", async () 
           entry.path.endsWith("unregistered-large.md"),
       ),
     );
+    assert.deepEqual(
+      result.scan.exceeded.map((entry) => [entry.budget, entry.path ?? ""]),
+      [...result.scan.exceeded]
+        .sort(
+          (left, right) =>
+            compareUtf8(left.budget, right.budget) ||
+            compareUtf8(left.path ?? "", right.path ?? ""),
+        )
+        .map((entry) => [entry.budget, entry.path ?? ""]),
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
+
+function compareReasons(left, right) {
+  return (
+    compareUtf8(left.kind, right.kind) ||
+    compareUtf8(left.input, right.input) ||
+    compareUtf8(left.detail, right.detail)
+  );
+}

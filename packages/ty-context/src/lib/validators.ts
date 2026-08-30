@@ -11,7 +11,11 @@ import {
   catalogWarnings,
 } from "./context-catalog/catalog-diagnostics.js";
 import { loadContextCatalog } from "./context-catalog/catalog-load.js";
-import { isPathWithin } from "./context-catalog/catalog-paths.js";
+import {
+  compareUtf8Paths,
+  isPathWithin,
+  normalizeContextPath,
+} from "./context-catalog/catalog-paths.js";
 import { harnessPath, harnessRoot } from "./harness-root.js";
 import { listFiles, pathExists, readText } from "./fs.js";
 import { runModularityCheck } from "./modularity.js";
@@ -163,6 +167,7 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
   let manifestRoles = new Map<string, ContextRole>();
   let manifestReadPolicies = new Map<string, string>();
   let manifestCatalogLoaded = false;
+  let catalogContextFiles: string[] | undefined;
   let schemaVersion = "4";
 
   if (!(await pathExists(configPath))) {
@@ -250,6 +255,9 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
   if (await pathExists(manifestPath)) {
     const catalog = await loadContextCatalog(projectRoot);
     manifestCatalogLoaded = true;
+    catalogContextFiles = catalog.context_files
+      .map((entry) => entry.absolute_path)
+      .filter((file) => file !== globalPath && file !== architecturePath);
     errors.push(...catalogErrors(catalog.diagnostics));
     warnings.push(...catalogWarnings(catalog.diagnostics));
     manifestRoles = catalog.roles_by_path;
@@ -266,10 +274,17 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
     );
   }
 
-  const contextFiles = (await listFiles(projectContextRoot))
-    .filter((file) => file.endsWith(".md"))
-    .filter((file) => file !== globalPath && file !== architecturePath)
-    .sort();
+  const contextFiles = (
+    catalogContextFiles ??
+    (await listFiles(projectContextRoot))
+      .filter((file) => file.endsWith(".md"))
+      .filter((file) => file !== globalPath && file !== architecturePath)
+  ).sort((left, right) =>
+    compareUtf8Paths(
+      repoRelative(projectRoot, left),
+      repoRelative(projectRoot, right),
+    ),
+  );
 
   const validatedContextFiles = new Map<string, ContextRole>();
   for (const file of contextFiles) {
@@ -600,7 +615,7 @@ function escapeRegExp(value: string): string {
 }
 
 function repoRelative(root: string, file: string): string {
-  return path.relative(root, file).split(path.sep).join("/");
+  return normalizeContextPath(path.relative(root, file));
 }
 
 function schemaRequiresContextManifest(schemaVersion: string): boolean {
