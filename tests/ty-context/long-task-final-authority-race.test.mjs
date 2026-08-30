@@ -21,6 +21,8 @@ import {
   readFinalReceipt,
   readProgressRecords,
 } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import * as finalizationIdentity from "../../packages/ty-context/dist/lib/long-task-finalization-identity.js";
+import * as terminalFinalization from "../../packages/ty-context/dist/lib/long-task-terminal-finalization.js";
 import {
   commitCandidate,
   createDeliveryFixture,
@@ -37,13 +39,15 @@ const repository = fileURLToPath(new URL("../..", import.meta.url));
 const cli = path.join(repository, "packages/ty-context/dist/cli.js");
 
 test("terminal publication has one Finalization Identity and CAS owner", async () => {
-  const identity =
-    await import("../../packages/ty-context/dist/lib/long-task-finalization-identity.js");
-  const finalization =
-    await import("../../packages/ty-context/dist/lib/long-task-terminal-finalization.js");
-  assert.equal(typeof identity.captureFinalizationIdentity, "function");
-  assert.equal(typeof identity.finalizationIdentityDigest, "function");
-  assert.equal(typeof finalization.finalizeDeliveryGateCas, "function");
+  assert.equal(
+    typeof finalizationIdentity.captureFinalizationIdentity,
+    "function",
+  );
+  assert.equal(
+    typeof finalizationIdentity.finalizationIdentityDigest,
+    "function",
+  );
+  assert.equal(typeof terminalFinalization.finalizeDeliveryGateCas, "function");
 });
 
 test("Final Gate rejects an Authority Revision that lands during execution", async () => {
@@ -110,17 +114,20 @@ test("Final Gate rejects an Authority Revision that lands during execution", asy
 });
 
 test("Final Gate rejects protected inputs and current-candidate runtime files changed during execution", async (t) => {
-  const cases = [
-    {
-      name: "raw Contract",
+  await t.test("raw Contract", async () => {
+    await assertConcurrentFinalGateMutationRejected({
+      signalName: "protected-raw-contract",
       mutate: async (fixture) =>
         appendFile(
           path.join(fixture.workdir, "delivery-contract.yaml"),
           "\n# concurrent raw Contract mutation\n",
         ),
-    },
-    {
-      name: "Source",
+    });
+  });
+
+  await t.test("Source", async () => {
+    await assertConcurrentFinalGateMutationRejected({
+      signalName: "protected-source",
       mutate: async (fixture) =>
         appendFile(
           path.join(fixture.root, "source.md"),
@@ -130,104 +137,109 @@ test("Final Gate rejects protected inputs and current-candidate runtime files ch
 <!-- ty-source-background:end -->
 `,
         ),
-    },
-    {
-      name: "controlling Context",
+    });
+  });
+
+  await t.test("controlling Context", async () => {
+    await assertConcurrentFinalGateMutationRejected({
+      signalName: "protected-controlling-context",
       mutate: async (fixture) =>
         appendFile(
           path.join(fixture.root, "project_context", "areas", "main.md"),
           "\nConcurrent controlling Context mutation.\n",
         ),
-    },
-    {
-      name: "product runner module",
+    });
+  });
+
+  await t.test("product runner module", async () => {
+    await assertConcurrentFinalGateMutationRejected({
+      signalName: "protected-product-runner-module",
       expectedFinding: "workspace_changed_during_final_gate",
       mutate: async (fixture) =>
         appendFile(
           path.join(fixture.root, "tests", "oracle.mjs"),
           "\n// concurrent runner mutation\n",
         ),
-    },
-    {
-      name: "verification input",
+    });
+  });
+
+  await t.test("verification input", async () => {
+    await assertConcurrentFinalGateMutationRejected({
+      signalName: "protected-verification-input",
       mutate: async (fixture) =>
         writeFile(
           path.join(fixture.root, "tests", "semantic-false.json"),
           `${JSON.stringify({ first: false, second: true })}\n`,
         ),
-    },
-    {
-      name: "workdir Outcome fragment",
+    });
+  });
+
+  await t.test("workdir Outcome fragment", async () => {
+    await assertConcurrentFinalGateMutationRejected({
+      signalName: "protected-workdir-outcome-fragment",
       fragment: true,
       mutate: async (fixture) =>
         appendFile(
           path.join(fixture.workdir, "outcomes.yaml"),
           "\n# concurrent workdir fragment mutation\n",
         ),
-    },
-  ];
-
-  for (const mutation of cases)
-    await t.test(mutation.name, async () => {
-      const fixture = await createDeliveryFixture();
-      const signal = raceSignal(
-        `protected-${mutation.name.toLowerCase().replaceAll(/[^a-z]+/gu, "-")}`,
-      );
-      try {
-        if (mutation.fragment) {
-          const outcomes = fixture.contract.outcomes;
-          delete fixture.contract.outcomes;
-          fixture.contract.outcome_files = ["outcomes.yaml"];
-          await writeFile(
-            path.join(fixture.workdir, "outcomes.yaml"),
-            `${JSON.stringify(
-              {
-                schema_version: "long-task-outcomes-v2",
-                outcomes,
-              },
-              null,
-              2,
-            )}\n`,
-          );
-          await writeContract(fixture.workdir, fixture.contract);
-        }
-        await installSlowOracle(fixture, signal);
-        await runCli(fixture.root, ["enable", "long-task"]);
-        await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-        await commitCandidate(fixture.root);
-
-        const finalProcess = runCliProcess(fixture.root, [
-          "long-task",
-          "final-gate",
-          fixture.workdir,
-        ]);
-        await waitForFile(signal.started);
-        await mutation.mutate(fixture);
-        await writeFile(signal.release, "release\n");
-
-        const final = await finalProcess;
-        assert.notEqual(final.exitCode, 0);
-        const receipt = parseCliJson(final.stdout);
-        assert.equal(
-          receipt.workflow_status,
-          "needs_work",
-          JSON.stringify(final),
-        );
-        assert.ok(
-          receipt.findings.some(
-            (finding) =>
-              finding.code ===
-              (mutation.expectedFinding ??
-                "protected_inputs_changed_during_final_gate"),
-          ),
-          JSON.stringify(receipt.findings),
-        );
-      } finally {
-        await removeTemporary(signal.folder);
-        await removeTemporary(fixture.root);
-      }
     });
+  });
 });
+
+async function assertConcurrentFinalGateMutationRejected({
+  signalName,
+  expectedFinding = "protected_inputs_changed_during_final_gate",
+  fragment = false,
+  mutate,
+}) {
+  const fixture = await createDeliveryFixture();
+  const signal = raceSignal(signalName);
+  try {
+    if (fragment) {
+      const outcomes = fixture.contract.outcomes;
+      delete fixture.contract.outcomes;
+      fixture.contract.outcome_files = ["outcomes.yaml"];
+      await writeFile(
+        path.join(fixture.workdir, "outcomes.yaml"),
+        `${JSON.stringify(
+          {
+            schema_version: "long-task-outcomes-v2",
+            outcomes,
+          },
+          null,
+          2,
+        )}\n`,
+      );
+      await writeContract(fixture.workdir, fixture.contract);
+    }
+    await installSlowOracle(fixture, signal);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+
+    const finalProcess = runCliProcess(fixture.root, [
+      "long-task",
+      "final-gate",
+      fixture.workdir,
+    ]);
+    await waitForFile(signal.started);
+    await mutate(fixture);
+    await writeFile(signal.release, "release\n");
+
+    const final = await finalProcess;
+    assert.notEqual(final.exitCode, 0);
+    const receipt = parseCliJson(final.stdout);
+    assert.equal(receipt.workflow_status, "needs_work", JSON.stringify(final));
+    assert.ok(
+      receipt.findings.some((finding) => finding.code === expectedFinding),
+      JSON.stringify(receipt.findings),
+    );
+  } finally {
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
+}
 
 test("targeted verify writes no progress for an Authority that became stale", async () => {
   const fixture = await createDeliveryFixture();
@@ -297,62 +309,62 @@ test("candidate mutation after Receipt staging rolls back acceptance and retains
 });
 
 test("live protected Source identity is revalidated at every terminal commit point", async (t) => {
-  const cases = [
-    {
-      name: "after finalization evaluation",
-      phase: "after_finalization_evaluation",
-    },
-    {
-      name: "after Receipt stage",
-      phase: "after_receipt_stage",
-    },
-    {
-      name: "after Receipt publish and before Authority clear",
-      phase: "after_receipt_publish",
-    },
-  ];
-
-  for (const mutation of cases)
-    await t.test(mutation.name, async () => {
-      const fixture = await createDeliveryFixture();
-      const signal = await finalizationSignal(mutation.phase);
-      try {
-        await makeFixtureSourceInvisibleToCandidateFingerprint(fixture.root);
-        await runCli(fixture.root, ["enable", "long-task"]);
-        await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
-        await commitCandidate(fixture.root);
-
-        const closing = runCliProcess(
-          fixture.root,
-          ["long-task", "close", fixture.workdir],
-          { env: finalizationSignalEnvironment(signal) },
-        );
-        await waitForFile(signal.started);
-        await appendFile(
-          path.join(fixture.root, "source.md"),
-          `\n<!-- protected Source race: ${mutation.phase} -->\n`,
-        );
-        await writeFile(signal.release, "release\n");
-
-        const result = await closing;
-        assert.notEqual(result.exitCode, 0, JSON.stringify(result));
-        const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
-        assert.equal(receipt.workflow_status, "needs_work");
-        assert.notEqual(receipt.workflow_status, "machine_accepted");
-        assert.ok(
-          receipt.findings.some(
-            (finding) =>
-              finding.code === "finalization_identity_compare_and_swap_failed",
-          ),
-          JSON.stringify(receipt.findings),
-        );
-        assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
-      } finally {
-        await removeTemporary(signal.folder);
-        await removeTemporary(fixture.root);
-      }
-    });
+  await t.test("after finalization evaluation", async () => {
+    await assertProtectedSourceMutationRejectedAtFinalizationPhase(
+      "after_finalization_evaluation",
+    );
+  });
+  await t.test("after Receipt stage", async () => {
+    await assertProtectedSourceMutationRejectedAtFinalizationPhase(
+      "after_receipt_stage",
+    );
+  });
+  await t.test("after Receipt publish and before Authority clear", async () => {
+    await assertProtectedSourceMutationRejectedAtFinalizationPhase(
+      "after_receipt_publish",
+    );
+  });
 });
+
+async function assertProtectedSourceMutationRejectedAtFinalizationPhase(phase) {
+  const fixture = await createDeliveryFixture();
+  const signal = await finalizationSignal(phase);
+  try {
+    await makeFixtureSourceInvisibleToCandidateFingerprint(fixture.root);
+    await runCli(fixture.root, ["enable", "long-task"]);
+    await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+    await commitCandidate(fixture.root);
+
+    const closing = runCliProcess(
+      fixture.root,
+      ["long-task", "close", fixture.workdir],
+      { env: finalizationSignalEnvironment(signal) },
+    );
+    await waitForFile(signal.started);
+    await appendFile(
+      path.join(fixture.root, "source.md"),
+      `\n<!-- protected Source race: ${phase} -->\n`,
+    );
+    await writeFile(signal.release, "release\n");
+
+    const result = await closing;
+    assert.notEqual(result.exitCode, 0, JSON.stringify(result));
+    const receipt = await readFinalReceipt(fixture.root, fixture.workdir);
+    assert.equal(receipt.workflow_status, "needs_work");
+    assert.notEqual(receipt.workflow_status, "machine_accepted");
+    assert.ok(
+      receipt.findings.some(
+        (finding) =>
+          finding.code === "finalization_identity_compare_and_swap_failed",
+      ),
+      JSON.stringify(receipt.findings),
+    );
+    assert.ok((await loadActiveLongTaskAuthority(fixture.root)).authority);
+  } finally {
+    await removeTemporary(signal.folder);
+    await removeTemporary(fixture.root);
+  }
+}
 
 test("an unchanged protected Source outside the candidate fingerprint remains allowed", async () => {
   const fixture = await createDeliveryFixture();

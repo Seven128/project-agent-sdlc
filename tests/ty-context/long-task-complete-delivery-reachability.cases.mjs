@@ -286,7 +286,7 @@ function optionalExactCrossSurfaceReachability(mutate) {
   });
 }
 
-for (const scenario of [
+const optionalCrossSurfaceIdentityScenarios = [
   {
     name: "actual projections",
     mutate({ externalAuthority }) {
@@ -380,15 +380,49 @@ for (const scenario of [
     },
     reason: "proof_surface_authority_ambiguous",
   },
-])
-  test(`optional cross-surface routes with different ${scenario.name} cannot become advisory`, () => {
+];
+
+test("optional cross-surface routes preserve every authority-identity distinction", async (t) => {
+  function assertScenario(name) {
+    const scenario = optionalCrossSurfaceIdentityScenarios.find(
+      (candidate) => candidate.name === name,
+    );
+    assert.ok(scenario);
     const result = optionalExactCrossSurfaceReachability(
       scenario.mutate,
     ).obligations.find((row) => row.claim_ref === "first.result");
     assert.ok(result);
     assert.equal(result.status, "unreachable");
     assert.equal(result.reason, scenario.reason);
-  });
+  }
+
+  await t.test("actual projections", () =>
+    assertScenario("actual projections"),
+  );
+  await t.test("comparators", () => assertScenario("comparators"));
+  await t.test("comparator modes", () => assertScenario("comparator modes"));
+  await t.test("comparator parameters", () =>
+    assertScenario("comparator parameters"),
+  );
+  await t.test("comparator tolerances", () =>
+    assertScenario("comparator tolerances"),
+  );
+  await t.test("comparator masks", () => assertScenario("comparator masks"));
+  await t.test("targets", () => assertScenario("targets"));
+  await t.test("methods", () => assertScenario("methods"));
+  await t.test("required evidence capabilities", () =>
+    assertScenario("required evidence capabilities"),
+  );
+  await t.test("Expected authority owners", () =>
+    assertScenario("Expected authority owners"),
+  );
+  await t.test("applicability sessions", () =>
+    assertScenario("applicability sessions"),
+  );
+  await t.test("missing compiled Expected/comparator authorities", () =>
+    assertScenario("missing compiled Expected/comparator authorities"),
+  );
+});
 
 test("Machine and External routes with different compiled Expected owners are ambiguous", () => {
   const fixture = optionalExactCrossSurfaceFixture();

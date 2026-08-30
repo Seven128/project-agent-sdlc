@@ -5,17 +5,12 @@ import os from "node:os";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { analyzeModularity } from "../../packages/ty-context/dist/lib/modularity.js";
+import { modularityAnalysisCapability } from "../../packages/ty-context/dist/lib/source-files.js";
 
 const cliPath = fileURLToPath(
   new URL("../../packages/ty-context/dist/cli.js", import.meta.url),
 );
-const { analyzeModularity } = await import(
-  new URL("../../packages/ty-context/dist/lib/modularity.js", import.meta.url)
-);
-const { modularityAnalysisCapability } = await import(
-  new URL("../../packages/ty-context/dist/lib/source-files.js", import.meta.url)
-);
-
 test("modularity capability classification covers every included file family", () => {
   const expected = new Map([
     ...["js", "jsx", "cjs", "mjs", "ts", "tsx"].map((extension) => [

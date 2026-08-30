@@ -18,68 +18,72 @@ import {
 const exec = promisify(execFile);
 
 test("force-corrupt-state safely abandons every unrecoverable local state", async (t) => {
-  for (const scenario of corruptScenarios())
-    await t.test(scenario.name, async () => {
-      const fixture = await createDeliveryFixture();
-      try {
-        await runCli(fixture.root, ["enable", "long-task"]);
-        await runCli(fixture.root, [
-          "long-task",
-          "compile",
-          fixture.workdir,
-        ]);
-        const activeFile = await activeRecordPath(fixture.root);
-        const markerKey = `ty-context.longTask.${worktreeIdentity(fixture.root)}`;
-        const baseline = await protectedBaseline(fixture);
-        await scenario.corrupt({
-          fixture,
-          activeFile,
-          markerKey,
-        });
+  async function assertScenario(name) {
+    const scenario = corruptScenarios().find(
+      (candidate) => candidate.name === name,
+    );
+    assert.ok(scenario);
+    const fixture = await createDeliveryFixture();
+    try {
+      await runCli(fixture.root, ["enable", "long-task"]);
+      await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);
+      const activeFile = await activeRecordPath(fixture.root);
+      const markerKey = `ty-context.longTask.${worktreeIdentity(fixture.root)}`;
+      const baseline = await protectedBaseline(fixture);
+      await scenario.corrupt({
+        fixture,
+        activeFile,
+        markerKey,
+      });
 
-        await assert.rejects(
-          () =>
-            runCli(fixture.root, [
-              "long-task",
-              "abandon",
-              fixture.workdir,
-            ]),
-        );
-        const doctor = await runCli(fixture.root, [
-          "long-task",
-          "doctor",
-          fixture.workdir,
-        ]);
-        assert.equal(doctor.healthy, false);
-        assert.equal(
-          doctor.next_action,
-          `ty-context long-task abandon ${fixture.workdir} --force-corrupt-state`,
-        );
+      await assert.rejects(() =>
+        runCli(fixture.root, ["long-task", "abandon", fixture.workdir]),
+      );
+      const doctor = await runCli(fixture.root, [
+        "long-task",
+        "doctor",
+        fixture.workdir,
+      ]);
+      assert.equal(doctor.healthy, false);
+      assert.equal(
+        doctor.next_action,
+        `ty-context long-task abandon ${fixture.workdir} --force-corrupt-state`,
+      );
 
-        const result = await runCli(fixture.root, [
-          "long-task",
-          "abandon",
-          fixture.workdir,
-          "--force-corrupt-state",
-        ]);
-        assert.equal(result.force_corrupt_state, true);
-        assert.equal(await pathExists(activeFile), false);
-        assert.equal(await gitConfig(fixture.root, markerKey), null);
-        assert.equal(
-          await pathExists(path.join(fixture.workdir, ".ty-context")),
-          false,
-        );
-        assert.equal(
-          await pathExists(
-            path.join(fixture.workdir, "delivery-contract.yaml"),
-          ),
-          true,
-        );
-        assert.deepEqual(await protectedBaseline(fixture), baseline);
-      } finally {
-        await rm(fixture.root, { recursive: true, force: true });
-      }
-    });
+      const result = await runCli(fixture.root, [
+        "long-task",
+        "abandon",
+        fixture.workdir,
+        "--force-corrupt-state",
+      ]);
+      assert.equal(result.force_corrupt_state, true);
+      assert.equal(await pathExists(activeFile), false);
+      assert.equal(await gitConfig(fixture.root, markerKey), null);
+      assert.equal(
+        await pathExists(path.join(fixture.workdir, ".ty-context")),
+        false,
+      );
+      assert.equal(
+        await pathExists(path.join(fixture.workdir, "delivery-contract.yaml")),
+        true,
+      );
+      assert.deepEqual(await protectedBaseline(fixture), baseline);
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+
+  await t.test("invalid JSON record", () =>
+    assertScenario("invalid JSON record"),
+  );
+  await t.test("marker only", () => assertScenario("marker only"));
+  await t.test("record only", () => assertScenario("record only"));
+  await t.test("marker and record identity mismatch", () =>
+    assertScenario("marker and record identity mismatch"),
+  );
+  await t.test("legacy cache missing", () =>
+    assertScenario("legacy cache missing"),
+  );
 });
 
 test("a canonical dead Active Authority owner is reclaimed without force", async () => {
@@ -163,11 +167,7 @@ function corruptScenarios() {
           windowsHide: true,
         });
         await rm(
-          path.join(
-            fixture.workdir,
-            ".ty-context",
-            "compiled-contract.json",
-          ),
+          path.join(fixture.workdir, ".ty-context", "compiled-contract.json"),
           { force: true },
         );
       },
@@ -177,10 +177,7 @@ function corruptScenarios() {
 
 async function protectedBaseline(fixture) {
   const [contract, source, context, head] = await Promise.all([
-    readFile(
-      path.join(fixture.workdir, "delivery-contract.yaml"),
-      "utf8",
-    ),
+    readFile(path.join(fixture.workdir, "delivery-contract.yaml"), "utf8"),
     readFile(path.join(fixture.root, "source.md"), "utf8"),
     readFile(
       path.join(fixture.root, "project_context", "areas", "main.md"),

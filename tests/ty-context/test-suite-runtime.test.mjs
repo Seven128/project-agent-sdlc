@@ -19,6 +19,7 @@ import {
   writePackageBuildFingerprint,
 } from "../../tools/package_build_fingerprint.mjs";
 import { selectAffectedTests } from "../../tools/affected_test_selection.mjs";
+import { localImplementationDependencies } from "../../tools/long_task_benchmark_implementation_closure_dependencies.mjs";
 import {
   CRITICAL_TEST_SENTINELS,
   LONG_TASK_EXCLUSIVE_TEST_FILES,
@@ -241,10 +242,8 @@ test("workspace snapshots honor inherited autocrlf when preserving tracked LF by
   }
 });
 
-test(
-  "workspace manifest serializes index-writing Git before parallel reads",
-  assertWorkspaceGitOrdering,
-);
+test("workspace manifest serializes index-writing Git before parallel reads", () =>
+  assertWorkspaceGitOrdering());
 
 test("suite-scoped fixture seeds preserve independent repository semantics", async () => {
   const seed = await prepareDeliveryFixtureSeed();
@@ -338,6 +337,12 @@ test("suite-scoped fixture seeds preserve independent repository semantics", asy
     const twoOutcomeSecondState = await readFile(
       path.join(twoOutcomeSecond.root, "src", "state.json"),
       "utf8",
+    );
+    assert.equal(JSON.parse(twoOutcomeSecondState).first, true);
+    assert.equal(
+      JSON.parse(twoOutcomeSecondState).second,
+      false,
+      "the initialized seed must retain the pre-optimization failing second outcome",
     );
     await writeFile(
       path.join(twoOutcomeFirst.root, "src", "state.json"),
@@ -726,12 +731,7 @@ test("file timing diagnostics count imported and unattributed terminal tests wit
     "ty-context",
     "zeta.cases.mjs",
   );
-  const importedWrapper = event(
-    "test:pass",
-    importedFile,
-    importedFile,
-    50,
-  );
+  const importedWrapper = event("test:pass", importedFile, importedFile, 50);
   importedWrapper.data.nesting = 0;
   const fileless = event("test:pass", null, "fileless skipped", 3);
   fileless.data.skip = true;
@@ -843,10 +843,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
     "long-task-final-authority-race.test.mjs",
   );
   assert.match(atomicFinalization.rationale, /Finalization Identity\/CAS/u);
-  assert.equal(
-    Object.hasOwn(atomicFinalization, "required_platforms"),
-    false,
-  );
+  assert.equal(Object.hasOwn(atomicFinalization, "required_platforms"), false);
   const windowsFinalization = CRITICAL_TEST_SENTINELS.find(
     (entry) => entry.id === "windows-finalization-tree-settlement",
   );
@@ -1198,6 +1195,7 @@ test("critical sentinel applicability is platform-derived without weakening regi
   assert.equal(linuxReport.critical_sentinel_coverage.status, "passed");
   assert.deepEqual(linuxReport.critical_sentinel_coverage.observed_ids, [
     crossPlatformSentinel.id,
+    windowsSentinel.id,
   ]);
   assert.deepEqual(linuxReport.critical_sentinel_coverage.non_applicable_ids, [
     windowsSentinel.id,
@@ -1207,6 +1205,119 @@ test("critical sentinel applicability is platform-derived without weakening regi
     [windowsSentinel.id],
   );
   assert.deepEqual(linuxReport.critical_sentinel_coverage.non_passing_ids, []);
+
+  const nonSelectedApplicableEvent = event(
+    "test:pass",
+    windowsFile,
+    `[critical:${windowsSentinel.id}] applicable but not selected`,
+    1,
+  );
+  nonSelectedApplicableEvent.data.skip = true;
+  const targetProjection = buildFileTimingReport({
+    suite: "required-critical-sentinel-registration-projection",
+    selectedFiles: [windowsFile, crossPlatformFile],
+    wallTimeMs: 10,
+    execution: { mode: "required-critical-sentinel", isolated_concurrency: 1 },
+    registeredCriticalSentinels: [crossPlatformSentinel, windowsSentinel],
+    applicableCriticalSentinels: [crossPlatformSentinel, windowsSentinel],
+    requiredCriticalSentinels: [crossPlatformSentinel],
+    events: [
+      event(
+        "test:pass",
+        crossPlatformFile,
+        `[critical:${crossPlatformSentinel.id}] selected target`,
+        1,
+      ),
+      nonSelectedApplicableEvent,
+    ],
+  }).critical_sentinel_coverage;
+  assert.deepEqual(targetProjection.non_applicable_ids, []);
+  assert.deepEqual(targetProjection.not_selected_ids, [windowsSentinel.id]);
+  assert.deepEqual(targetProjection.non_passing_ids, []);
+  assert.equal(targetProjection.status, "passed");
+
+  const nonApplicableReport = (events) =>
+    buildFileTimingReport({
+      suite: "long-task-trust",
+      selectedFiles: [windowsFile, crossPlatformFile],
+      wallTimeMs: 10,
+      execution: { mode: "serial", isolated_concurrency: 1 },
+      registeredCriticalSentinels: [crossPlatformSentinel, windowsSentinel],
+      requiredCriticalSentinels: [crossPlatformSentinel],
+      events: [
+        event(
+          "test:pass",
+          crossPlatformFile,
+          `[critical:${crossPlatformSentinel.id}] required Linux control`,
+          1,
+        ),
+        ...events,
+      ],
+    }).critical_sentinel_coverage;
+  const skippedNonApplicable = (file, suffix) => {
+    const record = event(
+      "test:pass",
+      file,
+      `[critical:${windowsSentinel.id}] ${suffix}`,
+      1,
+    );
+    record.data.skip = true;
+    return record;
+  };
+  const duplicateNonApplicable = nonApplicableReport([
+    skippedNonApplicable(windowsFile, "registered owner"),
+    skippedNonApplicable(crossPlatformFile, "duplicate wrong owner"),
+  ]);
+  assert.equal(duplicateNonApplicable.status, "failed");
+  assert.deepEqual(duplicateNonApplicable.duplicate_ids, [windowsSentinel.id]);
+  assert.deepEqual(duplicateNonApplicable.misplaced_ids, [windowsSentinel.id]);
+  assert.deepEqual(duplicateNonApplicable.non_passing_ids, []);
+
+  const misplacedNonApplicable = nonApplicableReport([
+    skippedNonApplicable(crossPlatformFile, "wrong owner only"),
+  ]);
+  assert.equal(misplacedNonApplicable.status, "failed");
+  assert.deepEqual(misplacedNonApplicable.duplicate_ids, []);
+  assert.deepEqual(misplacedNonApplicable.misplaced_ids, [windowsSentinel.id]);
+  assert.deepEqual(misplacedNonApplicable.missing_ids, []);
+  assert.deepEqual(misplacedNonApplicable.non_passing_ids, []);
+
+  const sameBasenameImportedFile = path.join(
+    repositoryRoot,
+    "outside-selected-test-root",
+    windowsSentinel.file,
+  );
+  const sameBasenameImportedReport = buildFileTimingReport({
+    suite: "long-task-trust",
+    selectedFiles: [windowsFile],
+    wallTimeMs: 10,
+    execution: { mode: "serial", isolated_concurrency: 1 },
+    registeredCriticalSentinels: [windowsSentinel],
+    requiredCriticalSentinels: [],
+    events: [
+      skippedNonApplicable(
+        sameBasenameImportedFile,
+        "same-basename imported wrong owner",
+      ),
+    ],
+  });
+  assert.equal(sameBasenameImportedReport.imported_file_count, 1);
+  assert.equal(
+    sameBasenameImportedReport.imported_files[0].file,
+    windowsSentinel.file,
+  );
+  assert.equal(
+    sameBasenameImportedReport.imported_files[0].source_kind,
+    "imported",
+  );
+  assert.deepEqual(
+    sameBasenameImportedReport.critical_sentinel_coverage.misplaced_ids,
+    [windowsSentinel.id],
+  );
+  assert.equal(
+    sameBasenameImportedReport.critical_sentinel_coverage.status,
+    "failed",
+  );
 
   const windowsReport = (events) =>
     buildFileTimingReport({
@@ -1246,6 +1357,121 @@ test("critical sentinel applicability is platform-derived without weakening regi
   ]);
 });
 
+test("critical runtime occurrences bind to their exact AST declaration identity", () => {
+  const sentinel = CRITICAL_TEST_SENTINELS.find(
+    (entry) => entry.id === "critical-policy-continuity",
+  );
+  assert.ok(sentinel);
+  const file = path.join(repositoryRoot, "tests", "ty-context", sentinel.file);
+  const title = `[critical:${sentinel.id}] canonical declaration`;
+  const declaration = {
+    id: sentinel.id,
+    file: sentinel.file,
+    line: 21,
+    column: 3,
+    title,
+  };
+  const timingReport = (runtimeTitle, line, column, runtimeFile = file) =>
+    buildFileTimingReport({
+      suite: "default",
+      selectedFiles: [file],
+      wallTimeMs: 1,
+      execution: { mode: "serial", isolated_concurrency: 1 },
+      registeredCriticalSentinels: [sentinel],
+      requiredCriticalSentinels: [sentinel],
+      declaredCriticalOccurrences: [declaration],
+      events: [
+        event("test:pass", runtimeFile, runtimeTitle, 1, { line, column }),
+      ],
+    });
+  const report = (runtimeTitle, line, column, runtimeFile = file) =>
+    timingReport(runtimeTitle, line, column, runtimeFile)
+      .critical_sentinel_coverage;
+
+  const matching = report(title, 21, 3);
+  assert.equal(matching.status, "passed");
+  assert.equal(matching.declaration_binding_status, "passed");
+  assert.deepEqual(matching.declaration_mismatch_ids, []);
+
+  for (const mismatch of [
+    report(title, 22, 3),
+    report(title, 21, 4),
+    report(`${title} alternate`, 21, 3),
+  ]) {
+    assert.equal(mismatch.status, "failed");
+    assert.equal(mismatch.declaration_binding_status, "failed");
+    assert.deepEqual(mismatch.declaration_mismatch_ids, [sentinel.id]);
+  }
+
+  const relativeFile = timingReport(title, 21, 3, sentinel.file);
+  assert.equal(relativeFile.unattributed_test_count, 1);
+  assert.equal(relativeFile.critical_sentinel_coverage.status, "failed");
+  assert.deepEqual(relativeFile.critical_sentinel_coverage.misplaced_ids, [
+    sentinel.id,
+  ]);
+});
+
+test("required reporter projections reject duplicate or missing per-file summaries", () => {
+  const file = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "test-suite-runtime.test.mjs",
+  );
+  const summary = {
+    type: "test:summary",
+    data: {
+      file,
+      duration_ms: 1,
+      success: true,
+      counts: {
+        tests: 0,
+        failed: 0,
+        passed: 0,
+        cancelled: 0,
+        skipped: 0,
+        todo: 0,
+        topLevel: 0,
+        suites: 0,
+      },
+    },
+  };
+  const report = (events) =>
+    buildFileTimingReport({
+      suite: "required-critical-sentinel-registration-projection",
+      selectedFiles: [file],
+      wallTimeMs: 1,
+      execution: {
+        mode: "required-critical-sentinel",
+        require_exact_file_summaries: true,
+        unknown_files_parallelized: false,
+      },
+      events,
+      testStatus: "passed",
+    });
+
+  const one = report([summary]);
+  assert.equal(one.test_status, "passed");
+  assert.deepEqual(one.file_summary_integrity, {
+    required: true,
+    status: "passed",
+    missing_files: [],
+    duplicate_files: [],
+  });
+
+  const duplicate = report([summary, structuredClone(summary)]);
+  assert.equal(duplicate.test_status, "failed");
+  assert.deepEqual(duplicate.file_summary_integrity.duplicate_files, [
+    "test-suite-runtime.test.mjs",
+  ]);
+
+  const missing = report([]);
+  assert.equal(missing.test_status, "failed");
+  assert.deepEqual(missing.file_summary_integrity.missing_files, [
+    "test-suite-runtime.test.mjs",
+  ]);
+});
+
 test("final ROI verifier preserves the package pretest build in clean snapshots", async () => {
   const verifierSource = await readFile(
     path.join(
@@ -1260,6 +1486,28 @@ test("final ROI verifier preserves the package pretest build in clean snapshots"
     /npmCommandSpec\(\[\s*"test",\s*"--workspace",\s*"project-tiny-context-harness",\s*\]\)/u,
   );
   assert.doesNotMatch(verifierSource, /"--ignore-scripts"/u);
+
+  const adapterRepositoryPath =
+    "examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs";
+  const adapterSource = await readFile(
+    path.join(repositoryRoot, ...adapterRepositoryPath.split("/")),
+    "utf8",
+  );
+  assert.doesNotThrow(() =>
+    localImplementationDependencies(adapterSource, adapterRepositoryPath),
+  );
+  assert.match(adapterSource, /url\.searchParams\.set\("roi",/u);
+  assert.match(adapterSource, /Date\.now\(\).*Math\.random\(\)/su);
+  const driftedAdapter = adapterSource.replace(
+    "return import(url.href);",
+    "return import(url.pathname);",
+  );
+  assert.notEqual(driftedAdapter, adapterSource);
+  assert.throws(
+    () =>
+      localImplementationDependencies(driftedAdapter, adapterRepositoryPath),
+    /benchmark_implementation_closure_nonliteral_loader/u,
+  );
 });
 
 test("design-fact complete verifier uses the portable npm command boundary", async () => {
@@ -1305,12 +1553,14 @@ test("complete affected routing explicitly supersedes a separate Trust aggregate
   ]);
 });
 
-function event(type, file, name, durationMs) {
+function event(type, file, name, durationMs, location = {}) {
   return {
     type,
     data: {
       file,
       name,
+      line: location.line ?? null,
+      column: location.column ?? null,
       details: {
         duration_ms: durationMs,
         failure_message: type === "test:fail" ? "fixture failed" : null,

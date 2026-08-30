@@ -181,74 +181,72 @@ test("Final Gate rejects an External Confirmation record changed during runner e
 });
 
 test("Finalization revalidates External record and artifact identities after evaluation", async (t) => {
-  for (const target of ["record", "artifact"])
-    await t.test(target, async () => {
-      const fixture = await externalFixture();
-      const signal = await finalizationSignal("after_finalization_evaluation");
-      try {
-        const prepared = await runCli(fixture.root, [
-          "long-task",
-          "external",
-          "prepare",
-          fixture.workdir,
-        ]);
-        const record = await buildPassingRecord(fixture, prepared);
-        await runCli(fixture.root, [
-          "long-task",
-          "external",
-          "submit",
-          fixture.workdir,
-          "--confirmation",
-          "fixture-external",
-          "--record",
-          await writeSubmissionRecord(
-            fixture,
-            `passing-${target}.json`,
-            record,
-          ),
-        ]);
+  async function assertTarget(target) {
+    const fixture = await externalFixture();
+    const signal = await finalizationSignal("after_finalization_evaluation");
+    try {
+      const prepared = await runCli(fixture.root, [
+        "long-task",
+        "external",
+        "prepare",
+        fixture.workdir,
+      ]);
+      const record = await buildPassingRecord(fixture, prepared);
+      await runCli(fixture.root, [
+        "long-task",
+        "external",
+        "submit",
+        fixture.workdir,
+        "--confirmation",
+        "fixture-external",
+        "--record",
+        await writeSubmissionRecord(fixture, `passing-${target}.json`, record),
+      ]);
 
-        const finalProcess = runCliProcess(
-          fixture.root,
-          ["long-task", "final-gate", fixture.workdir],
-          { env: finalizationSignalEnvironment(signal) },
+      const finalProcess = runCliProcess(
+        fixture.root,
+        ["long-task", "final-gate", fixture.workdir],
+        { env: finalizationSignalEnvironment(signal) },
+      );
+      await waitForFile(signal.started);
+      if (target === "record") {
+        await writeFile(
+          externalConfirmationRecordPath(fixture.workdir, "fixture-external"),
+          "{}\n",
         );
-        await waitForFile(signal.started);
-        if (target === "record") {
-          await writeFile(
-            externalConfirmationRecordPath(fixture.workdir, "fixture-external"),
-            "{}\n",
-          );
-        } else {
-          const snapshot = Object.values(record.artifact_snapshots)[0];
-          assert.ok(snapshot);
-          await writeFile(
-            runtimePath(fixture.workdir, snapshot.store_ref),
-            "tampered after finalization evaluation\n",
-          );
-        }
-        await writeFile(signal.release, "release\n");
-
-        const final = await finalProcess;
-        assert.notEqual(final.exitCode, 0);
-        const receipt = JSON.parse(final.stdout);
-        assert.equal(receipt.workflow_status, "needs_work");
-        assert.notEqual(receipt.workflow_status, "delivery_accepted");
-        assert.ok(
-          receipt.findings.some((finding) =>
-            finding.code.startsWith("finalization_"),
-          ),
-          JSON.stringify(receipt.findings),
+      } else {
+        const snapshot = Object.values(record.artifact_snapshots)[0];
+        assert.ok(snapshot);
+        await writeFile(
+          runtimePath(fixture.workdir, snapshot.store_ref),
+          "tampered after finalization evaluation\n",
         );
-        assert.equal(
-          await pathExists(await activeRecordPath(fixture.root)),
-          true,
-        );
-      } finally {
-        await rm(signal.folder, { recursive: true, force: true });
-        await rm(fixture.root, { recursive: true, force: true });
       }
-    });
+      await writeFile(signal.release, "release\n");
+
+      const final = await finalProcess;
+      assert.notEqual(final.exitCode, 0);
+      const receipt = JSON.parse(final.stdout);
+      assert.equal(receipt.workflow_status, "needs_work");
+      assert.notEqual(receipt.workflow_status, "delivery_accepted");
+      assert.ok(
+        receipt.findings.some((finding) =>
+          finding.code.startsWith("finalization_"),
+        ),
+        JSON.stringify(receipt.findings),
+      );
+      assert.equal(
+        await pathExists(await activeRecordPath(fixture.root)),
+        true,
+      );
+    } finally {
+      await rm(signal.folder, { recursive: true, force: true });
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+
+  await t.test("record", () => assertTarget("record"));
+  await t.test("artifact", () => assertTarget("artifact"));
 });
 
 test("Finalization revalidates the live External public key after Receipt publication", async () => {

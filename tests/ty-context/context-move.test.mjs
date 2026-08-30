@@ -373,50 +373,49 @@ test("context move recovers both forward and backward across a newly created dir
 });
 
 test("owned deletion tombstone closes publication-before-journal crashes in both directions", async (t) => {
-  for (const direction of ["complete", "rollback"])
-    await t.test(direction, async () => {
-      const root = await moveProject();
-      try {
-        const planned = await planContextMove(moveInput(root));
-        await assert.rejects(
-          executeContextMutationPlan(root, planned.plan, {
-            fault_after: `published_before_journal:${from}`,
-          }),
-          /fault_injected:published_before_journal/u,
-        );
-        const journal = await readContextMutationJournal(root);
-        const source = journal.files.find((entry) => entry.path === from);
-        assert.equal(source.temporary_state.state.identity.nlink, "2");
-        const remainder = await captureMutationFileState(
-          root,
-          source.temporary_path,
-          { allow_hardlinks: true },
-        );
-        assert.equal(remainder.identity.nlink, "1");
-        assert.equal(
-          (await contextMutationStatus(root)).files.find(
-            (entry) => entry.path === from,
-          ).state,
-          "after",
-        );
+  async function assertDirection(direction) {
+    const root = await moveProject();
+    try {
+      const planned = await planContextMove(moveInput(root));
+      await assert.rejects(
+        executeContextMutationPlan(root, planned.plan, {
+          fault_after: `published_before_journal:${from}`,
+        }),
+        /fault_injected:published_before_journal/u,
+      );
+      const journal = await readContextMutationJournal(root);
+      const source = journal.files.find((entry) => entry.path === from);
+      assert.equal(source.temporary_state.state.identity.nlink, "2");
+      const remainder = await captureMutationFileState(
+        root,
+        source.temporary_path,
+        { allow_hardlinks: true },
+      );
+      assert.equal(remainder.identity.nlink, "1");
+      assert.equal(
+        (await contextMutationStatus(root)).files.find(
+          (entry) => entry.path === from,
+        ).state,
+        "after",
+      );
 
-        if (direction === "complete") {
-          await completeContextMutation(root);
-          await assert.rejects(access(path.join(root, ...from.split("/"))));
-          await access(path.join(root, ...to.split("/")));
-        } else {
-          await rollbackContextMutation(root);
-          await access(path.join(root, ...from.split("/")));
-          await assert.rejects(access(path.join(root, ...to.split("/"))));
-        }
-        assert.equal(
-          (await contextMutationStatus(root)).journal_present,
-          false,
-        );
-      } finally {
-        await rm(root, { recursive: true, force: true });
+      if (direction === "complete") {
+        await completeContextMutation(root);
+        await assert.rejects(access(path.join(root, ...from.split("/"))));
+        await access(path.join(root, ...to.split("/")));
+      } else {
+        await rollbackContextMutation(root);
+        await access(path.join(root, ...from.split("/")));
+        await assert.rejects(access(path.join(root, ...to.split("/"))));
       }
-    });
+      assert.equal((await contextMutationStatus(root)).journal_present, false);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+
+  await t.test("complete", () => assertDirection("complete"));
+  await t.test("rollback", () => assertDirection("rollback"));
 });
 
 test("context move CAS protects every planned reference and unresolved literals block apply", async () => {

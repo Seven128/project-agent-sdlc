@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   chmod,
   copyFile,
+  mkdir,
   mkdtemp,
   readFile,
   rm,
@@ -525,9 +526,7 @@ async function createProcessFixture() {
     path.join(tmpdir(), "ty-context-process-observer-"),
   );
   const target = `bin/product-root${process.platform === "win32" ? ".exe" : ""}`;
-  await import("node:fs/promises").then(({ mkdir }) =>
-    mkdir(path.join(root, "bin"), { recursive: true }),
-  );
+  await mkdir(path.join(root, "bin"), { recursive: true });
   await copyFile(process.execPath, path.join(root, target));
   if (process.platform !== "win32") await chmod(path.join(root, target), 0o755);
   await writeFile(

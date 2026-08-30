@@ -12,7 +12,7 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { createWindowsJobSupervisorRequest } from "../../packages/ty-context/dist/lib/long-task-windows-job-supervisor-protocol.js";
 import {
@@ -28,6 +28,7 @@ import {
   runPowerShellHelper,
   windowsPowerShellExecutable,
 } from "./long-task-windows-job-supervisor-test-support.mjs";
+import { runOwnedChildProcess } from "./helpers/owned-child-process.mjs";
 
 export async function assertAssignFailureCannotResume() {
   const root = await mkdtemp(
@@ -124,31 +125,43 @@ export async function assertPackedTarballUsesPackageHelper() {
       path.join(extracted, "package", "node_modules"),
       "junction",
     );
-    const module = await import(
-      `${
-        pathToFileURL(
-          path.join(
-            extracted,
-            "package",
-            "dist",
-            "lib",
-            "long-task-command-process.js",
-          ),
-        ).href
-      }?tarball=${Date.now()}`
-    );
+    const moduleUrl = `${
+      pathToFileURL(
+        path.join(
+          extracted,
+          "package",
+          "dist",
+          "lib",
+          "long-task-command-process.js",
+        ),
+      ).href
+    }?tarball=${Date.now()}`;
     const script = path.join(root, "tarball-product.mjs");
     await writeFile(script, 'console.log("tarball-helper")\n', "utf8");
-    const execution = await module.spawnCommandOnce(
+    const child = await runOwnedChildProcess(
       process.execPath,
-      [script],
-      root,
-      3_000,
-      process.env,
-      true,
+      [
+        fileURLToPath(
+          new URL(
+            "./long-task-windows-job-supervisor-package-child.mjs",
+            import.meta.url,
+          ),
+        ),
+        moduleUrl,
+        script,
+        root,
+      ],
+      {
+        timeoutMs: 30_000,
+      },
     );
+    assert.equal(child.status, 0, child.stderr);
+    const execution = JSON.parse(child.stdout);
     assert.equal(execution.exit_code, 0);
-    assert.equal(execution.stdout.toString("utf8"), "tarball-helper\n");
+    assert.equal(
+      Buffer.from(execution.stdout_base64, "base64").toString("utf8"),
+      "tarball-helper\n",
+    );
   } finally {
     await rm(root, { recursive: true, force: true });
   }

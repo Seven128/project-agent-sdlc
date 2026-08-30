@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { appendFile, mkdir } from "node:fs/promises";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
 import { LEVEL4_AUDIT_REQUIRED_INPUT_ROLES } from "../../../tools/level4_governance_protocol.mjs";
 import { readPackedPackageIdentity } from "../../../tools/long_task_packed_package_identity.mjs";
 import { REAL_PROCESS_SCHEMAS } from "../../../tools/long_task_real_process_schema_policy.mjs";
@@ -19,6 +18,7 @@ import {
   toBytes,
   writeArtifact,
 } from "./long-task-level4-test-utils.mjs";
+import { runOwnedChildProcess } from "./owned-child-process.mjs";
 
 export async function runPromotionCase(options) {
   const {
@@ -109,9 +109,8 @@ export async function runPromotionCase(options) {
     records,
   });
   const promotionCommit = await git(checkout, ["rev-parse", "HEAD"]);
-  const verifyLevel4GovernancePromotion = await verifierAtCheckout(checkout);
-  const result = await verifyLevel4GovernancePromotion({
-    repositoryRoot: checkout,
+  const result = await runVerifierAtCheckout({
+    checkout,
     promotionCommit,
     evidenceRoot,
   });
@@ -141,11 +140,10 @@ export async function assertPromotionMutationRejected(options) {
   await git(checkout, ["add", "."]);
   await git(checkout, ["commit", "--amend", "--no-edit"]);
   const promotionCommit = await git(checkout, ["rev-parse", "HEAD"]);
-  const verifyLevel4GovernancePromotion = await verifierAtCheckout(checkout);
   await assert.rejects(
     () =>
-      verifyLevel4GovernancePromotion({
-        repositoryRoot: checkout,
+      runVerifierAtCheckout({
+        checkout,
         promotionCommit,
         evidenceRoot: options.evidenceRoot,
       }),
@@ -153,14 +151,41 @@ export async function assertPromotionMutationRejected(options) {
   );
 }
 
-async function verifierAtCheckout(checkout) {
+async function runVerifierAtCheckout({
+  checkout,
+  promotionCommit,
+  evidenceRoot,
+}) {
   const modulePath = path.join(
     checkout,
     "tools",
     "verify_level4_governance_promotion.mjs",
   );
-  const module = await import(pathToFileURL(modulePath).href);
-  return module.verifyLevel4GovernancePromotion;
+  try {
+    const result = await runOwnedChildProcess(
+      process.execPath,
+      [
+        modulePath,
+        "--promotion",
+        promotionCommit,
+        "--evidence-root",
+        evidenceRoot,
+      ],
+      {
+        cwd: checkout,
+        timeoutMs: 120_000,
+      },
+    );
+    if (result.status !== 0)
+      throw new Error(
+        `level4_promotion_child_exit:${result.status}:${result.stderr}`,
+      );
+    return JSON.parse(result.stdout);
+  } catch (error) {
+    throw new Error(`${error.message}\n${error.stderr ?? ""}`, {
+      cause: error,
+    });
+  }
 }
 
 export function packageControl(bytes) {

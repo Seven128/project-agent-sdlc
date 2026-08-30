@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import {
   cp,
+  lstat,
   mkdtemp,
   mkdir,
   readFile,
@@ -65,14 +66,7 @@ import {
   evaluateIndependentGold,
   loadSemanticGold,
 } from "../../examples/delivery-benchmark/real-process-workload/runner/gold.mjs";
-import {
-  enableRealProcessRoiLongTaskProfile,
-  executeRealProcessRoiLifecycle,
-} from "../../examples/delivery-benchmark/real-process-workload/runner/workload-executor.mjs";
-import {
-  createWorkloadFixture,
-  removeFixture,
-} from "../../examples/delivery-benchmark/real-process-workload/runner/fixture-adapter.mjs";
+import { runOwnedChildProcess } from "./helpers/owned-child-process.mjs";
 
 const {
   REAL_PROCESS_ATTESTATION_SCHEMA,
@@ -89,6 +83,14 @@ const workloadRoot = path.join(
   "delivery-benchmark",
   "real-process-workload",
 );
+const runtimeControlChild = fileURLToPath(
+  new URL("./long-task-real-process-roi-runtime-child.mjs", import.meta.url),
+);
+const ownedTreeFixture = fileURLToPath(
+  new URL("./owned-child-process-tree-fixture.mjs", import.meta.url),
+);
+const fixtureRuntimeEnvironments = new WeakMap();
+const ROI_RUNTIME_RESPONSE_LIMIT_BYTES = 16 * 1024 * 1024;
 const accountingPolicyText = readFileSync(
   path.join(root, ...FORMAL_ACCOUNTING_POLICY_REPOSITORY_PATH.split("/")),
   "utf8",
@@ -168,26 +170,108 @@ test("real process ROI CLI rejects conflicting modes and ignored option scopes",
 });
 
 test("real process ROI lifecycle enables Long-Task before Preflight", async () => {
-  const calls = [];
-  const result = await enableRealProcessRoiLongTaskProfile(async (...args) => {
-    calls.push(args);
-    return { status: 0 };
-  }, "C:\\fixture\\cli.js");
-  assert.equal(result.status, 0);
-  assert.deepEqual(calls, [
+  const success = await runRoiRuntimeControl("enable-capture", {
+    cli: "C:\\fixture\\cli.js",
+    status: 0,
+  });
+  assert.equal(success.result.status, 0);
+  assert.equal(success.error, null);
+  assert.deepEqual(success.calls, [
     [
       "enable-long-task",
       process.execPath,
       ["C:\\fixture\\cli.js", "enable", "long-task"],
     ],
   ]);
-  await assert.rejects(
-    enableRealProcessRoiLongTaskProfile(
-      async () => ({ status: 1 }),
-      "C:\\fixture\\cli.js",
-    ),
-    /real_process_roi_enable_failed:1/u,
-  );
+  const failure = await runRoiRuntimeControl("enable-capture", {
+    cli: "C:\\fixture\\cli.js",
+    status: 1,
+  });
+  assert.match(failure.error, /real_process_roi_enable_failed:1/u);
+  assert.equal(failure.result, null);
+});
+
+test("real process ROI child response stays regular and within its private file bound", async () => {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-response-"));
+  try {
+    const responsePath = path.join(temporary, "response.json");
+    await writeFile(responsePath, JSON.stringify({ ok: true, value: 1 }));
+    assert.deepEqual(await readBoundedRuntimeResponse(responsePath), {
+      ok: true,
+      value: 1,
+    });
+
+    await writeFile(
+      responsePath,
+      Buffer.alloc(ROI_RUNTIME_RESPONSE_LIMIT_BYTES + 1),
+    );
+    await assert.rejects(
+      () => readBoundedRuntimeResponse(responsePath),
+      /real_process_roi_runtime_control_response_invalid/u,
+    );
+
+    const targetPath = path.join(temporary, "target.json");
+    const linkedPath = path.join(temporary, "linked.json");
+    await writeFile(targetPath, JSON.stringify({ ok: true, value: 2 }));
+    try {
+      await symlink(targetPath, linkedPath, "file");
+    } catch (error) {
+      if (!["EPERM", "EACCES", "ENOTSUP"].includes(error?.code)) throw error;
+      return;
+    }
+    await assert.rejects(
+      () => readBoundedRuntimeResponse(linkedPath),
+      /real_process_roi_runtime_control_response_invalid/u,
+    );
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+test("test-owned child boundaries settle their process tree on success and bounded failure", async () => {
+  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-owned-tree-"));
+  try {
+    for (const control of [
+      {
+        mode: "timeout",
+        diagnostic: /owned_child_process_timeout/u,
+        timeoutMs: 2_000,
+      },
+      {
+        mode: "output-limit",
+        diagnostic: /owned_child_process_output_limit/u,
+        timeoutMs: 10_000,
+      },
+      {
+        mode: "success-leak",
+        diagnostic: /owned_child_process_(?:timeout|tree_unsettled)/u,
+        cleanSuccessAllowed: true,
+        timeoutMs: 2_000,
+      },
+    ]) {
+      const pidPath = path.join(temporary, `${control.mode}.json`);
+      const execution = runOwnedChildProcess(
+        process.execPath,
+        [ownedTreeFixture, pidPath, control.mode],
+        {
+          timeoutMs: control.timeoutMs,
+        },
+      );
+      if (control.cleanSuccessAllowed) {
+        try {
+          assert.equal((await execution).status, 0);
+        } catch (error) {
+          assert.match(String(error), control.diagnostic);
+        }
+      } else {
+        await assert.rejects(execution, control.diagnostic);
+      }
+      const pids = JSON.parse(await readFile(pidPath, "utf8"));
+      await waitForProcessesGone([pids.parent, pids.descendant]);
+    }
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
 });
 
 test("real process ROI current control is Preflight-ready after the measured enable step", async () => {
@@ -199,11 +283,11 @@ test("real process ROI current control is Preflight-ready after the measured ena
   });
   const cli = path.join(root, "packages", "ty-context", "dist", "cli.js");
   try {
-    await enableRealProcessRoiLongTaskProfile(
-      (_label, executable, args) =>
-        execute(executable, args, { cwd: fixture.root }),
+    await runRoiRuntimeControl("enable-fixture", {
       cli,
-    );
+      environment: fixtureRuntimeEnvironments.get(fixture),
+      root: fixture.root,
+    });
     await git(fixture.root, ["add", "-A"]);
     await git(fixture.root, [
       "commit",
@@ -454,7 +538,11 @@ test("R9/R10 workload cases reach the real Final Gate through non-closure input 
           result,
         ]),
       );
-      assert.equal(checkResults.get("first-check")?.status, "assertion_failed");
+      assert.equal(
+        checkResults.get("first-check")?.status,
+        "assertion_failed",
+        JSON.stringify(checkResults.get("first-check")?.findings ?? []),
+      );
       assert.ok(
         checkResults
           .get("first-check")
@@ -1593,6 +1681,80 @@ function committedCandidateIdentityFixture(label) {
   };
 }
 
+async function createWorkloadFixture(options) {
+  const result = await runRoiRuntimeControl("create-fixture", { options });
+  fixtureRuntimeEnvironments.set(result.fixture, result.environment);
+  return result.fixture;
+}
+
+async function removeFixture(fixture) {
+  try {
+    await runRoiRuntimeControl("remove-fixture", { fixture });
+  } catch (error) {
+    await rm(fixture.root, { recursive: true, force: true }).catch(() => {});
+    throw error;
+  }
+}
+
+async function executeRealProcessRoiLifecycle(options) {
+  const { commandRecords, ...serializable } = options;
+  const result = await runRoiRuntimeControl("execute-lifecycle", {
+    environment: fixtureRuntimeEnvironments.get(options.fixture),
+    options: serializable,
+  });
+  commandRecords.push(...result.commandRecords);
+  return result.lifecycle;
+}
+
+async function runRoiRuntimeControl(operation, payload) {
+  const temporary = await mkdtemp(
+    path.join(os.tmpdir(), "ty-roi-runtime-control-"),
+  );
+  const requestPath = path.join(temporary, "request.json");
+  const responsePath = path.join(temporary, "response.json");
+  try {
+    await writeFile(
+      requestPath,
+      JSON.stringify({ operation, ...payload }),
+      "utf8",
+    );
+    const execution = await runOwnedChildProcess(
+      process.execPath,
+      [runtimeControlChild, requestPath, responsePath],
+      {
+        cwd: root,
+        timeoutMs: 300_000,
+      },
+    );
+    if (execution.status !== 0)
+      throw new Error(
+        `real_process_roi_runtime_control_child:${operation}:${execution.status}:${execution.stderr}`,
+      );
+    const response = await readBoundedRuntimeResponse(responsePath);
+    if (response.ok !== true)
+      throw new Error(
+        `real_process_roi_runtime_control:${operation}:${response.error ?? "missing_error"}`,
+      );
+    return response.value;
+  } finally {
+    await rm(temporary, { recursive: true, force: true });
+  }
+}
+
+async function readBoundedRuntimeResponse(responsePath) {
+  const metadata = await lstat(responsePath);
+  if (
+    !metadata.isFile() ||
+    metadata.isSymbolicLink() ||
+    metadata.size > ROI_RUNTIME_RESPONSE_LIMIT_BYTES
+  )
+    throw new Error("real_process_roi_runtime_control_response_invalid");
+  const bytes = await readFile(responsePath);
+  if (bytes.length > ROI_RUNTIME_RESPONSE_LIMIT_BYTES)
+    throw new Error("real_process_roi_runtime_control_response_limit");
+  return JSON.parse(bytes.toString("utf8"));
+}
+
 async function execute(executable, args, options = {}) {
   const child = spawn(executable, args, {
     ...options,
@@ -1609,6 +1771,26 @@ async function execute(executable, args, options = {}) {
     stdout: Buffer.concat(stdout).toString("utf8"),
     stderr: Buffer.concat(stderr).toString("utf8"),
   };
+}
+
+async function waitForProcessesGone(pids) {
+  const deadline = Date.now() + 10_000;
+  while (pids.some(isProcessAlive)) {
+    if (Date.now() >= deadline)
+      assert.fail(`owned child process tree remained alive: ${pids.join(",")}`);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+  }
+}
+
+function isProcessAlive(pid) {
+  if (!Number.isInteger(pid) || pid <= 0) return false;
+  try {
+    process.kill(pid, 0);
+    return true;
+  } catch (error) {
+    if (error?.code === "ESRCH") return false;
+    throw error;
+  }
 }
 
 async function git(cwd, args) {

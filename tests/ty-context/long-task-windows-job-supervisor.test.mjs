@@ -8,7 +8,7 @@ import {
   assertPackedTarballUsesPackageHelper,
 } from "./long-task-windows-job-supervisor-package-fixture.mjs";
 import {
-  assertPowerShellCompatibility,
+  assertPowerShellRuntimeCompatibility,
   assertWindowsJobProtocol,
 } from "./long-task-windows-job-supervisor-protocol-fixture.mjs";
 import { assertWindowsJobRuntimeMatrix } from "./long-task-windows-job-supervisor-runtime-fixture.mjs";
@@ -62,7 +62,20 @@ test(
   "canonical helper accepts strict UTF-8 requests on Windows PowerShell 5.1 and PowerShell 7",
   { skip: process.platform !== "win32" },
   async (t) => {
-    await assertPowerShellCompatibility(t);
+    await t.test("Windows PowerShell 5.1", async () => {
+      await assertPowerShellRuntimeCompatibility(
+        await windowsJobTestSupport.windowsPowerShellExecutable(),
+      );
+    });
+    const pwsh = await windowsJobTestSupport.optionalPwshExecutable();
+    if (pwsh)
+      await t.test("PowerShell 7", async () => {
+        await assertPowerShellRuntimeCompatibility(pwsh);
+      });
+    else
+      t.diagnostic(
+        "PowerShell 7 is not installed; optional compatibility probe skipped",
+      );
   },
 );
 

@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
+import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { validateCounterfactualObservationImpact } from "../../packages/ty-context/dist/lib/long-task-evidence-sensitivity-policy.js";
 import {
   createDeliveryFixture,
@@ -105,10 +106,9 @@ test("a semantic witness on another Check cannot satisfy the current Check", asy
     ];
     outcome.applicability.push(otherApplicability);
     outcome.product.result_applicability_refs.push(otherApplicability.key);
-    const architectureFactBinding =
-      outcome.semantic_fact_bindings.facts.find((binding) =>
-        binding.fact_ref.endsWith(".architecture-boundary"),
-      );
+    const architectureFactBinding = outcome.semantic_fact_bindings.facts.find(
+      (binding) => binding.fact_ref.endsWith(".architecture-boundary"),
+    );
     const architectureFactAssertion = first.positive_assertions.find(
       (assertion) => assertion.key === "first-architecture-semantic-fact",
     );
@@ -252,12 +252,9 @@ test("a currently bad carrier may compile but cannot pass the Final Gate", async
     );
     await writeContract(fixture.workdir, fixture.contract);
     await assert.doesNotReject(
-      import("../../packages/ty-context/dist/lib/long-task-delivery-compiler.js").then(
-        ({ compileDeliveryContract }) =>
-          compileDeliveryContract(fixture.workdir, fixture.root, {
-            require_completion_gate: false,
-          }),
-      ),
+      compileDeliveryContract(fixture.workdir, fixture.root, {
+        require_completion_gate: false,
+      }),
     );
     await runCli(fixture.root, ["enable", "long-task"]);
     await runCli(fixture.root, ["long-task", "compile", fixture.workdir]);

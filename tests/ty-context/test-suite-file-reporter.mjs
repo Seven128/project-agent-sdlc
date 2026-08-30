@@ -51,6 +51,8 @@ export function buildFileTimingReport({
   events,
   requiredCriticalSentinels = [],
   registeredCriticalSentinels = requiredCriticalSentinels,
+  applicableCriticalSentinels = requiredCriticalSentinels,
+  declaredCriticalOccurrences = null,
   testStatus = null,
   wallTimeBudgetMs = null,
   wallTimeBudgetStatus = "not_configured",
@@ -66,7 +68,11 @@ export function buildFileTimingReport({
   for (const event of events) {
     if (event?.type === "test:summary") {
       const file = selectedEventFile(event.data, stateByFile);
-      if (file) stateByFile.get(fileKey(file)).summary = event.data;
+      if (file) {
+        const state = stateByFile.get(fileKey(file));
+        state.summary_terminal_count += 1;
+        state.summary = event.data;
+      }
       continue;
     }
     if (!terminalTypes.has(event?.type)) continue;
@@ -123,6 +129,10 @@ export function buildFileTimingReport({
   const missingFileCount = files.filter(
     (entry) => entry.status === "missing",
   ).length;
+  const fileSummaryIntegrity = buildFileSummaryIntegrity(
+    files,
+    execution?.require_exact_file_summaries === true,
+  );
   const criticalSentinelCoverage = buildCriticalSentinelCoverage(
     [
       ...files,
@@ -131,6 +141,8 @@ export function buildFileTimingReport({
     ],
     registeredCriticalSentinels,
     requiredCriticalSentinels,
+    applicableCriticalSentinels,
+    declaredCriticalOccurrences,
   );
   const executionStatus =
     testStatus ??
@@ -140,7 +152,10 @@ export function buildFileTimingReport({
         ? "failed"
         : "passed");
   const observedStatus =
-    executionStatus === "passed" && criticalSentinelCoverage.status !== "passed"
+    executionStatus === "passed" &&
+    (criticalSentinelCoverage.status !== "passed" ||
+      (fileSummaryIntegrity.required &&
+        fileSummaryIntegrity.status !== "passed"))
       ? "failed"
       : executionStatus;
   const status =
@@ -162,6 +177,7 @@ export function buildFileTimingReport({
     skipped_count: counts.skipped,
     cancelled_count: counts.cancelled,
     missing_file_count: missingFileCount,
+    file_summary_integrity: fileSummaryIntegrity,
     wall_time_ms: Math.round(wallTimeMs),
     status,
     test_status: observedStatus,
@@ -203,56 +219,89 @@ function buildCriticalSentinelCoverage(
   files,
   registeredSentinels,
   requiredSentinels,
+  applicableSentinels,
+  declaredOccurrences,
 ) {
   const registered = new Map(
     registeredSentinels.map((entry) => [entry.id, entry]),
   );
   const required = new Map(requiredSentinels.map((entry) => [entry.id, entry]));
-  for (const id of required.keys())
+  const applicable = new Map(
+    applicableSentinels.map((entry) => [entry.id, entry]),
+  );
+  for (const id of applicable.keys())
     if (!registered.has(id))
       throw new Error(
         `Applicable critical sentinel ${id} is absent from the suite registry.`,
+      );
+  for (const id of required.keys())
+    if (!applicable.has(id))
+      throw new Error(
+        `Required critical sentinel ${id} is not applicable to this projection.`,
       );
   const occurrences = new Map();
   for (const file of files) {
     for (const record of file.tests) {
       for (const id of criticalTags(record.name)) {
         const records = occurrences.get(id) ?? [];
-        records.push({ file: file.file, status: record.status });
+        records.push({
+          file: file.file,
+          name: record.name,
+          line: record.line,
+          column: record.column,
+          source_kind: file.source_kind ?? "unattributed",
+          status: record.status,
+        });
         occurrences.set(id, records);
       }
     }
   }
 
-  const registeredIds = [...registered.keys()].sort();
-  const requiredIds = [...required.keys()].sort();
-  const nonApplicableIds = registeredIds.filter((id) => !required.has(id));
-  const nonApplicable = new Set(nonApplicableIds);
+  const registeredIds = [...registered.keys()].sort(compareUtf8);
+  const requiredIds = [...required.keys()].sort(compareUtf8);
+  const applicableIds = [...applicable.keys()].sort(compareUtf8);
+  const nonApplicableIds = registeredIds.filter((id) => !applicable.has(id));
+  const notSelectedIds = applicableIds.filter((id) => !required.has(id));
   const nonApplicableObservedIds = nonApplicableIds.filter((id) =>
     occurrences.has(id),
   );
-  const observedIds = [...occurrences.keys()]
-    .filter((id) => !nonApplicable.has(id))
-    .sort();
+  const observedIds = [...occurrences.keys()].sort(compareUtf8);
   const missingIds = requiredIds.filter((id) => !occurrences.has(id));
   const unexpectedIds = observedIds.filter((id) => !registered.has(id));
   const duplicateIds = observedIds.filter(
     (id) => (occurrences.get(id)?.length ?? 0) !== 1,
   );
-  const misplacedIds = requiredIds.filter((id) =>
-    (occurrences.get(id) ?? []).some(
-      (record) => record.file !== required.get(id).file,
-    ),
+  const misplacedIds = registeredIds.filter(
+    (id) =>
+      occurrences.has(id) &&
+      (occurrences.get(id) ?? []).some(
+        (record) =>
+          record.source_kind !== "selected" ||
+          record.file !== registered.get(id).file,
+      ),
   );
-  const nonPassingIds = observedIds.filter((id) =>
+  const nonPassingIds = requiredIds.filter((id) =>
     (occurrences.get(id) ?? []).some((record) => record.status !== "passed"),
   );
+  const declaredById = declarationMap(declaredOccurrences);
+  const declarationMismatchIds =
+    declaredById === null
+      ? []
+      : registeredIds.filter(
+          (id) =>
+            occurrences.has(id) &&
+            !runtimeMatchesDeclaration(
+              occurrences.get(id) ?? [],
+              declaredById.get(id) ?? [],
+            ),
+        );
   const status =
     missingIds.length === 0 &&
     unexpectedIds.length === 0 &&
     duplicateIds.length === 0 &&
     misplacedIds.length === 0 &&
-    nonPassingIds.length === 0
+    nonPassingIds.length === 0 &&
+    declarationMismatchIds.length === 0
       ? "passed"
       : "failed";
   return {
@@ -261,6 +310,9 @@ function buildCriticalSentinelCoverage(
     registered_ids: registeredIds,
     required_count: requiredIds.length,
     required_ids: requiredIds,
+    applicable_count: applicableIds.length,
+    applicable_ids: applicableIds,
+    not_selected_ids: notSelectedIds,
     non_applicable_ids: nonApplicableIds,
     non_applicable_observed_ids: nonApplicableObservedIds,
     observed_ids: observedIds,
@@ -269,7 +321,40 @@ function buildCriticalSentinelCoverage(
     duplicate_ids: duplicateIds,
     misplaced_ids: misplacedIds,
     non_passing_ids: nonPassingIds,
+    declaration_binding_status:
+      declaredById === null
+        ? "not_provided"
+        : declarationMismatchIds.length === 0
+          ? "passed"
+          : "failed",
+    declaration_mismatch_ids: declarationMismatchIds,
   };
+}
+
+function declarationMap(declaredOccurrences) {
+  if (declaredOccurrences === null) return null;
+  if (!Array.isArray(declaredOccurrences))
+    throw new Error("Critical declaration inventory must be an array.");
+  const result = new Map();
+  for (const occurrence of declaredOccurrences) {
+    const rows = result.get(occurrence.id) ?? [];
+    rows.push(occurrence);
+    result.set(occurrence.id, rows);
+  }
+  return result;
+}
+
+function runtimeMatchesDeclaration(runtimeRows, declarationRows) {
+  if (runtimeRows.length !== 1 || declarationRows.length !== 1) return false;
+  const [runtime] = runtimeRows;
+  const [declaration] = declarationRows;
+  return (
+    runtime.source_kind === "selected" &&
+    runtime.file === declaration.file &&
+    runtime.name === declaration.title &&
+    runtime.line === declaration.line &&
+    runtime.column === declaration.column
+  );
 }
 
 function criticalTags(name) {
@@ -321,6 +406,7 @@ function createFileState(file, sourceKind = "selected") {
     source_kind: sourceKind,
     tests: [],
     summary: null,
+    summary_terminal_count: 0,
     wrapper_status: null,
     wrapper_duration_ms: null,
   };
@@ -349,16 +435,33 @@ function finalizeFile(state, selectedRoot) {
     duration_ms: durationMs,
     test_count: state.tests.length,
     summary_counts: state.summary?.counts ?? null,
+    summary_terminal_count: state.summary_terminal_count,
     tests: state.tests,
+  };
+}
+
+function buildFileSummaryIntegrity(files, required) {
+  const missingFiles = files
+    .filter((entry) => entry.summary_terminal_count === 0)
+    .map((entry) => entry.file);
+  const duplicateFiles = files
+    .filter((entry) => entry.summary_terminal_count > 1)
+    .map((entry) => entry.file);
+  return {
+    required,
+    status:
+      missingFiles.length === 0 && duplicateFiles.length === 0
+        ? "passed"
+        : "failed",
+    missing_files: missingFiles,
+    duplicate_files: duplicateFiles,
   };
 }
 
 function terminalEventFile(data, stateByFile) {
   if (typeof data?.file === "string" && data.file.length > 0) {
     const resolved = resolveCandidate(data.file);
-    if (resolved) return resolved;
-    const selected = selectedFileByBasename(data.file, stateByFile);
-    if (selected) return selected;
+    return resolved;
   }
   if (data?.nesting !== 0 || typeof data?.name !== "string") return null;
   const resolved = resolveCandidate(data.name);
@@ -367,12 +470,14 @@ function terminalEventFile(data, stateByFile) {
 }
 
 function selectedEventFile(data, stateByFile) {
-  for (const candidate of [data?.file, data?.name]) {
-    if (typeof candidate !== "string" || candidate.length === 0) continue;
-    const resolved = resolveCandidate(candidate);
+  if (typeof data?.file === "string" && data.file.length > 0) {
+    const resolved = resolveCandidate(data.file);
+    return resolved && stateByFile.has(fileKey(resolved)) ? resolved : null;
+  }
+  if (typeof data?.name === "string" && data.name.length > 0) {
+    const resolved = resolveCandidate(data.name);
     if (resolved && stateByFile.has(fileKey(resolved))) return resolved;
-    const byName = selectedFileByBasename(candidate, stateByFile);
-    if (byName) return byName;
+    return selectedFileByBasename(data.name, stateByFile);
   }
   return null;
 }

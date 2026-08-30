@@ -318,8 +318,7 @@ async function machineSelectedAdvisoryFixture(options = {}) {
       method: "exact_value",
       proof_surface: "data_state",
       evidence_capabilities: ["data_state"],
-      expected_authority_ref:
-        "contract-claim:first.control_relation_closure",
+      expected_authority_ref: "contract-claim:first.control_relation_closure",
       result_kind: "actual",
     });
   }
@@ -974,7 +973,7 @@ test("Machine-selected optional Claim keeps equivalent External advisory through
   }
 });
 
-for (const scenario of [
+const rawBlocksTargetScenarios = [
   {
     name: "missing second required target proof",
     options: { missingSecondRequiredTarget: true },
@@ -987,8 +986,14 @@ for (const scenario of [
     expected: /strict_negative_assertion_required:first/u,
     compile_expected: /delivery_contract_invalid:/u,
   },
-])
-  test(`raw blocks_target cannot hide ${scenario.name} from Preflight, Compile, or Final Gate`, async () => {
+];
+
+test("raw blocks_target cannot hide required Machine policy", async (t) => {
+  async function assertScenario(name) {
+    const scenario = rawBlocksTargetScenarios.find(
+      (candidate) => candidate.name === name,
+    );
+    assert.ok(scenario);
     const fixture = await machineSelectedAdvisoryFixture(scenario.options);
     try {
       const preflight = await rawCliOutcome(fixture.root, [
@@ -1028,9 +1033,17 @@ for (const scenario of [
     } finally {
       await removeTemporary(fixture.root);
     }
-  });
+  }
 
-for (const scenario of [
+  await t.test("missing second required target proof", () =>
+    assertScenario("missing second required target proof"),
+  );
+  await t.test("missing strict negative proof", () =>
+    assertScenario("missing strict negative proof"),
+  );
+});
+
+const advisoryRawPolicyScenarios = [
   {
     name: "stage_gate role",
     options: { advisoryStageGateOnly: true },
@@ -1047,8 +1060,14 @@ for (const scenario of [
     expected:
       /conformance_target_runtime_evidence_required:advisory-global-conformance/u,
   },
-])
-  test(`an effective advisory raw ${scenario.name} cannot supply Machine completion policy`, async () => {
+];
+
+test("effective advisory raw rows cannot supply Machine completion policy", async (t) => {
+  async function assertScenario(name) {
+    const scenario = advisoryRawPolicyScenarios.find(
+      (candidate) => candidate.name === name,
+    );
+    assert.ok(scenario);
     const fixture = await machineSelectedAdvisoryFixture(scenario.options);
     try {
       const preflight = await rawCliOutcome(fixture.root, [
@@ -1074,7 +1093,16 @@ for (const scenario of [
     } finally {
       await removeTemporary(fixture.root);
     }
-  });
+  }
+
+  await t.test("stage_gate role", () => assertScenario("stage_gate role"));
+  await t.test("strict negative Assertion", () =>
+    assertScenario("strict negative Assertion"),
+  );
+  await t.test("global conformance role", () =>
+    assertScenario("global conformance role"),
+  );
+});
 
 test("mixed advisory and blocking obligations keep blocking role at obligation granularity", async () => {
   const fixture = await externalFixture({

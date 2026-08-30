@@ -25,10 +25,8 @@ const cli = fileURLToPath(
   new URL("../../packages/ty-context/dist/cli.js", import.meta.url),
 );
 
-test(
-  "[critical:complete-delivery-black-box-closure] real Compile and Final Gate terminals block sanitized Starward and generic implementation drift",
-  exerciseCompleteDeliveryBlackBoxClosure,
-);
+test("[critical:complete-delivery-black-box-closure] real Compile and Final Gate terminals block sanitized Starward and generic implementation drift", () =>
+  exerciseCompleteDeliveryBlackBoxClosure());
 
 test("[critical:live-final-gate-only] controlled real V2 Smoke proves only the current Live Final Gate can finish", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });

@@ -69,11 +69,7 @@ export function localImplementationDependencies(source, repositoryPath) {
       isIdentifier(token, "require") &&
       isPunctuator(tokens[index + 1], "(")
     ) {
-      addRequiredDependency(
-        dependencies,
-        tokens[index + 2],
-        repositoryPath,
-      );
+      addRequiredDependency(dependencies, tokens[index + 2], repositoryPath);
       continue;
     }
     if (
@@ -82,11 +78,7 @@ export function localImplementationDependencies(source, repositoryPath) {
       isIdentifier(tokens[index + 2], "resolve") &&
       isPunctuator(tokens[index + 3], "(")
     ) {
-      addRequiredDependency(
-        dependencies,
-        tokens[index + 4],
-        repositoryPath,
-      );
+      addRequiredDependency(dependencies, tokens[index + 4], repositoryPath);
       continue;
     }
     if (
@@ -95,11 +87,7 @@ export function localImplementationDependencies(source, repositoryPath) {
       isIdentifier(tokens[index + 2], "require") &&
       isPunctuator(tokens[index + 3], "(")
     ) {
-      addRequiredDependency(
-        dependencies,
-        tokens[index + 4],
-        repositoryPath,
-      );
+      addRequiredDependency(dependencies, tokens[index + 4], repositoryPath);
       continue;
     }
     if (

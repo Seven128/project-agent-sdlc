@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
@@ -92,8 +92,9 @@ test("non_completing Source preserves exact text and unique target ownership", a
         refs: ["first.non_completing.spinner-only"],
       },
     });
-    const current = await import("node:fs/promises").then(({ readFile }) =>
-      readFile(path.join(duplicate.root, "source.md"), "utf8"),
+    const current = await readFile(
+      path.join(duplicate.root, "source.md"),
+      "utf8",
     );
     await writeFile(
       path.join(duplicate.root, "source.md"),

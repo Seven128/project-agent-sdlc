@@ -80,6 +80,7 @@ const execution = {
     lanePolicy?.max_files_per_test_process ?? files.length,
   unknown_files: lanePolicy?.unknown_files ?? [],
   unknown_files_parallelized: false,
+  require_exact_file_summaries: true,
   critical_title_inventory: titleInventory,
   fixture_seed_preparation_ms: null,
   cleanup: {
@@ -187,6 +188,7 @@ const timing = buildFileTimingReport({
   events,
   registeredCriticalSentinels,
   requiredCriticalSentinels,
+  declaredCriticalOccurrences: titleInventory.critical_occurrences,
   testStatus: completionFailed ? "failed" : "passed",
   wallTimeBudgetMs,
   wallTimeBudgetStatus: budgetStatus,

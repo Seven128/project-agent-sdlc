@@ -167,6 +167,7 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(suiteRunner, /resolveSuiteWallTimeBudgetMs\(suite\)/);
   assert.match(suiteRunner, /criticalSentinelsForSuite\(suite\)/);
   assert.match(suiteReporter, /critical_sentinel_coverage/);
+  assert.match(suiteReporter, /not_selected_ids/);
   assert.match(suiteReporter, /slowest_files/);
   assert.match(suiteRunner, /wall_time_budget_status/);
   assert.match(suiteRunner, /CI[\s\S]*--test-reporter=dot/);
@@ -174,14 +175,31 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
 
 test("complete and one-sentinel runners share parsed suite-wide critical title inventory", () => {
   const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
+  const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
   const suitePolicy = read("tools/test_suite_policy.mjs");
   const suiteSelection = read("tools/test_suite_selection.mjs");
   const titleInventory = read("tools/test_title_inventory.mjs");
+  const titleAnalysis = read("tools/test_title_static_analysis.mjs");
+  const titleDestructuringRoles = read(
+    "tools/test_title_destructuring_roles.mjs",
+  );
+  const titleModuleEdges = read("tools/test_title_module_edges.mjs");
+  const titleRegistration = read(
+    "tools/test_title_registration_resolution.mjs",
+  );
+  const titleExpressionRoles = read("tools/test_title_expression_roles.mjs");
+  const titleReferenceValidation = read(
+    "tools/test_title_reference_validation.mjs",
+  );
+  const titleRoles = read("tools/test_title_roles.mjs");
+  const titleScopeModel = read("tools/test_title_scope_model.mjs");
+  const titlePatternScope = read("tools/test_title_pattern_scope.mjs");
   const sentinelRunner = read("tools/run_required_critical_sentinel.mjs");
 
   assert.match(suiteRunner, /selectPackageTestNames\(availableNames, suite\)/u);
   assert.match(suiteRunner, /assertCriticalTestTitleInventory/u);
   assert.match(suiteRunner, /critical_title_inventory/u);
+  assert.match(suiteRunner, /require_exact_file_summaries/u);
   assert.match(suitePolicy, /LONG_TASK_TRUST_TEST_FILES/u);
   assert.match(suiteSelection, /export function selectPackageTestNames/u);
   assert.match(suiteSelection, /LONG_TASK_TRUST_TEST_FILES/u);
@@ -189,9 +207,75 @@ test("complete and one-sentinel runners share parsed suite-wide critical title i
   assert.match(sentinelRunner, /assertCriticalTestTitleInventory/u);
   assert.match(sentinelRunner, /selectPackageTestNames/u);
   assert.match(titleInventory, /from "acorn"/u);
-  assert.match(titleInventory, /node\.source\?\.value !== "node:test"/u);
-  assert.match(titleInventory, /NODE_TEST_FUNCTION_EXPORTS/u);
+  assert.match(titleInventory, /analyzeNodeTestProgram/u);
+  assert.match(titleInventory, /local_module_edges/u);
+  assert.match(titleInventory, /isWithinDirectory/u);
+  assert.match(titleInventory, /critical_occurrences/u);
+  assert.match(
+    suiteRunner,
+    /declaredCriticalOccurrences: titleInventory\.critical_occurrences/u,
+  );
+  assert.match(
+    sentinelRunner,
+    /declaredCriticalOccurrences:[\s\S]*critical_occurrences/u,
+  );
+  assert.match(suiteReporter, /declaration_mismatch_ids/u);
+  assert.match(suiteReporter, /file_summary_integrity/u);
+  assert.match(suiteReporter, /summary_terminal_count/u);
+  assert.match(titleAnalysis, /critical_test_title_inventory_dynamic_title/u);
+  assert.match(titleAnalysis, /resolveRegistrationRoles/u);
+  assert.match(titleAnalysis, /resolveDestructuringRoles/u);
+  assert.match(titleDestructuringRoles, /bindingScope/u);
+  assert.match(titleDestructuringRoles, /evaluationScope/u);
+  assert.match(titleDestructuringRoles, /resolveStaticPropertyName/u);
+  assert.match(titleDestructuringRoles, /constructor-access/u);
+  assert.match(titleDestructuringRoles, /AssignmentExpression/u);
+  assert.match(titleDestructuringRoles, /ForInStatement/u);
+  assert.match(titleDestructuringRoles, /ForOfStatement/u);
+  assert.match(
+    titleModuleEdges,
+    /critical_test_title_inventory_dynamic_module_specifier/u,
+  );
+  assert.match(
+    titleModuleEdges,
+    /critical_test_title_inventory_unsupported_dynamic_import/u,
+  );
+  assert.match(titleInventory, /createRequire/u);
+  assert.match(titleRegistration, /resolveImmutableAliases/u);
+  assert.match(titleRegistration, /get-builtin-module/u);
+  assert.match(titleExpressionRoles, /get-builtin-module/u);
+  assert.match(titleExpressionRoles, /dynamic-code/u);
+  assert.match(titleExpressionRoles, /constructor-access/u);
+  assert.match(titleExpressionRoles, /constructor-identity-method/u);
+  assert.match(
+    titleReferenceValidation,
+    /critical_test_title_inventory_unsupported_node_test_reference/u,
+  );
+  assert.match(titleRoles, /NODE_TEST_FUNCTION_EXPORTS/u);
+  assert.match(titleRoles, /NODE_TEST_SUITE_EXPORTS/u);
+  assert.match(titleRoles, /registerHooks/u);
+  assert.match(titleScopeModel, /buildNodeTestScopeModel/u);
+  assert.match(titleScopeModel, /createScope/u);
+  assert.match(titleScopeModel, /function-parameters/u);
+  assert.match(titlePatternScope, /bindScopePattern/u);
+  assert.match(sentinelRunner, /required-critical-sentinel-report-v1/u);
+  assert.match(sentinelRunner, /projection_status/u);
+  assert.match(sentinelRunner, /verified_ids/u);
+  assert.match(sentinelRunner, /registry_runtime_observation_complete/u);
+  assert.match(sentinelRunner, /applicableCriticalSentinels/u);
+  assert.match(sentinelRunner, /require_exact_file_summaries/u);
+  assert.match(sentinelRunner, /\.\.\.selectedFiles/u);
+  assert.match(sentinelRunner, /spawnCommandOnce/u);
+  assert.match(sentinelRunner, /REGISTRATION_PROJECTION_TIMEOUT_MS = 300_000/u);
   assert.doesNotMatch(titleInventory, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleAnalysis, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleDestructuringRoles, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleModuleEdges, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleRegistration, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleReferenceValidation, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleRoles, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titleScopeModel, /grep|execFile|spawn/u);
+  assert.doesNotMatch(titlePatternScope, /grep|execFile|spawn/u);
 });
 
 test("publish, tarball, and consumer gates retain complete release boundaries", () => {

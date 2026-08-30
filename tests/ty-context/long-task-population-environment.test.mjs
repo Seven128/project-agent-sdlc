@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import net from "node:net";
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, rm, writeFile } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -45,12 +45,14 @@ test("Population V2 validates exact entity sets", () => {
     ],
     [
       "excluded outside eligible",
-      (value) => value.population.excluded_items.push({ id: "x", rule: "disabled" }),
+      (value) =>
+        value.population.excluded_items.push({ id: "x", rule: "disabled" }),
       "excluded_not_eligible_subset",
     ],
     [
       "overlap",
-      (value) => value.population.excluded_items.push({ id: "a", rule: "disabled" }),
+      (value) =>
+        value.population.excluded_items.push({ id: "a", rule: "disabled" }),
       "observed_excluded_overlap",
     ],
     [
@@ -109,7 +111,11 @@ test("Environment probes block before runner start and support executable/file/e
     assert.equal(success.execution_status, "completed");
 
     for (const requirement of [
-      { key: "exe", kind: "executable", target: "definitely-missing-executable" },
+      {
+        key: "exe",
+        kind: "executable",
+        target: "definitely-missing-executable",
+      },
       { key: "env", kind: "env_var", target: "DEFINITELY_MISSING_ENV" },
       { key: "file", kind: "file", target: "missing.txt" },
       {
@@ -127,7 +133,7 @@ test("Environment probes block before runner start and support executable/file/e
       );
       assert.equal(result.execution_status, "blocked_external");
       assert.equal(result.attempts, 0);
-      await assert.rejects(() => import("node:fs/promises").then(({ access }) => access(marker)));
+      await assert.rejects(() => access(marker));
     }
   } finally {
     server.close();

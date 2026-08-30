@@ -15,16 +15,12 @@ import { mutateFixtureSemanticManifest } from "./long-task-semantic-fact-test-su
 import { FIXTURE_EXTERNAL_FACT_SPECS } from "./long-task-semantic-manifest-fixture.mjs";
 
 test("browser Playwright cannot machine-close declared obligations", async (t) => {
-  for (const weak of [false, true])
-    await t.test(weak ? "weak observability" : "standard risk", async () => {
-      const fixture = await createDeliveryFixture();
-      try {
-        await configureMachinePlaywright(fixture, { weak });
-        await assertUnsupportedMachineObserver(fixture);
-      } finally {
-        await rm(fixture.root, { recursive: true, force: true });
-      }
-    });
+  await t.test("standard risk", async () => {
+    await assertPlaywrightCannotMachineClose({ weak: false });
+  });
+  await t.test("weak observability", async () => {
+    await assertPlaywrightCannotMachineClose({ weak: true });
+  });
 });
 
 test("a complete project-authored UI Counterfactual cannot admit the browser observer", async () => {
@@ -82,6 +78,16 @@ test("unsupported browser obligations can proceed only as blocking External Conf
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+async function assertPlaywrightCannotMachineClose({ weak }) {
+  const fixture = await createDeliveryFixture();
+  try {
+    await configureMachinePlaywright(fixture, { weak });
+    await assertUnsupportedMachineObserver(fixture);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
 
 async function configureMachinePlaywright(fixture, { weak }) {
   await writeFile(

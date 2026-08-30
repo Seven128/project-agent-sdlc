@@ -133,45 +133,47 @@ test("journal successors require the exact predecessor sequence and canonical di
 });
 
 test("journal snapshot identity rejects same-byte replacement and read-time replacement", async (t) => {
-  for (const phase of ["before successor", "during read"])
-    await t.test(phase, async () => {
-      const root = await projectWithUnregisteredContext();
-      try {
-        const planned = await planContextRegistration(registerInput(root));
-        const initial = await createContextMutationJournal(root, planned.plan);
-        const journalFile = await journalSnapshotPath(root);
-        const bytes = await readFile(journalFile);
-        const mode = (await lstat(journalFile)).mode & 0o777;
-        const replacement = path.join(
-          root,
-          `.journal-replacement-${phase.replace(/\s/gu, "-")}`,
+  async function assertPhase(phase) {
+    const root = await projectWithUnregisteredContext();
+    try {
+      const planned = await planContextRegistration(registerInput(root));
+      const initial = await createContextMutationJournal(root, planned.plan);
+      const journalFile = await journalSnapshotPath(root);
+      const bytes = await readFile(journalFile);
+      const mode = (await lstat(journalFile)).mode & 0o777;
+      const replacement = path.join(
+        root,
+        `.journal-replacement-${phase.replace(/\s/gu, "-")}`,
+      );
+      await writeFile(replacement, bytes);
+      await chmod(replacement, mode);
+      const replace = async (absolute) => {
+        await rm(absolute);
+        await rename(replacement, absolute);
+      };
+      if (phase === "before successor") {
+        await replace(journalFile);
+        await assert.rejects(
+          updateContextMutationJournal(root, initial, { ...initial }, [
+            "planning",
+          ]),
+          /journal_predecessor_compare_and_swap_failed/u,
         );
-        await writeFile(replacement, bytes);
-        await chmod(replacement, mode);
-        const replace = async (absolute) => {
-          await rm(absolute);
-          await rename(replacement, absolute);
-        };
-        if (phase === "before successor") {
-          await replace(journalFile);
-          await assert.rejects(
-            updateContextMutationJournal(root, initial, { ...initial }, [
-              "planning",
-            ]),
-            /journal_predecessor_compare_and_swap_failed/u,
-          );
-        } else {
-          await assert.rejects(
-            readLatestJournalSnapshot(root, {
-              after_snapshot_read: replace,
-            }),
-            /journal_changed_during_read/u,
-          );
-        }
-      } finally {
-        await rm(root, { recursive: true, force: true });
+      } else {
+        await assert.rejects(
+          readLatestJournalSnapshot(root, {
+            after_snapshot_read: replace,
+          }),
+          /journal_changed_during_read/u,
+        );
       }
-    });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+
+  await t.test("before successor", () => assertPhase("before successor"));
+  await t.test("during read", () => assertPhase("during read"));
 });
 
 test("temporary creation before identity persistence and pre-v2 journals give manual recovery guidance", async (t) => {

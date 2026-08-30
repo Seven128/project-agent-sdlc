@@ -208,22 +208,28 @@ default = false
     },
   ];
 
-  for (const fixture of cases)
-    await t.test(fixture.name, async () => {
-      const root = await createContextProject(fixture);
-      try {
-        const typescript = await runValidator(root, "validate-context");
-        const portable = runPortableValidator(root);
-        assert.equal(typescript.errors.length > 0, fixture.blocked);
-        assert.equal(portable.status !== 0, fixture.blocked, portable.stderr);
-        if (fixture.pattern) {
-          assert.match(typescript.errors.join("\n"), fixture.pattern);
-          assert.match(portable.stderr, fixture.pattern);
-        }
-      } finally {
-        await rm(root, { recursive: true, force: true });
+  async function assertCase(fixture) {
+    const root = await createContextProject(fixture);
+    try {
+      const typescript = await runValidator(root, "validate-context");
+      const portable = runPortableValidator(root);
+      assert.equal(typescript.errors.length > 0, fixture.blocked);
+      assert.equal(portable.status !== 0, fixture.blocked, portable.stderr);
+      if (fixture.pattern) {
+        assert.match(typescript.errors.join("\n"), fixture.pattern);
+        assert.match(portable.stderr, fixture.pattern);
       }
-    });
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+
+  await t.test("NFC and NFD Context path aliases", () => assertCase(cases[0]));
+  await t.test("case-only Context path aliases", () => assertCase(cases[1]));
+  await t.test("NFC and NFD Area id aliases", () => assertCase(cases[2]));
+  await t.test("Chinese and non-ASCII distinct paths", () =>
+    assertCase(cases[3]),
+  );
 
   await t.test(
     "one NFD physical file with an NFC Manifest key",

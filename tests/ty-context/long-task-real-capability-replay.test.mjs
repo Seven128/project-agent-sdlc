@@ -74,8 +74,7 @@ test("Starward sanitized replay contains the four-page product shape and indepen
     });
     assert.equal(decision.authority, "machine", fact.key);
     const correct = observer.extractJsonPointerExactObservationFromBytes({
-      artifact_path:
-        replay.candidates.correct_process_product.artifact_path,
+      artifact_path: replay.candidates.correct_process_product.artifact_path,
       bytes: correctBytes,
       locator,
       sensitivity: "plain",
@@ -156,7 +155,8 @@ test("Starward sanitized replay contains the four-page product shape and indepen
   });
   assert.equal(proxy.reason, "observation_target_proxy_mismatch");
   for (const fact of replay.selected_design.facts.filter(
-    (candidate) => !observer.JSON_POINTER_EXACT_METHODS.includes(candidate.method),
+    (candidate) =>
+      !observer.JSON_POINTER_EXACT_METHODS.includes(candidate.method),
   )) {
     const unsupported = observer.observationAdmissionDecision({
       method: fact.method,
@@ -195,37 +195,261 @@ test("Starward hidden ground truth rejects A1-A12 and accepts the valid control 
     mask: null,
     sensitivity: "plain",
     locator: { kind: "json_pointer", value: "/observations/map/anatomy" },
-    oracle: { trust: "named_external_tcb", identity: "ty-context-json-pointer-exact", version: "1.0.0", sha256: null },
+    oracle: {
+      trust: "named_external_tcb",
+      identity: "ty-context-json-pointer-exact",
+      version: "1.0.0",
+      sha256: null,
+    },
     target_family: "process",
     current_static_artifact: true,
   };
   const attacks = [
-    ["A1 actual differs while submitted verdict passes", () => !exact.evaluateExactDigestComparison({ ...exactInput, actual_value_sha256: digest("f"), submitted_passed: true, submitted_verdict: "passed" }).passed],
-    ["A2 expected is copied into actual", () => observer.classifyObservationCarrier({ artifact_path: "delivery-contract.yaml", source_paths: ["docs/source.md"], expected_authority_paths: ["delivery-contract.yaml"], product_carrier_paths: ["src/map.json"], current_observer_artifact_paths: [] }) === "expected_authority_forbidden"],
-    ["A3 Anatomy is wrong while local controls are correct", () => observer.observationAdmissionDecision({ ...admittedStatic, method: "layout_geometry" }).authority !== "machine"],
-    ["A4 whole-page visual mode is wrong", () => observer.observationAdmissionDecision({ ...admittedStatic, method: "visual_fidelity" }).authority !== "machine"],
-    ["A5 primary action hierarchy is wrong", () => observer.observationAdmissionDecision({ ...admittedStatic, method: "information_hierarchy" }).authority !== "machine"],
-    ["A6 heterogeneous claims share aggregate status", () => sensitivity.validateCounterfactualObservationImpact({ baseline_by_fact: { anatomy: digest("a"), night_sky: digest("a") }, mutated_by_fact: { anatomy: digest("f"), night_sky: digest("f") }, expected_affected_fact_refs: ["anatomy"], preserved_fact_refs: ["night_sky"], target_live: true, carrier_role: "product" }) === "counterfactual_unexpected_fact_impact"],
-    ["A7 mutation targets pure evidence carrier", () => sensitivity.validateCounterfactualObservationImpact({ baseline_by_fact: { anatomy: digest("a") }, mutated_by_fact: { anatomy: digest("f") }, expected_affected_fact_refs: ["anatomy"], preserved_fact_refs: [], target_live: true, carrier_role: "evidence" }) === "counterfactual_mutates_generated_evidence"],
-    ["A8 historical native session", () => observer.observationAdmissionDecision({ ...admittedStatic, target_family: "native", current_static_artifact: false, historical_session: true }).authority !== "machine"],
-    ["A9 H5 proxy impersonates native target", () => observer.observationAdmissionDecision({ ...admittedStatic, target_family: "native", observed_target_family: "browser" }).reason === "observation_target_proxy_mismatch"],
-    ["A10 stale screenshot belongs to another tree", () => observer.observationAdmissionDecision({ ...admittedStatic, current_static_artifact: false, snapshot_matches: false }).authority !== "machine"],
-    ["A11 task-authored verifier is the sole material Oracle", () => observer.observationAdmissionDecision({ ...admittedStatic, oracle: { trust: "named_external_tcb", identity: "project-starward-verifier", version: "1.0.0", sha256: null } }).authority !== "machine"],
-    ["A12 asset integrity attempts to close layout accessibility or motion", () => observer.observationAdmissionDecision({ ...admittedStatic, method: "asset_integrity", required_method: "accessibility" }).reason === "observation_capability_mismatch"],
+    [
+      "A1 actual differs while submitted verdict passes",
+      () =>
+        !exact.evaluateExactDigestComparison({
+          ...exactInput,
+          actual_value_sha256: digest("f"),
+          submitted_passed: true,
+          submitted_verdict: "passed",
+        }).passed,
+    ],
+    [
+      "A2 expected is copied into actual",
+      () =>
+        observer.classifyObservationCarrier({
+          artifact_path: "delivery-contract.yaml",
+          source_paths: ["docs/source.md"],
+          expected_authority_paths: ["delivery-contract.yaml"],
+          product_carrier_paths: ["src/map.json"],
+          current_observer_artifact_paths: [],
+        }) === "expected_authority_forbidden",
+    ],
+    [
+      "A3 Anatomy is wrong while local controls are correct",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          method: "layout_geometry",
+        }).authority !== "machine",
+    ],
+    [
+      "A4 whole-page visual mode is wrong",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          method: "visual_fidelity",
+        }).authority !== "machine",
+    ],
+    [
+      "A5 primary action hierarchy is wrong",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          method: "information_hierarchy",
+        }).authority !== "machine",
+    ],
+    [
+      "A6 heterogeneous claims share aggregate status",
+      () =>
+        sensitivity.validateCounterfactualObservationImpact({
+          baseline_by_fact: { anatomy: digest("a"), night_sky: digest("a") },
+          mutated_by_fact: { anatomy: digest("f"), night_sky: digest("f") },
+          expected_affected_fact_refs: ["anatomy"],
+          preserved_fact_refs: ["night_sky"],
+          target_live: true,
+          carrier_role: "product",
+        }) === "counterfactual_unexpected_fact_impact",
+    ],
+    [
+      "A7 mutation targets pure evidence carrier",
+      () =>
+        sensitivity.validateCounterfactualObservationImpact({
+          baseline_by_fact: { anatomy: digest("a") },
+          mutated_by_fact: { anatomy: digest("f") },
+          expected_affected_fact_refs: ["anatomy"],
+          preserved_fact_refs: [],
+          target_live: true,
+          carrier_role: "evidence",
+        }) === "counterfactual_mutates_generated_evidence",
+    ],
+    [
+      "A8 historical native session",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          target_family: "native",
+          current_static_artifact: false,
+          historical_session: true,
+        }).authority !== "machine",
+    ],
+    [
+      "A9 H5 proxy impersonates native target",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          target_family: "native",
+          observed_target_family: "browser",
+        }).reason === "observation_target_proxy_mismatch",
+    ],
+    [
+      "A10 stale screenshot belongs to another tree",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          current_static_artifact: false,
+          snapshot_matches: false,
+        }).authority !== "machine",
+    ],
+    [
+      "A11 task-authored verifier is the sole material Oracle",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          oracle: {
+            trust: "named_external_tcb",
+            identity: "project-starward-verifier",
+            version: "1.0.0",
+            sha256: null,
+          },
+        }).authority !== "machine",
+    ],
+    [
+      "A12 asset integrity attempts to close layout accessibility or motion",
+      () =>
+        observer.observationAdmissionDecision({
+          ...admittedStatic,
+          method: "asset_integrity",
+          required_method: "accessibility",
+        }).reason === "observation_capability_mismatch",
+    ],
   ];
-  for (const [name, rejected] of attacks)
-    await t.test(name, () => assert.equal(rejected(), true));
+  const assertAttack = (index) => assert.equal(attacks[index][1](), true);
+  await t.test("A1 actual differs while submitted verdict passes", () =>
+    assertAttack(0),
+  );
+  await t.test("A2 expected is copied into actual", () => assertAttack(1));
+  await t.test("A3 Anatomy is wrong while local controls are correct", () =>
+    assertAttack(2),
+  );
+  await t.test("A4 whole-page visual mode is wrong", () => assertAttack(3));
+  await t.test("A5 primary action hierarchy is wrong", () => assertAttack(4));
+  await t.test("A6 heterogeneous claims share aggregate status", () =>
+    assertAttack(5),
+  );
+  await t.test("A7 mutation targets pure evidence carrier", () =>
+    assertAttack(6),
+  );
+  await t.test("A8 historical native session", () => assertAttack(7));
+  await t.test("A9 H5 proxy impersonates native target", () => assertAttack(8));
+  await t.test("A10 stale screenshot belongs to another tree", () =>
+    assertAttack(9),
+  );
+  await t.test("A11 task-authored verifier is the sole material Oracle", () =>
+    assertAttack(10),
+  );
+  await t.test(
+    "A12 asset integrity attempts to close layout accessibility or motion",
+    () => assertAttack(11),
+  );
 
   const validControls = [
-    ["correct static exact candidate", exact.evaluateExactDigestComparison(exactInput).passed],
-    ["package observer with current process artifact", observer.observationAdmissionDecision(admittedStatic).authority === "machine"],
-    ["target-consumed generated configuration remains a production carrier", observer.classifyObservationCarrier({ artifact_path: "generated/starward-runtime-config.json", source_paths: [], expected_authority_paths: [], product_carrier_paths: ["generated/starward-runtime-config.json"], current_observer_artifact_paths: ["artifacts/**"] }) === "product_carrier"],
-    ["one artifact can retain independent Fact locators", observer.admittedObservationKey("generated/starward-runtime-config.json", observer.jsonPointerExactLocatorForIdentity("starward.point-details.title")) !== observer.admittedObservationKey("generated/starward-runtime-config.json", observer.jsonPointerExactLocatorForIdentity("starward.mine.summary"))],
-    ["legal related-fact fan-out", sensitivity.validateCounterfactualObservationImpact({ baseline_by_fact: { anatomy: digest("a"), details: digest("a") }, mutated_by_fact: { anatomy: digest("f"), details: digest("f") }, expected_affected_fact_refs: ["anatomy", "details"], preserved_fact_refs: [], target_live: true, carrier_role: "product" }) === null],
-    ["unsupported native fact remains external", observer.observationAdmissionDecision({ ...admittedStatic, target_family: "native", current_static_artifact: false }).authority === "external_confirmation"],
-    ["legal tolerance remains outside the bounded exact adapter instead of false machine acceptance", observer.observationAdmissionDecision({ ...admittedStatic, tolerance: { value: 1 } }).authority === "external_confirmation"],
-    ["dynamic mask remains outside the bounded exact adapter instead of false machine acceptance", observer.observationAdmissionDecision({ ...admittedStatic, mask: { locator: "/mask" } }).authority === "external_confirmation"],
+    [
+      "correct static exact candidate",
+      exact.evaluateExactDigestComparison(exactInput).passed,
+    ],
+    [
+      "package observer with current process artifact",
+      observer.observationAdmissionDecision(admittedStatic).authority ===
+        "machine",
+    ],
+    [
+      "target-consumed generated configuration remains a production carrier",
+      observer.classifyObservationCarrier({
+        artifact_path: "generated/starward-runtime-config.json",
+        source_paths: [],
+        expected_authority_paths: [],
+        product_carrier_paths: ["generated/starward-runtime-config.json"],
+        current_observer_artifact_paths: ["artifacts/**"],
+      }) === "product_carrier",
+    ],
+    [
+      "one artifact can retain independent Fact locators",
+      observer.admittedObservationKey(
+        "generated/starward-runtime-config.json",
+        observer.jsonPointerExactLocatorForIdentity(
+          "starward.point-details.title",
+        ),
+      ) !==
+        observer.admittedObservationKey(
+          "generated/starward-runtime-config.json",
+          observer.jsonPointerExactLocatorForIdentity("starward.mine.summary"),
+        ),
+    ],
+    [
+      "legal related-fact fan-out",
+      sensitivity.validateCounterfactualObservationImpact({
+        baseline_by_fact: { anatomy: digest("a"), details: digest("a") },
+        mutated_by_fact: { anatomy: digest("f"), details: digest("f") },
+        expected_affected_fact_refs: ["anatomy", "details"],
+        preserved_fact_refs: [],
+        target_live: true,
+        carrier_role: "product",
+      }) === null,
+    ],
+    [
+      "unsupported native fact remains external",
+      observer.observationAdmissionDecision({
+        ...admittedStatic,
+        target_family: "native",
+        current_static_artifact: false,
+      }).authority === "external_confirmation",
+    ],
+    [
+      "legal tolerance remains outside the bounded exact adapter instead of false machine acceptance",
+      observer.observationAdmissionDecision({
+        ...admittedStatic,
+        tolerance: { value: 1 },
+      }).authority === "external_confirmation",
+    ],
+    [
+      "dynamic mask remains outside the bounded exact adapter instead of false machine acceptance",
+      observer.observationAdmissionDecision({
+        ...admittedStatic,
+        mask: { locator: "/mask" },
+      }).authority === "external_confirmation",
+    ],
   ];
-  for (const [name, passed] of validControls)
-    await t.test(`valid control: ${name}`, () => assert.equal(passed, true));
+  const assertValidControl = (index) =>
+    assert.equal(validControls[index][1], true);
+  await t.test("valid control: correct static exact candidate", () =>
+    assertValidControl(0),
+  );
+  await t.test(
+    "valid control: package observer with current process artifact",
+    () => assertValidControl(1),
+  );
+  await t.test(
+    "valid control: target-consumed generated configuration remains a production carrier",
+    () => assertValidControl(2),
+  );
+  await t.test(
+    "valid control: one artifact can retain independent Fact locators",
+    () => assertValidControl(3),
+  );
+  await t.test("valid control: legal related-fact fan-out", () =>
+    assertValidControl(4),
+  );
+  await t.test("valid control: unsupported native fact remains external", () =>
+    assertValidControl(5),
+  );
+  await t.test(
+    "valid control: legal tolerance remains outside the bounded exact adapter instead of false machine acceptance",
+    () => assertValidControl(6),
+  );
+  await t.test(
+    "valid control: dynamic mask remains outside the bounded exact adapter instead of false machine acceptance",
+    () => assertValidControl(7),
+  );
 });

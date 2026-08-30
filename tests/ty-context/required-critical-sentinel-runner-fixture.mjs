@@ -1,5 +1,4 @@
 import assert from "node:assert/strict";
-import { spawn } from "node:child_process";
 import {
   copyFile,
   cp,
@@ -11,7 +10,8 @@ import {
 } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { runOwnedChildProcess } from "./helpers/owned-child-process.mjs";
 
 const repositoryRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -36,6 +36,7 @@ export async function createFixture({
   ownerSource,
   extraFiles = {},
   reporterTransform = (source) => source,
+  runnerTransform = (source) => source,
   requiredPlatform = process.platform,
 }) {
   const root = await mkdtemp(path.join(fixtureParent, `${name}-`));
@@ -44,13 +45,82 @@ export async function createFixture({
   await mkdir(toolsRoot, { recursive: true });
   await mkdir(testsRoot, { recursive: true });
 
-  await copyFile(
+  const runnerSource = await readFile(
     path.join(repositoryRoot, "tools", "run_required_critical_sentinel.mjs"),
+    "utf8",
+  );
+  const processOwnerUrl = pathToFileURL(
+    path.join(
+      repositoryRoot,
+      "packages",
+      "ty-context",
+      "dist",
+      "lib",
+      "long-task-command-process.js",
+    ),
+  ).href;
+  await writeFile(
     path.join(toolsRoot, "run_required_critical_sentinel.mjs"),
+    runnerTransform(
+      replaceRequired(
+        runnerSource,
+        '"../packages/ty-context/dist/lib/long-task-command-process.js"',
+        JSON.stringify(processOwnerUrl),
+      ),
+    ),
+    "utf8",
   );
   await copyFile(
     path.join(repositoryRoot, "tools", "test_title_inventory.mjs"),
     path.join(toolsRoot, "test_title_inventory.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_static_analysis.mjs"),
+    path.join(toolsRoot, "test_title_static_analysis.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_destructuring_roles.mjs"),
+    path.join(toolsRoot, "test_title_destructuring_roles.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_module_edges.mjs"),
+    path.join(toolsRoot, "test_title_module_edges.mjs"),
+  );
+  await copyFile(
+    path.join(
+      repositoryRoot,
+      "tools",
+      "test_title_registration_resolution.mjs",
+    ),
+    path.join(toolsRoot, "test_title_registration_resolution.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_expression_roles.mjs"),
+    path.join(toolsRoot, "test_title_expression_roles.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_scope_model.mjs"),
+    path.join(toolsRoot, "test_title_scope_model.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_scope_bindings.mjs"),
+    path.join(toolsRoot, "test_title_scope_bindings.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_pattern_scope.mjs"),
+    path.join(toolsRoot, "test_title_pattern_scope.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_roles.mjs"),
+    path.join(toolsRoot, "test_title_roles.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_reference_validation.mjs"),
+    path.join(toolsRoot, "test_title_reference_validation.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_reference_exports.mjs"),
+    path.join(toolsRoot, "test_title_reference_exports.mjs"),
   );
   await copyFile(
     path.join(repositoryRoot, "tools", "test_suite_selection.mjs"),
@@ -85,8 +155,11 @@ export async function createFixture({
     "utf8",
   );
   await writeFile(path.join(testsRoot, ownerName), ownerSource, "utf8");
-  for (const [file, source] of Object.entries(extraFiles))
-    await writeFile(path.join(testsRoot, file), source, "utf8");
+  for (const [file, source] of Object.entries(extraFiles)) {
+    const target = path.join(testsRoot, file);
+    await mkdir(path.dirname(target), { recursive: true });
+    await writeFile(target, source, "utf8");
+  }
   return root;
 }
 
@@ -109,33 +182,22 @@ export function testDeclaration(name, implementation) {
   return `test(${JSON.stringify(name)}, ${implementation});`;
 }
 
-export function runFixture(root, args = [suite, sentinelId]) {
-  return new Promise((resolve, reject) => {
-    const child = spawn(
-      process.execPath,
-      [path.join(root, "tools", "run_required_critical_sentinel.mjs"), ...args],
-      {
-        cwd: root,
-        env: childEnvironment,
-        stdio: ["ignore", "pipe", "pipe"],
-        windowsHide: true,
-      },
-    );
-    let stdout = "";
-    let stderr = "";
-    child.stdout.setEncoding("utf8");
-    child.stderr.setEncoding("utf8");
-    child.stdout.on("data", (chunk) => {
-      stdout += chunk;
-    });
-    child.stderr.on("data", (chunk) => {
-      stderr += chunk;
-    });
-    child.once("error", reject);
-    child.once("close", (code, signal) =>
-      resolve({ code, signal, stdout, stderr }),
-    );
-  });
+export async function runFixture(root, args = [suite, sentinelId]) {
+  const result = await runOwnedChildProcess(
+    process.execPath,
+    [path.join(root, "tools", "run_required_critical_sentinel.mjs"), ...args],
+    {
+      cwd: root,
+      env: childEnvironment,
+      timeoutMs: 60_000,
+    },
+  );
+  return {
+    code: result.status,
+    signal: result.signal,
+    stdout: result.stdout,
+    stderr: result.stderr,
+  };
 }
 
 export function finalJsonLine(output) {

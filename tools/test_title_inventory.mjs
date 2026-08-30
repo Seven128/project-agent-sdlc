@@ -1,10 +1,20 @@
 import { readFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import path from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { parse } from "acorn";
+import { analyzeNodeTestProgram } from "./test_title_static_analysis.mjs";
 
 const CRITICAL_TAG = /\[critical:([a-z][a-z0-9]*(?:-[a-z0-9]+)*)\]/gu;
-const NODE_TEST_FUNCTION_EXPORTS = new Set(["it", "test"]);
-const TEST_MODIFIERS = new Set(["only", "skip", "todo"]);
+const JAVASCRIPT_MODULE_EXTENSIONS = new Set([
+  "",
+  ".cjs",
+  ".cts",
+  ".js",
+  ".mjs",
+  ".mts",
+  ".ts",
+]);
 
 export async function assertCriticalTestTitleInventory({
   suite,
@@ -54,6 +64,9 @@ export async function assertCriticalTestTitleInventory({
     selected_file_count: selectedFiles.length,
     test_title_count: titles.length,
     critical_occurrence_count: occurrences.length,
+    critical_occurrences: Object.freeze(
+      occurrences.map((entry) => Object.freeze({ ...entry })),
+    ),
     critical_ids: Object.freeze(
       [...new Set(occurrences.map((entry) => entry.id))].sort(compareUtf8),
     ),
@@ -61,31 +74,107 @@ export async function assertCriticalTestTitleInventory({
 }
 
 export async function readNodeTestTitleInventory(selectedFiles) {
-  const ordered = [...selectedFiles].sort((left, right) =>
-    compareUtf8(path.basename(left), path.basename(right)),
-  );
+  const ordered = [...selectedFiles]
+    .map((file) => path.resolve(file))
+    .sort((left, right) =>
+      compareUtf8(path.basename(left), path.basename(right)),
+    );
+  if (ordered.length === 0)
+    throw new Error("test_title_inventory_no_selected_files");
   const names = ordered.map((file) => path.basename(file));
   if (new Set(names).size !== names.length)
     throw new Error("test_title_inventory_duplicate_selected_file");
+  const testRoot = path.dirname(ordered[0]);
+  if (ordered.some((file) => path.dirname(file) !== testRoot))
+    throw new Error("test_title_inventory_selected_root_mismatch");
+
+  const moduleCache = new Map();
   const inventory = [];
-  for (const [index, file] of ordered.entries()) {
-    const source = await readFile(file, "utf8");
-    const program = parseModule(source, names[index]);
-    const bindings = nodeTestBindings(program);
-    walk(program, (node) => {
-      if (node.type !== "CallExpression") return;
-      if (!isNodeTestCall(node.callee, bindings)) return;
-      const title = staticTitle(node.arguments[0]);
-      if (title === null) return;
-      inventory.push({
-        file: names[index],
-        title,
-        line: node.loc?.start.line ?? 0,
-        column: (node.loc?.start.column ?? -1) + 1,
-      });
+  for (const rootFile of ordered) {
+    const visited = new Set();
+    await visitModule(rootFile, {
+      testRoot,
+      visited,
+      moduleCache,
+      inventory,
     });
   }
   return inventory.sort(compareTitleRows);
+}
+
+async function visitModule(
+  absoluteFile,
+  { testRoot, visited, moduleCache, inventory },
+) {
+  const normalized = path.resolve(absoluteFile);
+  if (visited.has(normalized)) return;
+  visited.add(normalized);
+  const analysis = await loadModule(normalized, testRoot, moduleCache);
+  for (const title of analysis.titles)
+    inventory.push({ file: displayPath(normalized, testRoot), ...title });
+  for (const edge of analysis.local_module_edges) {
+    const imported = resolveLocalModule(normalized, edge);
+    if (!isWithinDirectory(imported, testRoot)) {
+      if (edge.dynamic)
+        throw new Error(
+          `critical_test_title_inventory_unsupported_dynamic_import:${displayPath(normalized, testRoot)}:${edge.line}:${edge.column}`,
+        );
+      continue;
+    }
+    if (!isJavaScriptModulePath(imported)) continue;
+    await visitModule(imported, {
+      testRoot,
+      visited,
+      moduleCache,
+      inventory,
+    });
+  }
+}
+
+function isWithinDirectory(candidate, directory) {
+  const relative = path.relative(directory, candidate);
+  return (
+    relative === "" ||
+    (!relative.startsWith(`..${path.sep}`) &&
+      relative !== ".." &&
+      !path.isAbsolute(relative))
+  );
+}
+
+async function loadModule(absoluteFile, testRoot, moduleCache) {
+  const cached = moduleCache.get(absoluteFile);
+  if (cached) return cached;
+  const pending = (async () => {
+    const file = displayPath(absoluteFile, testRoot);
+    let source;
+    try {
+      source = await readFile(absoluteFile, "utf8");
+    } catch (error) {
+      throw new Error(
+        `test_title_inventory_read_failed:${file}:${failureMessage(error)}`,
+      );
+    }
+    const program = parseModule(source, file);
+    return analyzeNodeTestProgram({ program, file });
+  })();
+  moduleCache.set(absoluteFile, pending);
+  return pending;
+}
+
+function resolveLocalModule(importer, edge) {
+  try {
+    if (edge.resolution === "commonjs")
+      return path.resolve(
+        createRequire(pathToFileURL(importer)).resolve(edge.specifier),
+      );
+    return path.resolve(
+      fileURLToPath(new URL(edge.specifier, pathToFileURL(importer))),
+    );
+  } catch (error) {
+    throw new Error(
+      `test_title_inventory_import_invalid:${path.basename(importer)}:${edge.specifier}:${failureMessage(error)}`,
+    );
+  }
 }
 
 function parseModule(source, file) {
@@ -103,72 +192,6 @@ function parseModule(source, file) {
   }
 }
 
-function nodeTestBindings(program) {
-  const direct = new Set();
-  const namespaces = new Set();
-  for (const node of program.body) {
-    if (node.type !== "ImportDeclaration" || node.source?.value !== "node:test")
-      continue;
-    for (const specifier of node.specifiers) {
-      if (specifier.type === "ImportDefaultSpecifier")
-        direct.add(specifier.local.name);
-      else if (
-        specifier.type === "ImportSpecifier" &&
-        NODE_TEST_FUNCTION_EXPORTS.has(importedName(specifier.imported))
-      )
-        direct.add(specifier.local.name);
-      else if (specifier.type === "ImportNamespaceSpecifier")
-        namespaces.add(specifier.local.name);
-    }
-  }
-  return { direct, namespaces };
-}
-
-function importedName(imported) {
-  return imported?.type === "Identifier" ? imported.name : imported?.value;
-}
-
-function isNodeTestCall(callee, bindings) {
-  const parts = memberPath(callee);
-  if (!parts) return false;
-  if (bindings.direct.has(parts[0]))
-    return (
-      parts.length === 1 || (parts.length === 2 && TEST_MODIFIERS.has(parts[1]))
-    );
-  if (
-    !bindings.namespaces.has(parts[0]) ||
-    !NODE_TEST_FUNCTION_EXPORTS.has(parts[1])
-  )
-    return false;
-  return (
-    parts.length === 2 || (parts.length === 3 && TEST_MODIFIERS.has(parts[2]))
-  );
-}
-
-function memberPath(node) {
-  if (node?.type === "Identifier") return [node.name];
-  if (node?.type !== "MemberExpression" || node.optional) return null;
-  const owner = memberPath(node.object);
-  if (!owner) return null;
-  const property = node.computed
-    ? node.property?.type === "Literal" &&
-      typeof node.property.value === "string"
-      ? node.property.value
-      : null
-    : node.property?.type === "Identifier"
-      ? node.property.name
-      : null;
-  return property === null ? null : [...owner, property];
-}
-
-function staticTitle(node) {
-  if (node?.type === "Literal" && typeof node.value === "string")
-    return node.value;
-  if (node?.type === "TemplateLiteral" && node.expressions.length === 0)
-    return node.quasis[0]?.value.cooked ?? node.quasis[0]?.value.raw ?? "";
-  return null;
-}
-
 function criticalOccurrences(titles) {
   const result = [];
   for (const title of titles)
@@ -178,18 +201,19 @@ function criticalOccurrences(titles) {
         file: title.file,
         line: title.line,
         column: title.column,
+        title: title.title,
       });
   return result.sort(compareOccurrenceRows);
 }
 
-function walk(node, visit) {
-  if (!node || typeof node !== "object") return;
-  if (typeof node.type === "string") visit(node);
-  for (const [key, value] of Object.entries(node)) {
-    if (["end", "loc", "range", "start"].includes(key)) continue;
-    if (Array.isArray(value)) for (const child of value) walk(child, visit);
-    else if (value && typeof value === "object") walk(value, visit);
-  }
+function displayPath(absoluteFile, testRoot) {
+  return path.relative(testRoot, absoluteFile).replaceAll("\\", "/");
+}
+
+function isJavaScriptModulePath(absoluteFile) {
+  return JAVASCRIPT_MODULE_EXTENSIONS.has(
+    path.extname(absoluteFile).toLowerCase(),
+  );
 }
 
 function compareTitleRows(left, right) {

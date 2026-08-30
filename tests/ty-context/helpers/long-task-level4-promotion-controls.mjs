@@ -13,7 +13,6 @@ import {
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
-import { pathToFileURL } from "node:url";
 import { prepareRealProcessRoiPlan } from "../../../tools/long_task_real_process_roi_runner.mjs";
 import { npmCommandSpec } from "../../../tools/npm_command_spec.mjs";
 import {
@@ -22,6 +21,7 @@ import {
   runPromotionCase,
 } from "./long-task-level4-promotion-fixture.mjs";
 import { git } from "./long-task-level4-test-utils.mjs";
+import { runOwnedChildProcess } from "./owned-child-process.mjs";
 
 const execFileAsync = promisify(execFile);
 
@@ -134,16 +134,35 @@ export async function assertPromotionArtifactControls({
         "\n// synthetic modified executing verifier\n",
         "utf8",
       );
-      const alteredVerifier = await import(
-        pathToFileURL(alteredVerifierPath).href
-      );
-      await assert.rejects(
-        () =>
-          alteredVerifier.verifyLevel4GovernancePromotion({
-            repositoryRoot: positive.checkout,
-            promotionCommit: positive.promotionCommit,
-            evidenceRoot: positive.evidenceRoot,
-          }),
+      let alteredFailure = null;
+      try {
+        const execution = await runOwnedChildProcess(
+          process.execPath,
+          [
+            alteredVerifierPath,
+            "--promotion",
+            positive.promotionCommit,
+            "--evidence-root",
+            positive.evidenceRoot,
+          ],
+          {
+            cwd: positive.checkout,
+            timeoutMs: 120_000,
+          },
+        );
+        if (execution.status !== 0) {
+          const error = new Error(
+            `level4_promotion_altered_verifier_exit:${execution.status}`,
+          );
+          error.stderr = execution.stderr;
+          throw error;
+        }
+      } catch (error) {
+        alteredFailure = error;
+      }
+      assert.ok(alteredFailure, "altered verifier unexpectedly passed");
+      assert.match(
+        `${alteredFailure.message}\n${alteredFailure.stderr ?? ""}`,
         /level4_promotion_executing_benchmark_identity/u,
       );
     } finally {

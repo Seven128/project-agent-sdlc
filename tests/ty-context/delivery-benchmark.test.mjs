@@ -3,16 +3,22 @@ import assert from "node:assert/strict";
 import { mkdtemp, readdir, readFile, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
-import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import {
   buildWorkflowDiagnostics,
   listScenarios,
   prepareRunDirectory,
-  renderStagePrompt
+  renderStagePrompt,
 } from "../../examples/delivery-benchmark/runner/delivery_benchmark.mjs";
+import { runOwnedChildProcess } from "./helpers/owned-child-process.mjs";
 
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repoRoot = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
+const benchmarkDataChild = fileURLToPath(
+  new URL("./delivery-benchmark-data-child.mjs", import.meta.url),
+);
 
 test("benchmark report data is reset for Minimal Context reruns", async () => {
   const data = await loadBenchmarkData();
@@ -30,12 +36,13 @@ test("benchmark report data is reset for Minimal Context reruns", async () => {
 });
 
 test("benchmark docs keep skeleton protocol and remove old pilot conclusions", async () => {
-  const read = (relativePath) => readFile(path.join(repoRoot, relativePath), "utf8");
+  const read = (relativePath) =>
+    readFile(path.join(repoRoot, relativePath), "utf8");
   const [readme, runbook, resultsReadme, context] = await Promise.all([
     read("examples/delivery-benchmark/README.md"),
     read("examples/delivery-benchmark/RUNBOOK.md"),
     read("examples/delivery-benchmark/results/README.md"),
-    read("project_context/areas/delivery-benchmark.md")
+    read("project_context/areas/delivery-benchmark.md"),
   ]);
 
   for (const content of [readme, runbook, resultsReadme]) {
@@ -44,7 +51,10 @@ test("benchmark docs keep skeleton protocol and remove old pilot conclusions", a
     assert.match(content, /workflow overhead ratio/i);
     assert.match(content, /artifact count|artifact inventory/i);
     assert.match(content, /true[- ]product|hygiene/i);
-    assert.match(content, /AC progress visibility|acceptance progress visibility/i);
+    assert.match(
+      content,
+      /AC progress visibility|acceptance progress visibility/i,
+    );
     assert.doesNotMatch(content, /completed public run|formal result summary/i);
     assert.doesNotMatch(content, /\.work_products|validate-dev|validate-plan/);
   }
@@ -59,8 +69,14 @@ test("benchmark docs keep skeleton protocol and remove old pilot conclusions", a
 });
 
 test("results directory contains only report shell and reset data", async () => {
-  const files = await readdir(path.join(repoRoot, "examples", "delivery-benchmark", "results"));
-  assert.deepEqual(files.sort(), ["README.md", "benchmark-data.js", "index.html"]);
+  const files = await readdir(
+    path.join(repoRoot, "examples", "delivery-benchmark", "results"),
+  );
+  assert.deepEqual(files.sort(), [
+    "README.md",
+    "benchmark-data.js",
+    "index.html",
+  ]);
 });
 
 test("runner still supports scenario listing, prepare, and staged prompts", async () => {
@@ -71,20 +87,25 @@ test("runner still supports scenario listing, prepare, and staged prompts", asyn
       "expense-policy-engine",
       "project-context-recovery-lab",
       "support-triage-board",
-      "webhook-provider-bridge"
-    ].sort()
+      "webhook-provider-bridge",
+    ].sort(),
   );
 
-  const runRoot = await mkdtemp(path.join(os.tmpdir(), "delivery-benchmark-reset-"));
+  const runRoot = await mkdtemp(
+    path.join(os.tmpdir(), "delivery-benchmark-reset-"),
+  );
   try {
     const runDir = path.join(runRoot, "harness");
     await prepareRunDirectory({
       scenario: "support-triage-board",
       mode: "harness",
       outDir: runDir,
-      force: true
+      force: true,
     });
-    const prompt = await readFile(path.join(runDir, ".benchmark", "prompt.md"), "utf8");
+    const prompt = await readFile(
+      path.join(runDir, ".benchmark", "prompt.md"),
+      "utf8",
+    );
     assert.match(prompt, /Minimal Context Harness/);
     assert.match(prompt, /project_context\/\*\*/);
     assert.match(prompt, /make validate-context/);
@@ -94,7 +115,7 @@ test("runner still supports scenario listing, prepare, and staged prompts", asyn
     const recoveryPrompt = await renderStagePrompt({
       scenario: "support-triage-board",
       mode: "harness",
-      stage: "recovery"
+      stage: "recovery",
     });
     assert.match(recoveryPrompt, /Fresh-Agent Takeover/);
     assert.doesNotMatch(recoveryPrompt, /recovery_answer_key/);
@@ -111,7 +132,7 @@ test("runner exposes workflow diagnostics without making them conclusion-grade",
     productDefectCount: 3,
     hygieneIssueCount: 5,
     acProgressVisibleCount: 4,
-    acProgressTotal: 6
+    acProgressTotal: 6,
   });
 
   assert.equal(diagnostics.workflow_overhead_ratio, 0.25);
@@ -126,11 +147,18 @@ test("runner exposes workflow diagnostics without making them conclusion-grade",
 });
 
 async function loadBenchmarkData() {
-  const source = await readFile(
-    path.join(repoRoot, "examples", "delivery-benchmark", "results", "benchmark-data.js"),
-    "utf8"
+  const sourcePath = path.join(
+    repoRoot,
+    "examples",
+    "delivery-benchmark",
+    "results",
+    "benchmark-data.js",
   );
-  const context = { window: {} };
-  vm.runInNewContext(source, context, { filename: "benchmark-data.js" });
-  return context.window.__DELIVERY_BENCHMARK_DATA__;
+  const result = await runOwnedChildProcess(
+    process.execPath,
+    [benchmarkDataChild, sourcePath],
+    { timeoutMs: 10_000 },
+  );
+  assert.equal(result.status, 0, result.stderr);
+  return JSON.parse(result.stdout);
 }

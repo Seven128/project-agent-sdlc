@@ -1,4 +1,3 @@
-import { spawn } from "node:child_process";
 import { mkdtemp, readdir, rm } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
@@ -10,6 +9,7 @@ import {
 } from "./test_suite_policy.mjs";
 import { selectPackageTestNames } from "./test_suite_selection.mjs";
 import { assertCriticalTestTitleInventory } from "./test_title_inventory.mjs";
+import { spawnCommandOnce } from "../packages/ty-context/dist/lib/long-task-command-process.js";
 import {
   buildFileTimingReport,
   readReporterEvents,
@@ -24,12 +24,13 @@ const reporterPath = path.join(
   TEST_ROOT,
   "test-suite-file-reporter.mjs",
 );
+const REGISTRATION_PROJECTION_TIMEOUT_MS = 300_000;
 
 try {
   const { suite, id } = parseArguments(process.argv.slice(2));
   const sentinel = resolveSentinel(suite, id);
-  const titleInventory = await inventorySentinelTitles(suite, sentinel);
-  const result = await executeSentinel(suite, sentinel, titleInventory);
+  const inventory = await inventorySentinelTitles(suite, sentinel);
+  const result = await executeSentinel(suite, sentinel, inventory);
   console.log(JSON.stringify(result.report));
   if (result.failures.length > 0)
     throw new Error(
@@ -82,15 +83,26 @@ async function inventorySentinelTitles(suite, sentinel) {
     availableNames,
     inventorySuite,
   ).map((name) => path.join(testRoot, name));
-  return assertCriticalTestTitleInventory({
+  const titleInventory = await assertCriticalTestTitleInventory({
     suite: inventorySuite,
     selectedFiles,
     sentinels: [sentinel],
     rejectUnknown: false,
   });
+  const registeredSentinels = CRITICAL_TEST_SENTINELS.filter((entry) =>
+    entry.required_suites.includes(inventorySuite),
+  );
+  const applicableSentinels = criticalSentinelsForSuite(inventorySuite);
+  return {
+    applicableSentinels,
+    inventorySuite,
+    registeredSentinels,
+    selectedFiles,
+    titleInventory,
+  };
 }
 
-async function executeSentinel(suite, sentinel, titleInventory) {
+async function executeSentinel(suite, sentinel, inventory) {
   const ownerFile = path.join(repositoryRoot, TEST_ROOT, sentinel.file);
   const temporaryRoot = await mkdtemp(
     path.join(os.tmpdir(), "ty-context-required-sentinel-"),
@@ -110,7 +122,11 @@ async function executeSentinel(suite, sentinel, titleInventory) {
   let cleanupError = null;
 
   try {
-    completion = await runOwnerFile(ownerFile, eventFile, sentinel.id);
+    completion = await runRegistrationPopulation(
+      inventory.selectedFiles,
+      eventFile,
+      sentinel.id,
+    );
     parsed = await readReporterEvents(eventFile);
   } finally {
     try {
@@ -124,6 +140,8 @@ async function executeSentinel(suite, sentinel, titleInventory) {
     mode: "required-critical-sentinel",
     concurrency: 1,
     owner_file: `${TEST_ROOT}/${sentinel.file}`,
+    registration_population_suite: inventory.inventorySuite,
+    selected_file_count: inventory.selectedFiles.length,
     platform: process.platform,
     reporter: `${TEST_ROOT}/test-suite-file-reporter.mjs`,
     exit_code: completion.code,
@@ -131,39 +149,57 @@ async function executeSentinel(suite, sentinel, titleInventory) {
     event_parse_ms: parsed.duration_ms,
     event_parse_error: parsed.error,
     cleanup_error: cleanupError,
-    critical_title_inventory: titleInventory,
+    timeout_ms: REGISTRATION_PROJECTION_TIMEOUT_MS,
+    require_exact_file_summaries: true,
+    critical_title_inventory: inventory.titleInventory,
     unknown_files_parallelized: false,
   };
   const executionFailed =
     completion.error !== null ||
     completion.signal !== null ||
     completion.code !== 0;
-  const report = buildFileTimingReport({
-    suite,
-    selectedFiles: [ownerFile],
+  const timing = buildFileTimingReport({
+    suite: "required-critical-sentinel-registration-projection",
+    selectedFiles: inventory.selectedFiles,
     wallTimeMs: performance.now() - startedAt,
     execution,
     events: parsed.events,
-    registeredCriticalSentinels: [sentinel],
+    registeredCriticalSentinels: inventory.registeredSentinels,
+    applicableCriticalSentinels: inventory.applicableSentinels,
     requiredCriticalSentinels: [sentinel],
+    declaredCriticalOccurrences: inventory.titleInventory.critical_occurrences,
     testStatus: executionFailed ? "failed" : "passed",
     executionError: completion.error,
   });
+  const report = {
+    schema_version: "required-critical-sentinel-report-v1",
+    result_scope: "registration-projection",
+    complete_suite: false,
+    requested_suite: suite,
+    population_suite: inventory.inventorySuite,
+    target_id: sentinel.id,
+    verified_ids: [sentinel.id],
+    registry_runtime_observation_complete: false,
+    semantic_test_population_executed: false,
+    timing,
+  };
   const failures = reportFailures({
     report,
     sentinel,
+    inventory,
     parsed,
     completion,
     cleanupError,
   });
+  report.projection_status = failures.length === 0 ? "passed" : "failed";
   return { report, failures };
 }
 
-function runOwnerFile(ownerFile, eventFile, id) {
+async function runRegistrationPopulation(selectedFiles, eventFile, id) {
   const reporterModule = pathToFileURL(reporterPath).href;
   const namePattern = `\\[critical:${id}\\]`;
-  return new Promise((resolve) => {
-    const child = spawn(
+  try {
+    const execution = await spawnCommandOnce(
       process.execPath,
       [
         "--test",
@@ -173,32 +209,31 @@ function runOwnerFile(ownerFile, eventFile, id) {
         `--test-reporter-destination=${eventFile}`,
         "--test-reporter=spec",
         "--test-reporter-destination=stdout",
-        ownerFile,
+        ...selectedFiles,
       ],
-      {
-        cwd: repositoryRoot,
-        stdio: "inherit",
-        windowsHide: true,
-      },
+      repositoryRoot,
+      REGISTRATION_PROJECTION_TIMEOUT_MS,
+      process.env,
+      true,
     );
-    let spawnError = null;
-    child.once("error", (error) => {
-      spawnError = failureMessage(error);
-    });
-    child.once("close", (code, signal) =>
-      resolve({ code, signal, error: spawnError }),
-    );
-  });
+    if (execution.stdout.length > 0) process.stdout.write(execution.stdout);
+    if (execution.stderr.length > 0) process.stderr.write(execution.stderr);
+    return { code: execution.exit_code, signal: null, error: null };
+  } catch (error) {
+    return { code: null, signal: null, error: failureMessage(error) };
+  }
 }
 
 function reportFailures({
   report,
   sentinel,
+  inventory,
   parsed,
   completion,
   cleanupError,
 }) {
   const failures = [];
+  const timing = report.timing;
   if (parsed.error) failures.push(`report_read_failed:${parsed.error}`);
   if (parsed.events.length === 0) failures.push("report_missing_or_empty");
   if (completion.error) failures.push(`execution_error:${completion.error}`);
@@ -206,24 +241,45 @@ function reportFailures({
   if (completion.code !== 0)
     failures.push(`execution_exit_code:${completion.code ?? "missing"}`);
   if (cleanupError) failures.push(`cleanup_failed:${cleanupError}`);
-  if (report.schema_version !== "test-suite-timing-v2")
-    failures.push("report_schema_invalid");
-  if (report.file_count !== 1) failures.push("selected_file_count_not_one");
-  if (report.missing_file_count !== 0) failures.push("selected_file_missing");
-  if (report.imported_test_count !== 0)
-    failures.push(`imported_tests_observed:${report.imported_test_count}`);
-  if (report.unattributed_test_count !== 0)
+  if (report.schema_version !== "required-critical-sentinel-report-v1")
+    failures.push("projection_report_schema_invalid");
+  if (
+    report.result_scope !== "registration-projection" ||
+    report.complete_suite !== false ||
+    report.registry_runtime_observation_complete !== false ||
+    report.semantic_test_population_executed !== false
+  )
+    failures.push("projection_report_scope_invalid");
+  if (!sameStrings(report.verified_ids, [sentinel.id]))
+    failures.push("projection_report_verified_ids_invalid");
+  if (timing.schema_version !== "test-suite-timing-v2")
+    failures.push("timing_report_schema_invalid");
+  if (timing.file_count !== inventory.selectedFiles.length)
     failures.push(
-      `unattributed_tests_observed:${report.unattributed_test_count}`,
+      `selected_file_count_mismatch:${timing.file_count}:${inventory.selectedFiles.length}`,
+    );
+  if (timing.missing_file_count !== 0) failures.push("selected_file_missing");
+  if (
+    timing.file_summary_integrity?.required !== true ||
+    timing.file_summary_integrity?.status !== "passed"
+  )
+    failures.push("selected_file_summary_integrity_failed");
+  if (timing.imported_test_count !== 0)
+    failures.push(`imported_tests_observed:${timing.imported_test_count}`);
+  if (timing.unattributed_test_count !== 0)
+    failures.push(
+      `unattributed_tests_observed:${timing.unattributed_test_count}`,
     );
 
-  const coverage = report.critical_sentinel_coverage;
+  const coverage = timing.critical_sentinel_coverage;
   if (coverage?.status !== "passed")
     failures.push("critical_sentinel_coverage_failed");
   if (
-    coverage?.registered_count !== 1 ||
-    coverage?.registered_ids?.length !== 1 ||
-    coverage.registered_ids[0] !== sentinel.id
+    coverage?.registered_count !== inventory.registeredSentinels.length ||
+    !sameStrings(
+      coverage?.registered_ids,
+      inventory.registeredSentinels.map((entry) => entry.id).sort(compareUtf8),
+    )
   )
     failures.push("critical_sentinel_registry_projection_invalid");
   if (
@@ -233,8 +289,30 @@ function reportFailures({
   )
     failures.push("critical_sentinel_applicability_projection_invalid");
   if (
-    coverage?.observed_ids?.length !== 1 ||
-    coverage.observed_ids[0] !== sentinel.id
+    coverage?.applicable_count !== inventory.applicableSentinels.length ||
+    !sameStrings(
+      coverage?.applicable_ids,
+      inventory.applicableSentinels.map((entry) => entry.id).sort(compareUtf8),
+    ) ||
+    !coverage.applicable_ids.includes(sentinel.id)
+  )
+    failures.push("critical_sentinel_platform_projection_invalid");
+  if (
+    !isExactPartition(
+      coverage?.registered_ids,
+      coverage?.applicable_ids,
+      coverage?.non_applicable_ids,
+    ) ||
+    !isExactPartition(
+      coverage?.applicable_ids,
+      coverage?.required_ids,
+      coverage?.not_selected_ids,
+    )
+  )
+    failures.push("critical_sentinel_projection_partition_invalid");
+  if (
+    !Array.isArray(coverage?.observed_ids) ||
+    !coverage.observed_ids.includes(sentinel.id)
   )
     failures.push("critical_sentinel_observation_not_exact");
   appendCoverageFailures(failures, "missing", coverage?.missing_ids);
@@ -242,14 +320,38 @@ function reportFailures({
   appendCoverageFailures(failures, "duplicate", coverage?.duplicate_ids);
   appendCoverageFailures(failures, "misplaced", coverage?.misplaced_ids);
   appendCoverageFailures(failures, "non_passing", coverage?.non_passing_ids);
-  if (report.test_status !== "passed")
-    failures.push(`test_status_not_passed:${report.test_status}`);
+  if (timing.test_status !== "passed")
+    failures.push(`test_status_not_passed:${timing.test_status}`);
   return failures;
 }
 
 function appendCoverageFailures(failures, kind, ids) {
   if (Array.isArray(ids) && ids.length > 0)
     failures.push(`critical_sentinel_${kind}:${ids.join(",")}`);
+}
+
+function sameStrings(left, right) {
+  return (
+    Array.isArray(left) &&
+    left.length === right.length &&
+    left.every((value, index) => value === right[index])
+  );
+}
+
+function isExactPartition(whole, left, right) {
+  if (!Array.isArray(whole) || !Array.isArray(left) || !Array.isArray(right))
+    return false;
+  const combined = [...left, ...right].sort(compareUtf8);
+  return (
+    new Set(whole).size === whole.length &&
+    new Set(left).size === left.length &&
+    new Set(right).size === right.length &&
+    left.every((id) => !right.includes(id)) &&
+    sameStrings(whole, [...whole].sort(compareUtf8)) &&
+    sameStrings(left, [...left].sort(compareUtf8)) &&
+    sameStrings(right, [...right].sort(compareUtf8)) &&
+    sameStrings(whole, combined)
+  );
 }
 
 function failureMessage(error) {

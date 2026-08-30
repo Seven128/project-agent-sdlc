@@ -1,15 +1,10 @@
 import assert from "node:assert/strict";
-import path from "node:path";
-import { fileURLToPath, pathToFileURL } from "node:url";
-
-const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const scriptPath = path.join(repoRoot, "tools/npm_publish_access_check.mjs");
-const { summarize } = await import(pathToFileURL(scriptPath));
+import { summarize } from "../../tools/npm_publish_access_check.mjs";
 
 function report({ whoamiOk, registryPackage }) {
   return {
     whoami: { ok: whoamiOk },
-    registryPackage
+    registryPackage,
   };
 }
 
@@ -20,11 +15,11 @@ assert.equal(
       registryPackage: {
         ok: true,
         state: "published",
-        version: "0.2.40"
-      }
-    })
+        version: "0.2.40",
+      },
+    }),
   ).status,
-  "published"
+  "published",
 );
 
 assert.match(
@@ -34,11 +29,11 @@ assert.match(
       registryPackage: {
         ok: true,
         state: "published",
-        version: "0.2.40"
-      }
-    })
+        version: "0.2.40",
+      },
+    }),
   ).nextAction,
-  /local npm login is not required/
+  /local npm login is not required/,
 );
 
 assert.equal(
@@ -47,11 +42,11 @@ assert.equal(
       whoamiOk: false,
       registryPackage: {
         ok: false,
-        state: "missing"
-      }
-    })
+        state: "missing",
+      },
+    }),
   ).status,
-  "auth-needed"
+  "auth-needed",
 );
 
 assert.equal(
@@ -60,11 +55,11 @@ assert.equal(
       whoamiOk: true,
       registryPackage: {
         ok: false,
-        state: "missing"
-      }
-    })
+        state: "missing",
+      },
+    }),
   ).status,
-  "first-publish-needed"
+  "first-publish-needed",
 );
 
 assert.match(
@@ -73,11 +68,11 @@ assert.match(
       whoamiOk: true,
       registryPackage: {
         ok: false,
-        state: "missing"
-      }
-    })
+        state: "missing",
+      },
+    }),
   ).nextAction,
-  /release:prepare .*release:publish -- --local-fallback --yes\./
+  /release:prepare .*release:publish -- --local-fallback --yes\./,
 );
 
 assert.equal(
@@ -86,9 +81,9 @@ assert.equal(
       whoamiOk: true,
       registryPackage: {
         ok: false,
-        state: "error"
-      }
-    })
+        state: "error",
+      },
+    }),
   ).status,
-  "registry-check-failed"
+  "registry-check-failed",
 );

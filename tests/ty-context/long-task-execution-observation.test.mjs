@@ -113,12 +113,15 @@ test("process observation rejects cross-group transient input replacement even a
   });
 });
 
-for (const changedPath of [
+const postFreezeMutationPaths = [
   "config/secondary.json",
   "bin/product.mjs",
   "product/product-helper.mjs",
-]) {
-  test(`process observation rejects post-freeze mutation of ${changedPath}`, async () => {
+];
+
+test("process observation rejects every post-freeze closure mutation", async (t) => {
+  async function assertChangedPath(changedPath) {
+    assert.ok(postFreezeMutationPaths.includes(changedPath));
     await withRoot(async (root) => {
       const files = {
         "bin/product.mjs": Buffer.from("export default true;\n"),
@@ -153,8 +156,16 @@ for (const changedPath of [
       );
       assert.equal(result.package_observations[0].observation, null);
     });
-  });
-}
+  }
+
+  await t.test("config/secondary.json", () =>
+    assertChangedPath("config/secondary.json"),
+  );
+  await t.test("bin/product.mjs", () => assertChangedPath("bin/product.mjs"));
+  await t.test("product/product-helper.mjs", () =>
+    assertChangedPath("product/product-helper.mjs"),
+  );
+});
 
 test("process observation freezes repository files attributed only by the declared root argv", async () => {
   await withRoot(async (root) => {

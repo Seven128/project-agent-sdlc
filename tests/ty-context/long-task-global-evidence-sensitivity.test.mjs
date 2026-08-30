@@ -141,55 +141,53 @@ test("Global Semantic Fact bindings reject same-target different dimensions", as
   }
 });
 
-for (const scenario of [
-  {
-    name: "journey role",
-    mutate(_fixture, applicability) {
-      applicability.journey_role = "stage_gate";
-    },
-  },
-  {
-    name: "Given set",
-    mutate(fixture, applicability) {
-      const step = {
-        key: "outcome-local-given",
-        statement: "Load the outcome-local state.",
-      };
-      applicability.given_refs.push(step.key);
-      for (const check of fixture.contract.outcomes[0].acceptance.checks)
-        check.scenario.given.push(structuredClone(step));
-    },
-  },
-  {
-    name: "ordered When",
-    mutate(fixture, applicability) {
-      const step = {
-        key: "outcome-local-when",
-        statement: "Read the outcome-local state.",
-      };
-      applicability.when_refs.push(step.key);
-      for (const check of fixture.contract.outcomes[0].acceptance.checks)
-        check.scenario.when.push(structuredClone(step));
-    },
-  },
-])
-  test(`Global Semantic Fact bindings reject same-target different ${scenario.name}`, async () => {
-    const fixture = await createDeliveryFixture();
-    try {
-      await addGlobalClaim(fixture, { counterfactual: true });
-      const applicability = fixture.contract.outcomes[0].applicability.find(
-        (candidate) => candidate.key === "first-root-success",
-      );
-      assert.ok(applicability);
-      scenario.mutate(fixture, applicability);
-      await assertPreflightAndCompileReject(
-        fixture,
-        "global_semantic_fact_applicability_profile_mismatch",
-      );
-    } finally {
-      await rm(fixture.root, { recursive: true, force: true });
-    }
+test("Global Semantic Fact bindings reject same-target different journey role", async () => {
+  await assertSameTargetApplicabilityDrift((_fixture, applicability) => {
+    applicability.journey_role = "stage_gate";
   });
+});
+
+test("Global Semantic Fact bindings reject same-target different Given set", async () => {
+  await assertSameTargetApplicabilityDrift((fixture, applicability) => {
+    const step = {
+      key: "outcome-local-given",
+      statement: "Load the outcome-local state.",
+    };
+    applicability.given_refs.push(step.key);
+    for (const check of fixture.contract.outcomes[0].acceptance.checks)
+      check.scenario.given.push(structuredClone(step));
+  });
+});
+
+test("Global Semantic Fact bindings reject same-target different ordered When", async () => {
+  await assertSameTargetApplicabilityDrift((fixture, applicability) => {
+    const step = {
+      key: "outcome-local-when",
+      statement: "Read the outcome-local state.",
+    };
+    applicability.when_refs.push(step.key);
+    for (const check of fixture.contract.outcomes[0].acceptance.checks)
+      check.scenario.when.push(structuredClone(step));
+  });
+});
+
+async function assertSameTargetApplicabilityDrift(mutate) {
+  const fixture = await createDeliveryFixture();
+  try {
+    await addGlobalClaim(fixture, { counterfactual: true });
+    const applicability = fixture.contract.outcomes[0].applicability.find(
+      (candidate) => candidate.key === "first-root-success",
+    );
+    assert.ok(applicability);
+    mutate(fixture, applicability);
+    await assertPreflightAndCompileReject(
+      fixture,
+      "global_semantic_fact_applicability_profile_mismatch",
+    );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+}
 
 test("Global Semantic Fact bindings reject reversed When order", async () => {
   const fixture = await createDeliveryFixture();

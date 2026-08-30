@@ -808,6 +808,14 @@ test("required sentinel runner and reporter changes select all focused controls"
   for (const file of [
     "tools/run_required_critical_sentinel.mjs",
     "tools/test_title_inventory.mjs",
+    "tools/test_title_static_analysis.mjs",
+    "tools/test_title_module_edges.mjs",
+    "tools/test_title_expression_roles.mjs",
+    "tools/test_title_registration_resolution.mjs",
+    "tools/test_title_reference_validation.mjs",
+    "tools/test_title_roles.mjs",
+    "tools/test_title_scope_model.mjs",
+    "tools/test_title_pattern_scope.mjs",
     "tools/test_suite_selection.mjs",
   ]) {
     const runner = selectAffectedTests([file]);

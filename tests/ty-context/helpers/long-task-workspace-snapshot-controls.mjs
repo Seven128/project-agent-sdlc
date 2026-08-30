@@ -11,7 +11,7 @@ import { createDeliveryFixture } from "../long-task-delivery-fixtures.mjs";
 
 const exec = promisify(execFile);
 
-export async function assertWorkspaceSnapshotExtractionControls(t) {
+export async function assertWorkspaceSnapshotExtractionControls(mock) {
   const fixture = await createDeliveryFixture();
   let snapshot = null;
   let restoreSpawn = null;
@@ -19,7 +19,7 @@ export async function assertWorkspaceSnapshotExtractionControls(t) {
     await exec("git", ["update-index", "--skip-worktree", "src/state.json"], {
       cwd: fixture.root,
     });
-    const transient = interceptCheckoutIndex(t, {
+    const transient = interceptCheckoutIndex(mock, {
       failCount: 1,
       stderr: "",
     });
@@ -57,7 +57,7 @@ export async function assertWorkspaceSnapshotExtractionControls(t) {
     await snapshot.dispose();
     snapshot = null;
 
-    const exhausted = interceptCheckoutIndex(t, {
+    const exhausted = interceptCheckoutIndex(mock, {
       failCount: Number.POSITIVE_INFINITY,
       stderr: "",
     });
@@ -83,7 +83,7 @@ export async function assertWorkspaceSnapshotExtractionControls(t) {
 
     const sourcePath = path.join(fixture.root, "source.md");
     const sourceBefore = await readFile(sourcePath);
-    const drifting = interceptCheckoutIndex(t, {
+    const drifting = interceptCheckoutIndex(mock, {
       failCount: 1,
       stderr: "",
       beforeClose: () =>
@@ -113,7 +113,7 @@ export async function assertWorkspaceSnapshotExtractionControls(t) {
       "candidate drift must prevent replay",
     );
 
-    const diagnosed = interceptCheckoutIndex(t, {
+    const diagnosed = interceptCheckoutIndex(mock, {
       failCount: Number.POSITIVE_INFINITY,
       stderr: "fatal: Unable to create '.git/index.lock': File exists.\n",
     });
@@ -143,10 +143,10 @@ export async function assertWorkspaceSnapshotExtractionControls(t) {
   }
 }
 
-function interceptCheckoutIndex(t, { failCount, stderr, beforeClose }) {
+function interceptCheckoutIndex(mock, { failCount, stderr, beforeClose }) {
   const realSpawn = childProcess.spawn;
   const calls = [];
-  t.mock.method(childProcess, "spawn", (command, argv = [], options) => {
+  mock.method(childProcess, "spawn", (command, argv = [], options) => {
     if (command === "git" && argv[0] === "checkout-index") {
       calls.push([...argv]);
       if (calls.length <= failCount) return failedGitChild(stderr, beforeClose);
@@ -160,7 +160,7 @@ function interceptCheckoutIndex(t, { failCount, stderr, beforeClose }) {
     restore() {
       if (restored) return;
       restored = true;
-      t.mock.restoreAll();
+      mock.restoreAll();
       syncBuiltinESMExports();
     },
   };

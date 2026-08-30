@@ -1101,6 +1101,14 @@ export function selectAffectedTests(changedPaths, options = {}) {
     if (
       file === "tools/run_required_critical_sentinel.mjs" ||
       file === "tools/test_title_inventory.mjs" ||
+      file === "tools/test_title_static_analysis.mjs" ||
+      file === "tools/test_title_module_edges.mjs" ||
+      file === "tools/test_title_expression_roles.mjs" ||
+      file === "tools/test_title_registration_resolution.mjs" ||
+      file === "tools/test_title_reference_validation.mjs" ||
+      file === "tools/test_title_roles.mjs" ||
+      file === "tools/test_title_scope_model.mjs" ||
+      file === "tools/test_title_pattern_scope.mjs" ||
       file === "tools/test_suite_selection.mjs"
     ) {
       tests.add(testPath("affected-test-selection.test.mjs"));

@@ -22,13 +22,13 @@ test("runner target symlink is rejected", async (t) => {
   try {
     if (
       !(await replaceWithSymlink(
-        t,
         path.join(
           fixture.root,
           ...fixture.contract.outcomes[0].acceptance.checks[0].runner.target.split(
             "/",
           ),
         ),
+        (reason) => t.skip(reason),
       ))
     )
       return;
@@ -46,7 +46,7 @@ test("verification input symlink is rejected", async (t) => {
   try {
     const helper = path.join(fixture.root, "tests", "helper.mjs");
     await writeFile(helper, "export {};\n");
-    if (!(await replaceWithSymlink(t, helper))) return;
+    if (!(await replaceWithSymlink(helper, (reason) => t.skip(reason)))) return;
     fixture.contract.outcomes[0].acceptance.checks[0].verification_inputs.push(
       "tests/helper.mjs",
     );
@@ -63,7 +63,12 @@ test("verification input symlink is rejected", async (t) => {
 test("Source file symlink is rejected", async (t) => {
   const fixture = await createDeliveryFixture();
   try {
-    if (!(await replaceWithSymlink(t, path.join(fixture.root, "source.md"))))
+    if (
+      !(await replaceWithSymlink(
+        path.join(fixture.root, "source.md"),
+        (reason) => t.skip(reason),
+      ))
+    )
       return;
     await assert.rejects(
       compileFixture(fixture),
@@ -86,7 +91,8 @@ test("Outcome fragment symlink is rejected", async (t) => {
     await writeContract(fixture.workdir, rootContract);
     const fragment = path.join(folder, "first.yaml");
     await writeFile(fragment, YAML.stringify(outcome));
-    if (!(await replaceWithSymlink(t, fragment))) return;
+    if (!(await replaceWithSymlink(fragment, (reason) => t.skip(reason))))
+      return;
     await assert.rejects(
       compileFixture(fixture),
       /protected_input_symlink_not_allowed:outcome_fragment:outcomes\/first\.yaml/u,
@@ -144,7 +150,7 @@ function compileFixture(fixture) {
   });
 }
 
-async function replaceWithSymlink(t, file) {
+async function replaceWithSymlink(file, skip) {
   const real = `${file}.real`;
   await rename(file, real);
   try {
@@ -152,7 +158,7 @@ async function replaceWithSymlink(t, file) {
     return true;
   } catch (error) {
     if (["EPERM", "EACCES", "ENOTSUP"].includes(error.code)) {
-      t.skip(`symlink unsupported: ${error.code}`);
+      skip(`symlink unsupported: ${error.code}`);
       return false;
     }
     throw error;

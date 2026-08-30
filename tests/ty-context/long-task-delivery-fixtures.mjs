@@ -3,6 +3,7 @@ import { generateKeyPairSync } from "node:crypto";
 import { rmSync } from "node:fs";
 import {
   cp,
+  access,
   mkdir,
   mkdtemp,
   readFile,
@@ -230,13 +231,7 @@ export async function createDeliveryFixture(options = {}) {
         manifest,
       );
       await installPackageMachineFixture(root, manifest);
-      if (twoOutcomes) {
-        const statePath = path.join(root, "src", "state.json");
-        const state = JSON.parse(await readFile(statePath, "utf8"));
-        state.first = true;
-        state.second = false;
-        await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
-      }
+      if (twoOutcomes) await preserveTwoOutcomeFailureBaseline(root);
       await exec(
         "git",
         [
@@ -348,6 +343,7 @@ async function initializeSeedRepository(
     manifest,
   );
   await installPackageMachineFixture(root, manifest);
+  if (twoOutcomes) await preserveTwoOutcomeFailureBaseline(root);
   await writeFile(
     path.join(root, "tests", "semantic-false.json"),
     `${JSON.stringify({
@@ -422,6 +418,14 @@ async function configureEphemeralFixtureRepository(root) {
     ["gc.auto", "0"],
   ])
     await exec("git", ["config", "--local", key, value], { cwd: root });
+}
+
+async function preserveTwoOutcomeFailureBaseline(root) {
+  const statePath = path.join(root, "src", "state.json");
+  const state = JSON.parse(await readFile(statePath, "utf8"));
+  state.first = true;
+  state.second = false;
+  await writeFile(statePath, `${JSON.stringify(state, null, 2)}\n`);
 }
 
 async function resolveFixtureSeedRoot(explicitRoot) {
@@ -1333,7 +1337,7 @@ export function parseCliJson(stdout) {
 
 export async function pathExists(file) {
   try {
-    await import("node:fs/promises").then(({ access }) => access(file));
+    await access(file);
     return true;
   } catch {
     return false;

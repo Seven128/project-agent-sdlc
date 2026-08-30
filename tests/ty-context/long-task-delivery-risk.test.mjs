@@ -19,7 +19,7 @@ test("ordinary Contract is standard and explicit strict raises it", () => {
   assert.equal(classifyLongTaskRisk(standard).effective_level, "strict");
 });
 
-for (const fact of [
+const strictRiskFacts = [
   "security_boundary_change",
   "permission_boundary_change",
   "data_migration",
@@ -27,16 +27,39 @@ for (const fact of [
   "public_api_or_schema_change",
   "full_population_operation",
   "irreversible_external_effect",
-]) {
-  test(`${fact} binds strict risk to its Outcome`, () => {
+];
+
+test("each strict risk fact binds to its owning Outcome", async (t) => {
+  function assertRiskFact(fact) {
+    assert.ok(strictRiskFacts.includes(fact));
     const contract = deliveryContract();
     contract.risk.facts[fact] = ["first"];
     const decision = classifyLongTaskRisk(contract);
     assert.equal(decision.effective_level, "strict");
     assert.ok(decision.reasons.includes(`${fact}:first`));
     assert.ok(decision.reasons_by_outcome.first.includes(fact));
-  });
-}
+  }
+
+  await t.test("security_boundary_change", () =>
+    assertRiskFact("security_boundary_change"),
+  );
+  await t.test("permission_boundary_change", () =>
+    assertRiskFact("permission_boundary_change"),
+  );
+  await t.test("data_migration", () => assertRiskFact("data_migration"));
+  await t.test("persistent_data_change", () =>
+    assertRiskFact("persistent_data_change"),
+  );
+  await t.test("public_api_or_schema_change", () =>
+    assertRiskFact("public_api_or_schema_change"),
+  );
+  await t.test("full_population_operation", () =>
+    assertRiskFact("full_population_operation"),
+  );
+  await t.test("irreversible_external_effect", () =>
+    assertRiskFact("irreversible_external_effect"),
+  );
+});
 
 test("unknown risk Outcome and multi-repository delivery fail closed", () => {
   const unknown = deliveryContract();
@@ -375,9 +398,7 @@ test("same-target partial External takeover cannot waive the remaining target ap
   assert.throws(
     () =>
       validateExecutionTargets(contract, undefined, {
-        acceptance_reachability: blockingReachability([
-          "first-root-success",
-        ]),
+        acceptance_reachability: blockingReachability(["first-root-success"]),
         compiled_outcomes: [compiledOutcome(outcome, [compiled])],
       }),
     /critical_path_required_target_proof_missing:first:fixture-app/u,
@@ -393,9 +414,7 @@ test("a blocking success applicability cannot waive a separate stage_gate applic
   assert.throws(
     () =>
       validateDeliveryStages(contract, undefined, {
-        acceptance_reachability: blockingReachability([
-          "first-root-success",
-        ]),
+        acceptance_reachability: blockingReachability(["first-root-success"]),
         compiled_outcomes: [compiledOutcome(outcome, [])],
       }),
     /stage_gate_check_required:first:first|stage_gate_target_runtime_result_required:first:first/u,
@@ -601,12 +620,7 @@ function addResultApplicability(outcome, key, journeyRole) {
   outcome.product.result_applicability_refs.push(key);
 }
 
-function compiledCheck(
-  contract,
-  declared,
-  outcomeKey,
-  machineAssertionKeys,
-) {
+function compiledCheck(contract, declared, outcomeKey, machineAssertionKeys) {
   const check = structuredClone(declared);
   const assertions = [
     ...check.positive_assertions,

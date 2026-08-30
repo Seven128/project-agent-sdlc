@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import {
@@ -10,11 +11,9 @@ import {
 } from "../../tools/consumer_lab_full_test.mjs";
 
 test("consumer lab release check follows the current compatibility wrapper", async () => {
-  const source = await import("node:fs/promises").then(({ readFile }) =>
-    readFile(
-      new URL("../../tools/consumer_lab_full_test.mjs", import.meta.url),
-      "utf8",
-    ),
+  const source = await readFile(
+    new URL("../../tools/consumer_lab_full_test.mjs", import.meta.url),
+    "utf8",
   );
   assert.match(
     source,

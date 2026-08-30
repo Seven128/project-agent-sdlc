@@ -62,7 +62,7 @@ test("workspace scope classifies every changed path with forbidden precedence", 
 });
 
 test("workspace snapshots recover only an unchanged no-diagnostic checkout and retain sparse entries", async (t) => {
-  await assertWorkspaceSnapshotExtractionControls(t);
+  await assertWorkspaceSnapshotExtractionControls(t.mock);
 });
 
 test("first-lock bootstrap admits only a validated regular exact Codex worker profile", async () => {

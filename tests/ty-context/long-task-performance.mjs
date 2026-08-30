@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import {
+  lstat,
   mkdir,
   readFile,
   rename,
@@ -32,9 +33,7 @@ import {
   runCli,
   writeContract,
 } from "./long-task-delivery-fixtures.mjs";
-import {
-  addGlobalClaim,
-} from "./long-task-global-evidence-sensitivity-fixture.mjs";
+import { addGlobalClaim } from "./long-task-global-evidence-sensitivity-fixture.mjs";
 
 const exec = promisify(execFile);
 const performanceBudgetProfiles = {
@@ -65,7 +64,8 @@ const performanceBudgetProfiles = {
     probe_total_ms: 180000,
   },
 };
-const budgetProfile = process.platform === "win32" ? "windows-v1" : "default-v1";
+const budgetProfile =
+  process.platform === "win32" ? "windows-v1" : "default-v1";
 const budgets = performanceBudgetProfiles[budgetProfile];
 const probeStarted = performance.now();
 
@@ -137,11 +137,13 @@ try {
       await readFile(path.join(snapshot.root, "untracked/u000.txt"), "utf8"),
       "untracked\n",
     );
-    await assert.rejects(readFile(path.join(snapshot.root, "large/d000/f00002.txt")));
+    await assert.rejects(
+      readFile(path.join(snapshot.root, "large/d000/f00002.txt")),
+    );
     assert.ok(
-      (await import("node:fs/promises").then(({ lstat }) =>
-        lstat(path.join(snapshot.root, "packages/app/node_modules")),
-      )).isSymbolicLink(),
+      (
+        await lstat(path.join(snapshot.root, "packages/app/node_modules"))
+      ).isSymbolicLink(),
     );
   } finally {
     await snapshot.dispose();
@@ -306,10 +308,14 @@ async function createDirtyMatrix(root) {
     path.join(root, "large/d000/f00004.txt"),
     path.join(root, "large/renamed.txt"),
   );
-  await exec("git", ["add", "-A", "large/d000/f00004.txt", "large/renamed.txt"], {
-    cwd: root,
-    windowsHide: true,
-  });
+  await exec(
+    "git",
+    ["add", "-A", "large/d000/f00004.txt", "large/renamed.txt"],
+    {
+      cwd: root,
+      windowsHide: true,
+    },
+  );
   await exec("git", ["update-index", "--chmod=+x", "large/d000/f00005.txt"], {
     cwd: root,
     windowsHide: true,
