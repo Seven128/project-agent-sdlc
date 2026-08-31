@@ -1,10 +1,18 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  rm,
+  stat,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { npmCommandSpec } from "../../tools/npm_command_spec.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -20,6 +28,9 @@ const outDir = await mkdtemp(
 );
 const sourcePreviewOutDir = await mkdtemp(
   path.join(tmpdir(), "ty-context-source-preview-pack-test-"),
+);
+const packlistFixture = await mkdtemp(
+  path.join(tmpdir(), "ty-context-package-ignore-test-"),
 );
 const packageManifest = JSON.parse(
   await readFile(
@@ -102,9 +113,78 @@ try {
     ),
   );
   await stat(previewReport.tarballPath);
+
+  const fixtureTools = path.join(
+    packlistFixture,
+    "assets",
+    "tools",
+    "__pycache__",
+  );
+  await mkdir(fixtureTools, { recursive: true });
+  await writeFile(
+    path.join(packlistFixture, "package.json"),
+    `${JSON.stringify(
+      {
+        name: "ty-context-package-ignore-fixture",
+        version: "1.0.0",
+        files: ["assets"],
+      },
+      null,
+      2,
+    )}\n`,
+    "utf8",
+  );
+  await writeFile(
+    path.join(packlistFixture, "assets", ".npmignore"),
+    await readFile(
+      path.join(repoRoot, "packages", "ty-context", "assets", ".npmignore"),
+      "utf8",
+    ),
+    "utf8",
+  );
+  await writeFile(
+    path.join(packlistFixture, "assets", "tools", "validate_context.py"),
+    "print('ok')\n",
+    "utf8",
+  );
+  await writeFile(
+    path.join(fixtureTools, "validate_context.cpython-310.pyc"),
+    "runtime cache",
+    "utf8",
+  );
+  await writeFile(
+    path.join(packlistFixture, "assets", "tools", "validate_context.pyo"),
+    "runtime cache",
+    "utf8",
+  );
+  const packSpec = npmCommandSpec([
+    "pack",
+    "--dry-run",
+    "--json",
+    "--ignore-scripts",
+  ]);
+  const packResult = spawnSync(packSpec.command, packSpec.args, {
+    cwd: packlistFixture,
+    encoding: "utf8",
+    timeout: 30_000,
+    windowsHide: true,
+  });
+  assert.ifError(packResult.error);
+  assert.equal(packResult.status, 0, packResult.stderr || packResult.stdout);
+  const packedFiles = JSON.parse(packResult.stdout)[0].files.map(
+    (entry) => entry.path,
+  );
+  assert.ok(packedFiles.includes("assets/tools/validate_context.py"));
+  assert.equal(
+    packedFiles.some(
+      (file) => file.includes("/__pycache__/") || /\.(?:pyc|pyo)$/iu.test(file),
+    ),
+    false,
+  );
 } finally {
   await rm(outDir, { recursive: true, force: true });
   await rm(sourcePreviewOutDir, { recursive: true, force: true });
+  await rm(packlistFixture, { recursive: true, force: true });
 }
 
 test("top-level script assertions completed", () => {});
