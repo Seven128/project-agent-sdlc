@@ -1,6 +1,13 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { performance } from "node:perf_hooks";
@@ -985,16 +992,35 @@ async function gitText(cwd, args) {
   }
 }
 
-async function removeWorktree(repositoryRoot, checkout) {
-  const resolved = path.resolve(checkout);
-  const temporaryRoot = path.resolve(os.tmpdir());
+async function physicalCleanupCheckout(checkout, temporaryRoot) {
+  let physicalCheckout;
+  let physicalTemporaryRoot;
+  try {
+    [physicalCheckout, physicalTemporaryRoot] = await Promise.all([
+      realpath(checkout),
+      realpath(temporaryRoot),
+    ]);
+  } catch (error) {
+    throw new Error("real_process_roi_worktree_cleanup_scope", {
+      cause: error,
+    });
+  }
+  const relativeCheckout = path.relative(
+    physicalTemporaryRoot,
+    physicalCheckout,
+  );
   if (
-    resolved === temporaryRoot ||
-    !resolved
-      .toLowerCase()
-      .startsWith(`${temporaryRoot.toLowerCase()}${path.sep}`)
+    !relativeCheckout ||
+    relativeCheckout === ".." ||
+    relativeCheckout.startsWith(`..${path.sep}`) ||
+    path.isAbsolute(relativeCheckout)
   )
     throw new Error("real_process_roi_worktree_cleanup_scope");
+  return physicalCheckout;
+}
+
+async function removeWorktree(repositoryRoot, checkout, temporaryRoot) {
+  const resolved = await physicalCleanupCheckout(checkout, temporaryRoot);
   const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-cleanup-"));
   try {
     const result = await spawnCaptured(
@@ -1017,11 +1043,12 @@ async function removeWorktree(repositoryRoot, checkout) {
 export async function cleanupRealProcessRoiWorktrees(
   repositoryRoot,
   checkouts,
+  temporaryRoot,
 ) {
   const failures = [];
   for (const checkout of new Set(checkouts))
     try {
-      await removeWorktree(repositoryRoot, checkout);
+      await removeWorktree(repositoryRoot, checkout, temporaryRoot);
     } catch (error) {
       failures.push(error);
     }
@@ -1043,7 +1070,7 @@ export async function finalizeRealProcessRoiResources({
 }) {
   const failures = primaryError ? [primaryError] : [];
   try {
-    await cleanupWorktrees(repositoryRoot, checkouts);
+    await cleanupWorktrees(repositoryRoot, checkouts, temporaryRoot);
   } catch (error) {
     failures.push(error);
   }

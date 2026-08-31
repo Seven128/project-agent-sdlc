@@ -629,9 +629,18 @@ test("partial real process ROI setup explicitly removes a registered dirty workt
   const temporary = await createPhysicalTemporaryDirectory(
     "ty-roi-cleanup-test-",
   );
+  const aliasContainer = await createPhysicalTemporaryDirectory(
+    "ty-roi-cleanup-alias-",
+  );
+  const temporaryAlias = path.join(aliasContainer, "owned-root");
   const repository = path.join(temporary, "repository");
   const checkout = path.join(temporary, "partial-variant");
   try {
+    await symlink(
+      temporary,
+      temporaryAlias,
+      process.platform === "win32" ? "junction" : "dir",
+    );
     await mkdir(repository, { recursive: true });
     await git(repository, ["init", "-b", "main"]);
     await git(repository, ["config", "user.email", "fixture@example.invalid"]);
@@ -642,7 +651,7 @@ test("partial real process ROI setup explicitly removes a registered dirty workt
     await git(repository, ["worktree", "add", "--detach", checkout, "HEAD"]);
     await writeFile(path.join(checkout, "partial-install.txt"), "dirty\n");
 
-    await cleanupRealProcessRoiWorktrees(repository, [checkout]);
+    await cleanupRealProcessRoiWorktrees(repository, [checkout], temporaryAlias);
 
     const worktrees = await git(repository, [
       "worktree",
@@ -655,6 +664,51 @@ test("partial real process ROI setup explicitly removes a registered dirty workt
     );
     await assert.rejects(readFile(path.join(checkout, "partial-install.txt")));
   } finally {
+    await rm(aliasContainer, { recursive: true, force: true });
+    await rm(temporary, { recursive: true, force: true });
+  }
+});
+
+test("real process ROI worktree cleanup rejects a checkout outside its owned temporary root", async () => {
+  const temporary = await createPhysicalTemporaryDirectory(
+    "ty-roi-cleanup-scope-",
+  );
+  const outside = await createPhysicalTemporaryDirectory(
+    "ty-roi-cleanup-outside-",
+  );
+  const repository = path.join(outside, "repository");
+  const checkout = path.join(outside, "outside-variant");
+  try {
+    await mkdir(repository, { recursive: true });
+    await git(repository, ["init", "-b", "main"]);
+    await git(repository, ["config", "user.email", "fixture@example.invalid"]);
+    await git(repository, ["config", "user.name", "Fixture"]);
+    await writeFile(path.join(repository, "fixture.txt"), "baseline\n");
+    await git(repository, ["add", "fixture.txt"]);
+    await git(repository, ["commit", "-m", "fixture"]);
+    await git(repository, ["worktree", "add", "--detach", checkout, "HEAD"]);
+
+    await assert.rejects(
+      cleanupRealProcessRoiWorktrees(repository, [checkout], temporary),
+      (error) =>
+        error instanceof AggregateError &&
+        error.errors.some(
+          (failure) =>
+            failure.message === "real_process_roi_worktree_cleanup_scope",
+        ),
+    );
+
+    const worktrees = await git(repository, [
+      "worktree",
+      "list",
+      "--porcelain",
+    ]);
+    assert.equal(
+      normalizePath(worktrees.stdout).includes(normalizePath(checkout)),
+      true,
+    );
+  } finally {
+    await rm(outside, { recursive: true, force: true });
     await rm(temporary, { recursive: true, force: true });
   }
 });
@@ -670,8 +724,17 @@ test("real process ROI finalization attempts every resource and preserves primar
       checkouts: new Set(["checkout"]),
       temporaryRoot: "temporary-root",
       primaryError,
-      cleanupWorktrees: async (repositoryRoot, checkouts) => {
-        calls.push(["worktrees", repositoryRoot, [...checkouts]]);
+      cleanupWorktrees: async (
+        repositoryRoot,
+        checkouts,
+        temporaryRoot,
+      ) => {
+        calls.push([
+          "worktrees",
+          repositoryRoot,
+          [...checkouts],
+          temporaryRoot,
+        ]);
         throw worktreeError;
       },
       removeTemporaryRoot: async (temporaryRoot) => {
@@ -691,7 +754,7 @@ test("real process ROI finalization attempts every resource and preserves primar
     },
   );
   assert.deepEqual(calls, [
-    ["worktrees", "repository", ["checkout"]],
+    ["worktrees", "repository", ["checkout"], "temporary-root"],
     ["temporary-root", "temporary-root"],
   ]);
 });
