@@ -1237,7 +1237,7 @@ function localChecks() {
       contains(npmTrustedPublishWorkflow, /npm run build --workspace project-tiny-context-harness/) &&
       contains(npmTrustedPublishWorkflow, /Complete package tests/) &&
       contains(npmTrustedPublishWorkflow, /run: npm test --workspace project-tiny-context-harness/) &&
-      !contains(npmTrustedPublishWorkflow, /npm run test:long-task-workflow/) &&
+      (npmTrustedPublishWorkflow.match(/npm run test:long-task-workflow:built --workspace project-tiny-context-harness --ignore-scripts/g)?.length ?? 0) === 1 &&
       contains(npmTrustedPublishWorkflow, /npm run release:check-version/) &&
       contains(npmTrustedPublishWorkflow, /node packages\/ty-context\/dist\/cli\.js package check-source/) &&
       contains(npmTrustedPublishWorkflow, /make validate-harness/) &&
@@ -1250,7 +1250,7 @@ function localChecks() {
       contains(npmTrustedPublishWorkflow, /uses: actions\/download-artifact@[a-f0-9]{40}/) &&
       contains(npmTrustedPublishWorkflow, /name: npm-release-\$\{\{ github\.run_id \}\}/) &&
       contains(npmTrustedPublishWorkflow, /overwrite: true/) &&
-      !contains(npmTrustedPublishWorkflow, /github\.run_attempt/) &&
+      !contains(npmTrustedPublishWorkflow, /name: npm-release-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/) &&
       contains(npmTrustedPublishWorkflow, /needs: prepare/) &&
       contains(npmTrustedPublishWorkflow, /verify_workflow_release_artifact\.mjs/) &&
       contains(npmTrustedPublishWorkflow, /publish_prepared_artifact\.mjs/) &&
@@ -1727,7 +1727,7 @@ function localChecks() {
       contains(maintainerWorkflow, /Typecheck package/) &&
       contains(maintainerWorkflow, /Complete package tests/) &&
       contains(maintainerWorkflow, /npm test --workspace project-tiny-context-harness/) &&
-      !contains(maintainerWorkflow, /npm run test:long-task-workflow/) &&
+      (maintainerWorkflow.match(/npm run test:long-task-workflow:built --workspace project-tiny-context-harness --ignore-scripts/g)?.length ?? 0) === 1 &&
       contains(maintainerWorkflow, /node tools\/quickstart_smoke\.mjs/) &&
       contains(maintainerWorkflow, /npm run preview:pack/),
     "Maintainer package CI runs the complete default and Long-Task Workflow suites on submitted branches, pull requests and main."

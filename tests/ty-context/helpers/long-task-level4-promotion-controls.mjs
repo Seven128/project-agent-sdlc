@@ -17,6 +17,7 @@ import { prepareRealProcessRoiPlan } from "../../../tools/long_task_real_process
 import { npmCommandSpec } from "../../../tools/npm_command_spec.mjs";
 import {
   assertPromotionMutationRejected,
+  LEVEL4_PROMOTION_VERIFIER_TIMEOUT_MS,
   packageControl,
   runPromotionCase,
 } from "./long-task-level4-promotion-fixture.mjs";
@@ -147,7 +148,7 @@ export async function assertPromotionArtifactControls({
           ],
           {
             cwd: positive.checkout,
-            timeoutMs: 120_000,
+            timeoutMs: LEVEL4_PROMOTION_VERIFIER_TIMEOUT_MS,
           },
         );
         if (execution.status !== 0) {

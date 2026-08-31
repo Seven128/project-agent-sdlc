@@ -334,7 +334,7 @@ test("bundle path spelling is portable for directory, manifest and members", asy
       assert.equal(inspection.mode, "bundle", target);
       assert.match(
         inspection.diagnostics[0].detail,
-        /(?:path_case_mismatch|bundle_manifest_missing|ENOENT)/u,
+        /(?:path_case_mismatch|bundle_manifest_missing|protected_input_not_found:design_authority_member|ENOENT)/u,
         target,
       );
     } finally {

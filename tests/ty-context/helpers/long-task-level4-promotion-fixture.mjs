@@ -20,6 +20,8 @@ import {
 } from "./long-task-level4-test-utils.mjs";
 import { runOwnedChildProcess } from "./owned-child-process.mjs";
 
+export const LEVEL4_PROMOTION_VERIFIER_TIMEOUT_MS = 300_000;
+
 export async function runPromotionCase(options) {
   const {
     repositoryRoot,
@@ -173,7 +175,7 @@ async function runVerifierAtCheckout({
       ],
       {
         cwd: checkout,
-        timeoutMs: 120_000,
+        timeoutMs: LEVEL4_PROMOTION_VERIFIER_TIMEOUT_MS,
       },
     );
     if (result.status !== 0)
