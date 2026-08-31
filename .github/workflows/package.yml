@@ -133,7 +133,7 @@ jobs:
       - name: Trust boundary package tests
         env:
           TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/pull-request
-          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v4
+          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v5
         run: |
           set -o pipefail
           npm run test:trust:built --workspace project-tiny-context-harness --ignore-scripts 2>&1 | tee package-trust-test.log
@@ -209,7 +209,7 @@ jobs:
       - name: Complete package tests
         env:
           TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/main
-          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v4
+          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v5
         run: |
           set -o pipefail
           npm test --workspace project-tiny-context-harness --ignore-scripts 2>&1 | tee package-test.log

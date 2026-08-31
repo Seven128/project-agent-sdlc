@@ -505,6 +505,20 @@ export const CONTROLLED_TEST_SUITE_BUDGET_PROFILES = Object.freeze({
     rationale:
       "Versioned default-suite recalibration for the complete 91-root/607-test population: exact GitHub Ubuntu runs 33411209068 and 33416528161 measured 215790ms and 220704ms. A 10% margin over the larger observation rounded up to the next 30-second boundary yields 270000ms; Trust and complete Long-Task ceilings, discovery, concurrency, cache prohibition, assertions, and critical sentinel requirements remain unchanged.",
   }),
+  "github-ubuntu-v5": Object.freeze({
+    expected_environment: Object.freeze({
+      GITHUB_ACTIONS: "true",
+      RUNNER_OS: "Linux",
+    }),
+    budgets_ms: Object.freeze({
+      default: 270_000,
+      "long-task-trust": 1_110_000,
+      "long-task": 2_040_000,
+    }),
+    reviewed_on: "2026-09-01",
+    rationale:
+      "Versioned Long-Task recalibration for the necessary 89-root/672-test population after efficiency investigation. Exact GitHub Ubuntu run 33426432085 at cb0809effd47fea9d157ac898c2154525289dd2c passed all tests, complete-suite integrity and every applicable sentinel in 1849328ms; its exact Trust lanes plus seed and cleanup measured 994078ms. A 10% margin over each observation rounded up to the next 30-second boundary yields 2040000ms and 1110000ms. The immutable seed, independent repositories, assertions, isolation classes, 16-file process bound, concurrency, cache prohibition, discovery and critical coverage remain unchanged; v1-v4 remain immutable.",
+  }),
 });
 
 assertControlledTestSuiteBudgetProfiles();

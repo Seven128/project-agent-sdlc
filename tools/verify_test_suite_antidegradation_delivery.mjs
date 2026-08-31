@@ -16,7 +16,7 @@ const artifactRoot = path.join(
 );
 const timingRoot = path.join(artifactRoot, "timing");
 const logPath = path.join(artifactRoot, "complete-suite.log");
-const controlledProfileName = "github-ubuntu-v4";
+const controlledProfileName = "github-ubuntu-v5";
 const maximumLongTaskWallTimeMs = 1_598_030;
 
 const expectedCriticalSentinels = Object.freeze([
@@ -579,8 +579,8 @@ async function controlledProfilePasses(module) {
     return (
       deepEqual(budgets, {
         default: 270000,
-        "long-task-trust": 630000,
-        "long-task": 1200000,
+        "long-task-trust": 1110000,
+        "long-task": 2040000,
       }) &&
       module.resolveSuiteWallTimeBudgetMs("default", {}) === null &&
       unknownFails &&
