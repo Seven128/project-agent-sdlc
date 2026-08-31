@@ -19,6 +19,7 @@ import {
   writePackageBuildFingerprint,
 } from "../../tools/package_build_fingerprint.mjs";
 import { selectAffectedTests } from "../../tools/affected_test_selection.mjs";
+import { assertCriticalTestTitleInventory } from "../../tools/test_title_inventory.mjs";
 import { localImplementationDependencies } from "../../tools/long_task_benchmark_implementation_closure_dependencies.mjs";
 import {
   CRITICAL_TEST_SENTINELS,
@@ -1409,6 +1410,125 @@ test("critical runtime occurrences bind to their exact AST declaration identity"
   assert.deepEqual(relativeFile.critical_sentinel_coverage.misplaced_ids, [
     sentinel.id,
   ]);
+
+  const sameBasenameImportedFile = path.join(
+    repositoryRoot,
+    "outside-selected-test-root",
+    sentinel.file,
+  );
+  const wrongSourceKind = timingReport(
+    title,
+    21,
+    3,
+    sameBasenameImportedFile,
+  ).critical_sentinel_coverage;
+  assert.equal(wrongSourceKind.status, "failed");
+  assert.deepEqual(wrongSourceKind.misplaced_ids, [sentinel.id]);
+  assert.deepEqual(wrongSourceKind.declaration_mismatch_ids, [sentinel.id]);
+});
+
+test("unfiltered complete runtime closes dynamic registrations outside static inventory ownership", async () => {
+  const root = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-runtime-registration-closure-"),
+  );
+  const testRoot = path.join(root, "tests", "ty-context");
+  const runtimeRoot = path.join(root, "runtime");
+  const canonicalFile = path.join(testRoot, "canonical.test.mjs");
+  const dynamicRootFile = path.join(testRoot, "dynamic.test.mjs");
+  const helperFile = path.join(runtimeRoot, "register-runtime-sentinel.mjs");
+  const filteredEventsFile = path.join(root, "filtered.ndjson");
+  const completeEventsFile = path.join(root, "complete.ndjson");
+  const id = "runtime-platform-closure-control";
+  const canonicalTitle = `[critical:${id}] canonical declaration`;
+  const sentinel = {
+    id,
+    file: path.basename(canonicalFile),
+    rationale: "Fixture-only registration closure control.",
+    required_suites: ["probe"],
+  };
+  try {
+    await mkdir(testRoot, { recursive: true });
+    await mkdir(runtimeRoot, { recursive: true });
+    await writeFile(
+      canonicalFile,
+      `import test from "node:test";\ntest(${JSON.stringify(canonicalTitle)}, () => {});\n`,
+      "utf8",
+    );
+    await writeFile(
+      dynamicRootFile,
+      `import test from "node:test";\nimport { registerRuntimeSentinel } from "../../runtime/register-runtime-sentinel.mjs";\ntest("ordinary parent invokes runtime module", async () => {\n  await registerRuntimeSentinel();\n});\n`,
+      "utf8",
+    );
+    await writeFile(
+      helperFile,
+      `import test from "node:test";\nexport async function registerRuntimeSentinel() {\n  await test(${JSON.stringify(`[critical:${id}] dynamic extra occurrence`)}, () => {});\n}\n`,
+      "utf8",
+    );
+
+    const selectedFiles = [canonicalFile, dynamicRootFile];
+    const inventory = await assertCriticalTestTitleInventory({
+      suite: "probe",
+      selectedFiles,
+      sentinels: [sentinel],
+    });
+    assert.equal(inventory.critical_occurrence_count, 1);
+
+    const filteredEvents = await runRuntimeRegistrationFixture({
+      selectedFiles,
+      eventFile: filteredEventsFile,
+      namePattern: `\\[critical:${id}\\]`,
+    });
+    const filteredReport = runtimeRegistrationReport({
+      sentinel,
+      selectedFiles,
+      inventory,
+      events: filteredEvents,
+      complete: false,
+    });
+    assert.equal(
+      filteredReport.execution.result_scope,
+      "registration-projection",
+    );
+    assert.equal(filteredReport.execution.complete_suite, false);
+    assert.equal(filteredReport.file_summary_integrity.status, "passed");
+    assert.equal(filteredReport.critical_sentinel_coverage.status, "passed");
+
+    const completeEvents = await runRuntimeRegistrationFixture({
+      selectedFiles,
+      eventFile: completeEventsFile,
+    });
+    const completeReport = runtimeRegistrationReport({
+      sentinel,
+      selectedFiles,
+      inventory,
+      events: completeEvents,
+      complete: true,
+    });
+    assert.equal(completeReport.execution.result_scope, "complete-suite");
+    assert.equal(completeReport.execution.complete_suite, true);
+    assert.equal(
+      completeReport.execution.semantic_test_population_executed,
+      true,
+    );
+    assert.equal(
+      completeReport.execution.registry_runtime_observation_complete,
+      true,
+    );
+    assert.equal(completeReport.file_summary_integrity.status, "passed");
+    assert.equal(completeReport.critical_sentinel_coverage.status, "failed");
+    assert.deepEqual(completeReport.critical_sentinel_coverage.duplicate_ids, [
+      id,
+    ]);
+    assert.deepEqual(completeReport.critical_sentinel_coverage.misplaced_ids, [
+      id,
+    ]);
+    assert.deepEqual(
+      completeReport.critical_sentinel_coverage.declaration_mismatch_ids,
+      [id],
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
 });
 
 test("required reporter projections reject duplicate or missing per-file summaries", () => {
@@ -1567,6 +1687,66 @@ function event(type, file, name, durationMs, location = {}) {
       },
     },
   };
+}
+
+async function runRuntimeRegistrationFixture({
+  selectedFiles,
+  eventFile,
+  namePattern = null,
+}) {
+  const reporter = "./tests/ty-context/test-suite-file-reporter.mjs";
+  const args = [
+    "--test",
+    "--test-concurrency=1",
+    `--test-reporter=${reporter}`,
+    `--test-reporter-destination=${eventFile}`,
+    ...(namePattern ? [`--test-name-pattern=${namePattern}`] : []),
+    ...selectedFiles,
+  ];
+  const childEnvironment = { ...process.env };
+  delete childEnvironment.NODE_TEST_CONTEXT;
+  const result = await exec(process.execPath, args, {
+    cwd: repositoryRoot,
+    env: childEnvironment,
+    maxBuffer: 2 * 1024 * 1024,
+    windowsHide: true,
+  });
+  const parsed = await readReporterEvents(eventFile);
+  assert.equal(
+    parsed.error,
+    null,
+    JSON.stringify({ args, stdout: result.stdout, stderr: result.stderr }),
+  );
+  return parsed.events;
+}
+
+function runtimeRegistrationReport({
+  sentinel,
+  selectedFiles,
+  inventory,
+  events,
+  complete,
+}) {
+  return buildFileTimingReport({
+    suite: "probe",
+    selectedFiles,
+    wallTimeMs: 1,
+    execution: {
+      mode: complete ? "serial" : "required-critical-sentinel",
+      result_scope: complete ? "complete-suite" : "registration-projection",
+      complete_suite: complete,
+      semantic_test_population_executed: complete,
+      registry_runtime_observation_complete: complete,
+      require_exact_file_summaries: true,
+      unknown_files_parallelized: false,
+    },
+    registeredCriticalSentinels: [sentinel],
+    applicableCriticalSentinels: [sentinel],
+    requiredCriticalSentinels: [sentinel],
+    declaredCriticalOccurrences: inventory.critical_occurrences,
+    events,
+    testStatus: "passed",
+  });
 }
 
 async function git(cwd, args) {

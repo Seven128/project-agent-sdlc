@@ -3,11 +3,15 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import { parse } from "yaml";
+import { CRITICAL_TEST_SENTINELS } from "../../tools/test_suite_policy.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
   "../..",
 );
+const COMPLETE_LONG_TASK_COMMAND =
+  "npm run test:long-task-workflow:built --workspace project-tiny-context-harness --ignore-scripts";
 
 test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from complete regression and preserves same-run diagnostics", () => {
   const packageWorkflow = read(".github/workflows/package.yml");
@@ -89,7 +93,10 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(packageWorkflow, /Upload package test timing/);
   assert.match(packageWorkflow, /uses: actions\/upload-artifact@[a-f0-9]{40}/);
   assert.match(packageWorkflow, /if-no-files-found: ignore/);
-  assert.doesNotMatch(packageWorkflow, /npm run test:long-task-workflow/);
+  assert.equal(
+    countOccurrences(packageWorkflow, COMPLETE_LONG_TASK_COMMAND),
+    1,
+  );
   assert.match(packageWorkflow, /node tools\/quickstart_smoke\.mjs/);
   assert.match(packageWorkflow, /npm run preview:pack/);
 
@@ -166,11 +173,54 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(suiteRunner, /resolveTestTimingOutput\(repositoryRoot, suite\)/);
   assert.match(suiteRunner, /resolveSuiteWallTimeBudgetMs\(suite\)/);
   assert.match(suiteRunner, /criticalSentinelsForSuite\(suite\)/);
+  assert.match(suiteRunner, /result_scope:\s*"complete-suite"/u);
+  assert.match(suiteRunner, /complete_suite:\s*true/u);
+  assert.match(suiteRunner, /semantic_test_population_executed:\s*false/u);
+  assert.match(suiteRunner, /registry_runtime_observation_complete:\s*false/u);
+  assert.match(
+    suiteRunner,
+    /execution\.semantic_test_population_executed = completeRuntimeObservation/u,
+  );
+  assert.match(
+    suiteRunner,
+    /execution\.registry_runtime_observation_complete = completeRuntimeObservation/u,
+  );
   assert.match(suiteReporter, /critical_sentinel_coverage/);
   assert.match(suiteReporter, /not_selected_ids/);
   assert.match(suiteReporter, /slowest_files/);
   assert.match(suiteRunner, /wall_time_budget_status/);
   assert.match(suiteRunner, /CI[\s\S]*--test-reporter=dot/);
+});
+
+test("every platform-specific Long-Task sentinel has same-platform complete runtime evidence", () => {
+  const platforms = [
+    ...new Set(
+      CRITICAL_TEST_SENTINELS.filter((entry) =>
+        entry.required_suites.includes("long-task"),
+      ).flatMap((entry) => entry.required_platforms ?? []),
+    ),
+  ].sort();
+  assert.ok(platforms.length > 0);
+
+  const packageJobs = parsedWorkflowJobs(".github/workflows/package.yml");
+  const packageEvidence = assertPlatformCompleteSuiteJobs(
+    packageJobs,
+    platforms,
+  );
+  const publishJobs = parsedWorkflowJobs(".github/workflows/npm-publish.yml");
+  const publishEvidence = assertPlatformCompleteSuiteJobs(
+    publishJobs,
+    platforms,
+  );
+  const prepareNeeds = normalizeNeeds(publishJobs.prepare?.needs);
+  for (const jobId of publishEvidence.values())
+    assert.ok(
+      prepareNeeds.includes(jobId),
+      `publish preparation must depend on ${jobId}`,
+    );
+
+  assert.deepEqual([...packageEvidence.keys()], platforms);
+  assert.deepEqual([...publishEvidence.keys()], platforms);
 });
 
 test("complete and one-sentinel runners share parsed suite-wide critical title inventory", () => {
@@ -228,7 +278,7 @@ test("complete and one-sentinel runners share parsed suite-wide critical title i
   assert.match(titleDestructuringRoles, /bindingScope/u);
   assert.match(titleDestructuringRoles, /evaluationScope/u);
   assert.match(titleDestructuringRoles, /resolveStaticPropertyName/u);
-  assert.match(titleDestructuringRoles, /constructor-access/u);
+  assert.match(titleDestructuringRoles, /resolveConstructorAccessRole/u);
   assert.match(titleDestructuringRoles, /AssignmentExpression/u);
   assert.match(titleDestructuringRoles, /ForInStatement/u);
   assert.match(titleDestructuringRoles, /ForOfStatement/u);
@@ -312,7 +362,10 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   );
   assert.match(publishWorkflow, /Upload package test timing/);
   assert.doesNotMatch(publishWorkflow, /TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON/);
-  assert.doesNotMatch(publishWorkflow, /npm run test:long-task-workflow/);
+  assert.equal(
+    countOccurrences(publishWorkflow, COMPLETE_LONG_TASK_COMMAND),
+    1,
+  );
   assert.match(publishWorkflow, /release:check-version/);
   assert.match(publishWorkflow, /package check-source/);
   assert.match(publishWorkflow, /make validate-harness/);
@@ -473,11 +526,84 @@ function assertWindowsLevel4RuntimeJob(
         ? "node --test --test-concurrency=1 tests/ty-context/long-task-windows-job-supervisor.test.mjs tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs"
         : "node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs",
       "node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement",
+      COMPLETE_LONG_TASK_COMMAND,
     ],
   );
   assert.doesNotMatch(
     job,
     /--test-name-pattern|long-task-final-authority-race\.test\.mjs/u,
   );
-  assert.doesNotMatch(job, /continue-on-error|\bif:\s*/u);
+  assert.doesNotMatch(job, /continue-on-error/u);
+  assert.match(job, /Upload Windows Long-Task timing[\s\S]*if:\s*always\(\)/u);
+  assert.match(
+    job,
+    /Complete Windows Long-Task package suite[\s\S]*TY_CONTEXT_TEST_TIMING_DIR:\s*\.artifacts\/test-timing\/windows/u,
+  );
+}
+
+function parsedWorkflowJobs(relativePath) {
+  const workflow = parse(read(relativePath));
+  assert.ok(workflow && typeof workflow === "object");
+  assert.ok(workflow.jobs && typeof workflow.jobs === "object");
+  return workflow.jobs;
+}
+
+function assertPlatformCompleteSuiteJobs(jobs, platforms) {
+  const evidence = new Map();
+  for (const platform of platforms) {
+    const matching = Object.entries(jobs).filter(([, job]) => {
+      if (runnerPlatform(job?.["runs-on"]) !== platform) return false;
+      return (job.steps ?? []).some(
+        (step) => step.run?.trim() === COMPLETE_LONG_TASK_COMMAND,
+      );
+    });
+    assert.equal(
+      matching.length,
+      1,
+      `${platform} must have exactly one complete Long-Task job`,
+    );
+    const [jobId, job] = matching[0];
+    const completeSteps = (job.steps ?? []).filter(
+      (step) => step.run?.trim() === COMPLETE_LONG_TASK_COMMAND,
+    );
+    assert.equal(completeSteps.length, 1);
+    const completeStep = completeSteps[0];
+    const timingDirectory = completeStep.env?.TY_CONTEXT_TEST_TIMING_DIR;
+    assert.match(timingDirectory, /^\.artifacts\/test-timing\/[a-z0-9-]+$/u);
+    assert.doesNotMatch(
+      completeStep.run,
+      /--test-name-pattern|long-task-trust|tests\/ty-context|--test-concurrency/u,
+    );
+    const timingUploads = (job.steps ?? []).filter(
+      (step) =>
+        typeof step.uses === "string" &&
+        step.uses.startsWith("actions/upload-artifact@") &&
+        step.with?.path === `${timingDirectory}/*.json`,
+    );
+    assert.equal(timingUploads.length, 1);
+    assert.equal(timingUploads[0].if, "always()");
+    assert.equal(timingUploads[0].with["if-no-files-found"], "error");
+    evidence.set(platform, jobId);
+  }
+  return evidence;
+}
+
+function runnerPlatform(runsOn) {
+  const labels = Array.isArray(runsOn) ? runsOn : [runsOn];
+  for (const label of labels) {
+    if (typeof label !== "string") continue;
+    if (label.startsWith("windows-")) return "win32";
+    if (label.startsWith("macos-")) return "darwin";
+    if (label.startsWith("ubuntu-")) return "linux";
+  }
+  return null;
+}
+
+function normalizeNeeds(needs) {
+  if (typeof needs === "string") return [needs];
+  return Array.isArray(needs) ? needs : [];
+}
+
+function countOccurrences(source, needle) {
+  return source.split(needle).length - 1;
 }

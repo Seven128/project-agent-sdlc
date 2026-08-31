@@ -100,6 +100,18 @@ jobs:
         run: node --test --test-concurrency=1 tests/ty-context/long-task-windows-job-supervisor.test.mjs tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs
       - name: Verify Windows finalization tree settlement
         run: node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement
+      - name: Complete Windows Long-Task package suite
+        env:
+          TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/windows
+        run: npm run test:long-task-workflow:built --workspace project-tiny-context-harness --ignore-scripts
+      - name: Upload Windows Long-Task timing
+        if: always()
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
+        with:
+          name: windows-long-task-timing-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .artifacts/test-timing/windows/*.json
+          if-no-files-found: error
+          retention-days: 14
 
   pull-request:
     if: ${{ github.event_name == 'pull_request' || (github.event_name == 'push' && github.ref != 'refs/heads/main') }}
