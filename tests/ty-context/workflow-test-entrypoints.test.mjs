@@ -421,6 +421,16 @@ test("publish, tarball, and consumer gates retain complete release boundaries", 
   assert.match(tarballSmoke, /"ty-context",\s*"route"/);
   assert.match(tarballSmoke, /"context",\s*"create"/);
   assert.match(tarballSmoke, /"ty-context",\s*"context",\s*"inspect"/);
+  const scaffoldCreate = tarballSmoke.indexOf('"context",\n      "create"');
+  const scaffoldRestore = tarballSmoke.indexOf(
+    "await rm(portableContextScaffold, { force: true })",
+  );
+  const longTaskEnable = tarballSmoke.indexOf(
+    '"ty-context", "enable", "long-task"',
+  );
+  assert.ok(scaffoldCreate >= 0);
+  assert.ok(scaffoldRestore > scaffoldCreate);
+  assert.ok(longTaskEnable > scaffoldRestore);
   assert.match(tarballSmoke, /"design-authority",\s*"inspect"/);
   assert.match(tarballSmoke, /"design-authority",\s*"tokens"/);
   assert.match(tarballSmoke, /"authority-delta",\s*"validate"/);

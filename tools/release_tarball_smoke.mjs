@@ -9,6 +9,13 @@ import { writeReleaseTarballLongTaskFixture } from "./release_tarball_smoke_fixt
 
 const { tarball, portableOnly } = parseArgs(process.argv.slice(2));
 const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-tarball-smoke-"));
+const portableContextScaffold = path.join(
+  root,
+  "project_context",
+  "areas",
+  "main",
+  "scaffold.md",
+);
 
 try {
   run("npm", ["init", "-y"], root);
@@ -146,7 +153,7 @@ try {
       "context",
       "create",
       "--path",
-      "project_context/areas/main/scaffold.md",
+      path.relative(root, portableContextScaffold).replaceAll(path.sep, "/"),
       "--role",
       "domain",
       "--format",
@@ -161,7 +168,7 @@ try {
       "ty-context",
       "context",
       "inspect",
-      "project_context/areas/main/scaffold.md",
+      path.relative(root, portableContextScaffold).replaceAll(path.sep, "/"),
       "--format",
       "json",
     ],
@@ -170,6 +177,8 @@ try {
   run("npx", ["--no-install", "ty-context", "validate-context"], root);
 
   if (!portableOnly) {
+    await rm(portableContextScaffold, { force: true });
+    run("npx", ["--no-install", "ty-context", "validate-context"], root);
     run("npx", ["--no-install", "ty-context", "enable", "long-task"], root);
     const workdir = await writeReleaseTarballLongTaskFixture(root);
     await writeFile(path.join(root, ".gitignore"), "node_modules/\n", "utf8");
