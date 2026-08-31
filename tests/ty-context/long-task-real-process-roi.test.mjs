@@ -8,6 +8,7 @@ import {
   mkdtemp,
   mkdir,
   readFile,
+  realpath,
   rm,
   stat,
   symlink,
@@ -98,6 +99,10 @@ const accountingPolicyText = readFileSync(
 const fakeCandidate = "c".repeat(40);
 const fakeTree = "d".repeat(40);
 const digest = (value) => createHash("sha256").update(value).digest("hex");
+
+async function createPhysicalTemporaryDirectory(prefix) {
+  return realpath(await mkdtemp(path.join(os.tmpdir(), prefix)));
+}
 
 test("real process ROI CLI fails closed when a path option has no value", async () => {
   const cli = path.join(root, "tools", "verify_long_task_real_process_roi.mjs");
@@ -192,7 +197,7 @@ test("real process ROI lifecycle enables Long-Task before Preflight", async () =
 });
 
 test("real process ROI child response stays regular and within its private file bound", async () => {
-  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-response-"));
+  const temporary = await createPhysicalTemporaryDirectory("ty-roi-response-");
   try {
     const responsePath = path.join(temporary, "response.json");
     await writeFile(responsePath, JSON.stringify({ ok: true, value: 1 }));
@@ -229,7 +234,7 @@ test("real process ROI child response stays regular and within its private file 
 });
 
 test("test-owned child boundaries settle their process tree on success and bounded failure", async () => {
-  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-owned-tree-"));
+  const temporary = await createPhysicalTemporaryDirectory("ty-owned-tree-");
   try {
     for (const control of [
       {
@@ -489,8 +494,8 @@ test("R9/R10 workload cases reach the real Final Gate through non-closure input 
       caseId,
       repeat: 1,
     });
-    const outputDir = await mkdtemp(
-      path.join(os.tmpdir(), `ty-roi-${caseId.slice(0, 3)}-`),
+    const outputDir = await createPhysicalTemporaryDirectory(
+      `ty-roi-${caseId.slice(0, 3)}-`,
     );
     const commandRecords = [];
     try {
@@ -606,7 +611,7 @@ test("real process ROI setup routes every Windows npm command through ComSpec wi
 });
 
 test("real process ROI artifact manifest keeps its retained-file budget fail closed", async () => {
-  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-budget-"));
+  const temporary = await createPhysicalTemporaryDirectory("ty-roi-budget-");
   const oversized = path.join(temporary, "oversized.stdout.log");
   try {
     await writeFile(oversized, "");
@@ -621,8 +626,8 @@ test("real process ROI artifact manifest keeps its retained-file budget fail clo
 });
 
 test("partial real process ROI setup explicitly removes a registered dirty worktree", async () => {
-  const temporary = await mkdtemp(
-    path.join(os.tmpdir(), "ty-roi-cleanup-test-"),
+  const temporary = await createPhysicalTemporaryDirectory(
+    "ty-roi-cleanup-test-",
   );
   const repository = path.join(temporary, "repository");
   const checkout = path.join(temporary, "partial-variant");
@@ -762,7 +767,7 @@ test("repository process product has eight fine-grained normal/degraded facts an
       Object.values(evaluateProductFacts(structuredClone(gold[mode]))),
       Array(8).fill(true),
     );
-  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-product-"));
+  const temporary = await createPhysicalTemporaryDirectory("ty-roi-product-");
   try {
     await mkdir(path.join(temporary, "src"), { recursive: true });
     await mkdir(path.join(temporary, "config"), { recursive: true });
@@ -1082,7 +1087,7 @@ test("report verifier is Windows-TCB-bound and recomputes raw SHA closure, summa
     );
     return;
   }
-  const temporary = await mkdtemp(path.join(os.tmpdir(), "ty-roi-report-"));
+  const temporary = await createPhysicalTemporaryDirectory("ty-roi-report-");
   try {
     const state = await materializeVerifierReportFixture(temporary);
     await assertVerifierFormalConclusions(temporary, state);
@@ -1707,8 +1712,8 @@ async function executeRealProcessRoiLifecycle(options) {
 }
 
 async function runRoiRuntimeControl(operation, payload) {
-  const temporary = await mkdtemp(
-    path.join(os.tmpdir(), "ty-roi-runtime-control-"),
+  const temporary = await createPhysicalTemporaryDirectory(
+    "ty-roi-runtime-control-",
   );
   const requestPath = path.join(temporary, "request.json");
   const responsePath = path.join(temporary, "response.json");
