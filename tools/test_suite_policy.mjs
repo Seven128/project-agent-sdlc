@@ -491,6 +491,20 @@ export const CONTROLLED_TEST_SUITE_BUDGET_PROFILES = Object.freeze({
     rationale:
       "Versioned Trust recalibration from the 566039ms PR #44 GitHub Ubuntu observation: a 10% margin rounded up to the next 30-second boundary yields 630000ms. Default and complete Long-Task ceilings, discovery, concurrency, cache prohibition, assertions, and critical sentinel requirements remain unchanged.",
   }),
+  "github-ubuntu-v4": Object.freeze({
+    expected_environment: Object.freeze({
+      GITHUB_ACTIONS: "true",
+      RUNNER_OS: "Linux",
+    }),
+    budgets_ms: Object.freeze({
+      default: 270_000,
+      "long-task-trust": 630_000,
+      "long-task": 1_200_000,
+    }),
+    reviewed_on: "2026-09-01",
+    rationale:
+      "Versioned default-suite recalibration for the complete 91-root/607-test population: exact GitHub Ubuntu runs 33411209068 and 33416528161 measured 215790ms and 220704ms. A 10% margin over the larger observation rounded up to the next 30-second boundary yields 270000ms; Trust and complete Long-Task ceilings, discovery, concurrency, cache prohibition, assertions, and critical sentinel requirements remain unchanged.",
+  }),
 });
 
 assertControlledTestSuiteBudgetProfiles();

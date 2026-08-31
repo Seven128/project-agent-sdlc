@@ -1058,6 +1058,26 @@ test("[critical:controlled-budget-profile] suite wall-time budgets are named, en
     resolveSuiteWallTimeBudgetMs("long-task-trust", versionThreeEnvironment),
     630000,
   );
+  const versionFourEnvironment = {
+    ...environment,
+    TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: "github-ubuntu-v4",
+  };
+  assert.deepEqual(
+    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v4"].budgets_ms,
+    {
+      default: 270000,
+      "long-task-trust": 630000,
+      "long-task": 1200000,
+    },
+  );
+  assert.equal(
+    CONTROLLED_TEST_SUITE_BUDGET_PROFILES["github-ubuntu-v4"].reviewed_on,
+    "2026-09-01",
+  );
+  assert.equal(
+    resolveSuiteWallTimeBudgetMs("default", versionFourEnvironment),
+    270000,
+  );
   assert.equal(suiteWallTimeBudgetStatus(630000, 630000), "within_budget");
   assert.equal(suiteWallTimeBudgetStatus(630001, 630000), "exceeded");
   const versionThreeProfile =
