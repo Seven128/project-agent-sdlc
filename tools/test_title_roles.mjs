@@ -1,5 +1,40 @@
 export const NODE_TEST_FUNCTION_EXPORTS = new Set(["it", "test"]);
 export const NODE_TEST_SUITE_EXPORTS = new Set(["describe", "suite"]);
+export const CONSTRUCTOR_INSPECTION_PROPERTIES = new Set(["length", "name"]);
+
+const CONSTRUCTOR_ORIGINS = new Set([
+  "commonjs-module",
+  "module-class",
+  "dynamic-code",
+  "function",
+  "unknown-role-bearing-value",
+]);
+
+export function constructorAccessRole(origin) {
+  if (!CONSTRUCTOR_ORIGINS.has(origin))
+    throw new Error(`invalid_constructor_access_origin:${origin}`);
+  return { type: "constructor-access", origin };
+}
+
+export function constructorOriginFromRole(role) {
+  if (!role) return null;
+  if (role.type === "constructor-access") return "dynamic-code";
+  if (role.type === "constructor-identity-method") return role.origin;
+  if (role.type === "commonjs-module") return "commonjs-module";
+  if (role.type === "module-class" || role.type === "module-namespace")
+    return "module-class";
+  if (role.type === "dynamic-code") return "dynamic-code";
+  if (role.type === "callable") return "function";
+  return "unknown-role-bearing-value";
+}
+
+export function isConstructorCapabilityRole(role) {
+  return (
+    role?.type === "constructor-access" ||
+    role?.type === "constructor-identity-method" ||
+    role?.type === "unsupported-constructor-capability"
+  );
+}
 
 export function importedNodeTestRole(source, specifier, imported) {
   if (source === "node:vm" || source === "vm")

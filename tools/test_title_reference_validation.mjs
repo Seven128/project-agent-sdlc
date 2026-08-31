@@ -1,4 +1,5 @@
 import {
+  CONSTRUCTOR_INSPECTION_PROPERTIES,
   NODE_TEST_FUNCTION_EXPORTS,
   NODE_TEST_SUITE_EXPORTS,
 } from "./test_title_roles.mjs";
@@ -88,10 +89,7 @@ function isSafeConstructorAccessReference(node, parent) {
   const property = memberProperty(parent);
   return (
     property !== null &&
-    property !== "apply" &&
-    property !== "bind" &&
-    property !== "call" &&
-    property !== "constructor"
+    (CONSTRUCTOR_INSPECTION_PROPERTIES.has(property) || property === "valueOf")
   );
 }
 

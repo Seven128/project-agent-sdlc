@@ -1,6 +1,9 @@
 import {
+  CONSTRUCTOR_INSPECTION_PROPERTIES,
   NODE_TEST_FUNCTION_EXPORTS,
   NODE_TEST_SUITE_EXPORTS,
+  constructorAccessRole,
+  constructorOriginFromRole,
 } from "./test_title_roles.mjs";
 import { resolveScopeBinding } from "./test_title_scope_model.mjs";
 
@@ -66,7 +69,7 @@ function resolveIdentifierRole(node, scope) {
 function resolveCallExpressionRole(node, scope, model) {
   const callee = resolveNodeTestExpression(node.callee, scope, model);
   if (callee?.type === "constructor-identity-method")
-    return { type: "constructor-access" };
+    return constructorAccessRole(callee.origin);
   if (callee?.type === "constructor-access") return { type: "dynamic-code" };
   if (callee?.type === "reflect-get")
     return resolveReflectGetCall(node, scope, model);
@@ -79,7 +82,8 @@ function resolveCallExpressionRole(node, scope, model) {
 function resolveReflectGetCall(node, scope, model) {
   const owner = resolveNodeTestExpression(node.arguments[0], scope, model);
   const property = staticStringLiteral(node.arguments[1]);
-  if (property === "constructor") return { type: "constructor-access" };
+  if (property === "constructor")
+    return resolveConstructorAccessRole(node.arguments[0], owner, scope, model);
   if (owner?.type === "process") return { type: "unsupported-module-loader" };
   if (
     owner?.type === "global-object" &&
@@ -102,10 +106,11 @@ function resolveLoadedModuleRole(specifier) {
 
 function resolveMemberExpressionRole(node, scope, model) {
   const property = memberProperty(node);
-  if (property === "constructor") return { type: "constructor-access" };
   const unboundRole = resolveUnboundGlobalMemberRole(node, scope);
   if (unboundRole) return unboundRole;
   const owner = resolveNodeTestExpression(node.object, scope, model);
+  if (property === "constructor")
+    return resolveConstructorAccessRole(node.object, owner, scope, model);
   if (!owner || property === null) return null;
   return resolvePropertyRole(owner, property);
 }
@@ -121,15 +126,12 @@ function resolveUnboundGlobalMemberRole(node, scope) {
   return null;
 }
 
-function resolvePropertyRole(owner, property) {
+export function resolvePropertyRole(owner, property) {
   if (owner.type === "dynamic-code-namespace") return { type: "dynamic-code" };
   if (owner.type === "constructor-access" && property === "valueOf")
-    return { type: "constructor-identity-method" };
-  if (
-    owner.type === "constructor-access" &&
-    ["apply", "bind", "call"].includes(property)
-  )
-    return { type: "dynamic-code" };
+    return { type: "constructor-identity-method", origin: owner.origin };
+  if (owner.type === "constructor-access")
+    return resolveConstructorPropertyRole(owner, property);
   const globalRole = resolveGlobalPropertyRole(owner, property);
   if (globalRole) return globalRole;
   const moduleRole = resolveModulePropertyRole(owner, property);
@@ -146,6 +148,92 @@ function resolvePropertyRole(owner, property) {
     return { type: "callable", registration: "test" };
   if (owner.type === "callable" && TEST_MODIFIERS.has(property)) return owner;
   return null;
+}
+
+function resolveConstructorPropertyRole(owner, property) {
+  if (CONSTRUCTOR_INSPECTION_PROPERTIES.has(property)) return null;
+  if (["apply", "bind", "call", "constructor"].includes(property))
+    return { type: "dynamic-code" };
+  if (
+    (owner.origin === "commonjs-module" || owner.origin === "module-class") &&
+    ["_compile", "_extensions", "_load", "runMain"].includes(property)
+  )
+    return { type: "unsupported-module-loader" };
+  return { type: "unsupported-constructor-capability", origin: owner.origin };
+}
+
+export function resolveConstructorAccessRole(
+  expression,
+  ownerRole,
+  scope,
+  model,
+) {
+  const expressionOrigin = constructorOriginFromExpression(
+    expression,
+    scope,
+    model,
+  );
+  if (expressionOrigin === "ordinary-data") return null;
+  return constructorAccessRole(
+    constructorOriginFromRole(ownerRole) ??
+      expressionOrigin ??
+      "unknown-role-bearing-value",
+  );
+}
+
+function constructorOriginFromExpression(node, scope, model, seen = new Set()) {
+  if (!node) return null;
+  if (node.type === "ChainExpression" || node.type === "AwaitExpression")
+    return constructorOriginFromExpression(
+      node.expression ?? node.argument,
+      scope,
+      model,
+      seen,
+    );
+  if (
+    node.type === "ArrowFunctionExpression" ||
+    node.type === "FunctionExpression" ||
+    node.type === "ClassExpression"
+  )
+    return "function";
+  if (node.type === "ObjectExpression" && hasInertOwnConstructor(node))
+    return "ordinary-data";
+  if (node.type !== "Identifier") return null;
+  const binding = resolveScopeBinding(scope, node.name);
+  if (!binding?.aliasInitializer || seen.has(binding)) return null;
+  return constructorOriginFromExpression(
+    binding.aliasInitializer,
+    model.scopeByNode.get(binding.aliasInitializer) ?? binding.scope,
+    model,
+    new Set(seen).add(binding),
+  );
+}
+
+function hasInertOwnConstructor(node) {
+  return node.properties.some((property) => {
+    if (
+      property.type !== "Property" ||
+      property.kind !== "init" ||
+      property.method ||
+      property.computed
+    )
+      return false;
+    const name =
+      property.key?.type === "Identifier"
+        ? property.key.name
+        : property.key?.type === "Literal"
+          ? property.key.value
+          : null;
+    return name === "constructor" && isInertConstructorValue(property.value);
+  });
+}
+
+function isInertConstructorValue(node) {
+  return (
+    node?.type === "ObjectExpression" ||
+    node?.type === "ArrayExpression" ||
+    node?.type === "Literal"
+  );
 }
 
 function resolveGlobalPropertyRole(owner, property) {

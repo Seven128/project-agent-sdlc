@@ -4,6 +4,7 @@ import { collectNodeTestModuleSpecifier } from "./test_title_module_edges.mjs";
 import {
   analysisError,
   assertClosedRegistrationCallback,
+  isNonTransferableNodeTestRole,
   isNodeTestModuleLoaderRole,
   isUnsupportedNodeTestRole,
   markResolvedReferences,
@@ -28,6 +29,7 @@ export function analyzeNodeTestProgram({ program, file }) {
         prepass: true,
         resolveNodeTestExpression,
       });
+  resolveRegistrationRoles(model, file);
   resolveDestructuringRoles(model, file);
   resolveRegistrationRoles(model, file);
 
@@ -70,7 +72,8 @@ export function analyzeNodeTestProgram({ program, file }) {
     if (
       binding.aliasInitializer &&
       binding.nodeTestRole &&
-      !isUnsupportedNodeTestRole(binding.nodeTestRole)
+      !isUnsupportedNodeTestRole(binding.nodeTestRole) &&
+      !isNonTransferableNodeTestRole(binding.nodeTestRole)
     )
       markResolvedReferences(
         binding.aliasInitializer,

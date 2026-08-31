@@ -95,6 +95,7 @@ function visitCatch(node, parentScope, model) {
       pattern: node.param,
       bindingScope: scope,
       evaluationScope: scope,
+      sourceExpression: null,
     });
   if (node.param)
     bindScopePattern(
@@ -162,6 +163,7 @@ function visitVariableDeclaration(node, scope, model) {
       pattern: declaration.id,
       bindingScope: targetScope,
       evaluationScope: scope,
+      sourceExpression: declaration.init,
     });
     bindScopePattern(
       declaration.id,
@@ -200,6 +202,7 @@ function visitFunction(node, parentScope, model) {
       pattern: parameter,
       bindingScope: parameterScope,
       evaluationScope: parameterScope,
+      sourceExpression: null,
     });
     bindScopePattern(
       parameter,

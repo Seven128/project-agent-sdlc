@@ -3,6 +3,7 @@ import {
   resolveNodeTestExpression,
 } from "./test_title_expression_roles.mjs";
 import { resolveScopeBinding } from "./test_title_scope_model.mjs";
+import { isConstructorCapabilityRole } from "./test_title_roles.mjs";
 
 export { memberProperty, resolveNodeTestExpression };
 
@@ -74,8 +75,13 @@ export function isNodeTestModuleLoaderRole(role) {
 export function isUnsupportedNodeTestRole(role) {
   return (
     role?.type === "unsupported-module-loader" ||
-    role?.type === "unsupported-reflection"
+    role?.type === "unsupported-reflection" ||
+    role?.type === "unsupported-constructor-capability"
   );
+}
+
+export function isNonTransferableNodeTestRole(role) {
+  return isConstructorCapabilityRole(role);
 }
 
 export function analysisError(code, file, node) {

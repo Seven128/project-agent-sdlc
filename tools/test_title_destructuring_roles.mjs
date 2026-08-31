@@ -1,20 +1,42 @@
 import { resolveStaticString } from "./test_title_module_edges.mjs";
+import {
+  resolveConstructorAccessRole,
+  resolveNodeTestExpression,
+  resolvePropertyRole,
+} from "./test_title_expression_roles.mjs";
 import { analysisError } from "./test_title_registration_resolution.mjs";
 import { resolveScopeBinding } from "./test_title_scope_model.mjs";
-
-const CONSTRUCTOR_ACCESS = Object.freeze({ type: "constructor-access" });
 
 export function resolveDestructuringRoles(model, file) {
   for (const {
     pattern,
     bindingScope,
     evaluationScope,
+    sourceExpression,
   } of model.bindingPatterns)
-    inspectPattern(pattern, bindingScope, evaluationScope, model, file);
+    inspectPattern(
+      pattern,
+      bindingScope,
+      evaluationScope,
+      model,
+      file,
+      sourceExpression,
+      sourceExpression
+        ? resolveNodeTestExpression(sourceExpression, evaluationScope, model)
+        : null,
+    );
   for (const node of model.nodes) {
     if (node.type === "AssignmentExpression") {
       const scope = model.scopeByNode.get(node.left);
-      inspectPattern(node.left, scope, scope, model, file);
+      inspectPattern(
+        node.left,
+        scope,
+        scope,
+        model,
+        file,
+        node.right,
+        resolveNodeTestExpression(node.right, scope, model),
+      );
       continue;
     }
     if (
@@ -27,15 +49,33 @@ export function resolveDestructuringRoles(model, file) {
         model.scopeByNode.get(node.left),
         model,
         file,
+        null,
+        null,
       );
   }
 }
 
-function inspectPattern(pattern, bindingScope, evaluationScope, model, file) {
+function inspectPattern(
+  pattern,
+  bindingScope,
+  evaluationScope,
+  model,
+  file,
+  sourceExpression = null,
+  sourceRole = null,
+) {
   if (!pattern) return;
   switch (pattern.type) {
     case "AssignmentPattern":
-      inspectPattern(pattern.left, bindingScope, evaluationScope, model, file);
+      inspectPattern(
+        pattern.left,
+        bindingScope,
+        evaluationScope,
+        model,
+        file,
+        sourceExpression,
+        sourceRole,
+      );
       return;
     case "RestElement":
       inspectPattern(
@@ -44,14 +84,32 @@ function inspectPattern(pattern, bindingScope, evaluationScope, model, file) {
         evaluationScope,
         model,
         file,
+        sourceExpression,
+        sourceRole,
       );
       return;
     case "ArrayPattern":
       for (const element of pattern.elements)
-        inspectPattern(element, bindingScope, evaluationScope, model, file);
+        inspectPattern(
+          element,
+          bindingScope,
+          evaluationScope,
+          model,
+          file,
+          sourceExpression,
+          sourceRole,
+        );
       return;
     case "ObjectPattern":
-      inspectObjectPattern(pattern, bindingScope, evaluationScope, model, file);
+      inspectObjectPattern(
+        pattern,
+        bindingScope,
+        evaluationScope,
+        model,
+        file,
+        sourceExpression,
+        sourceRole,
+      );
   }
 }
 
@@ -61,6 +119,8 @@ function inspectObjectPattern(
   evaluationScope,
   model,
   file,
+  sourceExpression,
+  sourceRole,
 ) {
   for (const property of pattern.properties) {
     if (property.type !== "Property") {
@@ -70,10 +130,18 @@ function inspectObjectPattern(
         evaluationScope,
         model,
         file,
+        sourceExpression,
+        sourceRole,
       );
       continue;
     }
-    const role = constructorPropertyRole(property, evaluationScope, model);
+    const role = destructuredPropertyRole(
+      property,
+      evaluationScope,
+      model,
+      sourceExpression,
+      sourceRole,
+    );
     if (role)
       assignDirectRole(
         property.value,
@@ -82,6 +150,8 @@ function inspectObjectPattern(
         evaluationScope,
         model,
         file,
+        null,
+        role,
       );
     else
       inspectPattern(
@@ -90,11 +160,19 @@ function inspectObjectPattern(
         evaluationScope,
         model,
         file,
+        null,
+        null,
       );
   }
 }
 
-function constructorPropertyRole(property, scope, model) {
+function destructuredPropertyRole(
+  property,
+  scope,
+  model,
+  sourceExpression,
+  sourceRole,
+) {
   const name = property.computed
     ? resolveStaticPropertyName(property.key, scope, model)
     : property.key?.type === "Identifier"
@@ -103,8 +181,17 @@ function constructorPropertyRole(property, scope, model) {
           typeof property.key.value === "string"
         ? property.key.value
         : null;
-  if (name === "constructor") return CONSTRUCTOR_ACCESS;
-  return property.computed && name === null ? CONSTRUCTOR_ACCESS : null;
+  if (name === "constructor")
+    return resolveConstructorAccessRole(
+      sourceExpression,
+      sourceRole,
+      scope,
+      model,
+    );
+  if (sourceRole && name !== null) return resolvePropertyRole(sourceRole, name);
+  if (sourceRole || (property.computed && name === null))
+    return { type: "unsupported-reflection" };
+  return null;
 }
 
 function resolveStaticPropertyName(node, scope, model, seen = new Set()) {
@@ -141,6 +228,8 @@ function assignDirectRole(
   evaluationScope,
   model,
   file,
+  sourceExpression,
+  sourceRole,
 ) {
   if (!target) return;
   if (target.type === "Identifier") {
@@ -163,6 +252,8 @@ function assignDirectRole(
       evaluationScope,
       model,
       file,
+      sourceExpression,
+      sourceRole,
     );
     return;
   }
@@ -171,7 +262,15 @@ function assignDirectRole(
     target.type === "ArrayPattern" ||
     target.type === "RestElement"
   ) {
-    inspectPattern(target, bindingScope, evaluationScope, model, file);
+    inspectPattern(
+      target,
+      bindingScope,
+      evaluationScope,
+      model,
+      file,
+      sourceExpression,
+      sourceRole,
+    );
     return;
   }
   throw analysisError(
