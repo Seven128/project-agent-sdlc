@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -126,3 +127,5 @@ function write(relativePath, content) {
   mkdirSync(path.dirname(absolutePath), { recursive: true });
   writeFileSync(absolutePath, content, "utf8");
 }
+
+test("top-level script assertions completed", () => {});

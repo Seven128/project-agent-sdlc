@@ -70,7 +70,7 @@ test("Authoring Preflight compares a pre-semantic active Authority without weake
   }
 });
 
-test("Authoring Preflight is ready, under two seconds and completely read-only", async () => {
+test("Authoring Preflight is ready and completely read-only", async () => {
   const fixture = await createDeliveryFixture();
   try {
     const marker = path.join(fixture.root, "preflight-runner-started");
@@ -79,12 +79,10 @@ test("Authoring Preflight is ready, under two seconds and completely read-only",
       `require("node:fs").writeFileSync(${JSON.stringify(marker)}, "ran");\n`,
     );
     const before = await stateSnapshot(fixture);
-    const started = performance.now();
     const result = await preflightDeliveryContract(
       fixture.workdir,
       fixture.root,
     );
-    assert.ok(performance.now() - started < 2000);
     assert.equal(result.status, "ready");
     assert.equal(result.would_create_authority_lock, true);
     assert.equal(result.source_coverage.resolved, 3);

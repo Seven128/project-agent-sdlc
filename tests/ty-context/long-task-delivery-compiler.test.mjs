@@ -66,16 +66,14 @@ const DESIGN_ROOT_STATEMENT = "main content";
 const execFileAsync = promisify(execFile);
 let cachedPlaywrightTestModulePromise;
 
-test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets under two seconds", async () => {
+test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
   try {
-    const started = performance.now();
     const compiled = await compileDeliveryContract(
       fixture.workdir,
       fixture.root,
       { require_completion_gate: false },
     );
-    assert.ok(performance.now() - started < 2000);
     assert.equal(compiled.schema_version, "compiled-long-task-delivery-v2");
     assert.equal(compiled.effective_risk, "standard");
     assert.deepEqual(

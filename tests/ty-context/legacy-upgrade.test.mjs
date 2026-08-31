@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import { mkdir, mkdtemp, readFile, rm, stat, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -239,3 +240,5 @@ jobs:
 function count(content, needle) {
   return content.split(needle).length - 1;
 }
+
+test("top-level script assertions completed", () => {});

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -298,3 +299,5 @@ const blockedFirst = recommendedNext([
   { id: "ready-later", status: "ready" },
 ]);
 assert.equal(blockedFirst.id, "fix-first");
+
+test("top-level script assertions completed", () => {});

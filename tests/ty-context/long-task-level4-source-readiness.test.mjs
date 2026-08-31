@@ -5,6 +5,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   symlink,
   writeFile,
@@ -114,7 +115,9 @@ test("formal source preflight derives missing price meters and enforces delivery
 });
 
 test("runner-owned State payload is sorted, exact, retained, and package-proxy/hardlink/empty sources fail closed", async (t) => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-state-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-state-")),
+  );
   const executionRoot = path.join(root, "formal-evidence", invocationId);
   const retention = {
     scope: "this-delivery-precollection-proxy-only",
@@ -210,8 +213,8 @@ test("runner-owned State payload is sorted, exact, retained, and package-proxy/h
 });
 
 test("runner-owned State capture rejects a replaced root and nested junction escape", async (t) => {
-  const root = await mkdtemp(
-    path.join(os.tmpdir(), "ty-level4-state-junction-"),
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-state-junction-")),
   );
   const executionRoot = path.join(root, "formal-evidence", invocationId);
   const outside = path.join(root, "outside-state");
@@ -268,7 +271,9 @@ test("runner-owned State capture rejects a replaced root and nested junction esc
 });
 
 test("runner-owned output locators stay inside the run root and post-close reads reject linked files", async () => {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-level4-output-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-level4-output-")),
+  );
   try {
     assert.throws(
       () => resolveFormalArtifact(root, "../escaped-output.bin"),

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -70,3 +71,5 @@ const help = spawnSync(process.execPath, [scriptPath, "--help"], {
 });
 assert.equal(help.status, 0, help.stderr);
 assert.match(help.stdout, /launch_hn_snapshot\.mjs/);
+
+test("top-level script assertions completed", () => {});

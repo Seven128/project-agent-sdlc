@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { mkdtempSync, readFileSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -57,3 +58,5 @@ assert.equal(forced.status, 0, `${forced.stdout}\n${forced.stderr}`);
 const redditNote = readFileSync(outputPath, "utf8");
 assert.match(redditNote, /Channel: Reddit/);
 assert.doesNotMatch(redditNote, /launch:hn-snapshot/);
+
+test("top-level script assertions completed", () => {});

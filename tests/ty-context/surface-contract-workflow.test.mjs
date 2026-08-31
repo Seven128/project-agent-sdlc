@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -269,3 +270,5 @@ for (const role of ["surface-contract", "product-surface", "web-contract", "app-
   assert.equal(parsedContextRules.roles.includes(role), false);
 }
 assert.match(validators, /catalog-portable-contract\.js/u);
+
+test("top-level script assertions completed", () => {});

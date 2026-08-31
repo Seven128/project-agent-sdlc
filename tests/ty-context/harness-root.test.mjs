@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
@@ -74,3 +75,5 @@ try {
 } finally {
   await rm(root, { recursive: true, force: true });
 }
+
+test("top-level script assertions completed", () => {});

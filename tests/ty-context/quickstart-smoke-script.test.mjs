@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import { mkdtemp, readFile, rm, stat } from "node:fs/promises";
 import { tmpdir } from "node:os";
@@ -105,3 +106,5 @@ try {
   await rm(outDir, { recursive: true, force: true });
   await rm(sourcePreviewOutDir, { recursive: true, force: true });
 }
+
+test("top-level script assertions completed", () => {});

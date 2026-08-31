@@ -1,5 +1,14 @@
 import assert from "node:assert/strict";
-import { link, mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import {
+  link,
+  mkdir,
+  mkdtemp,
+  readFile,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import {
@@ -58,7 +67,9 @@ export function deriveFixtureAccounting(
 }
 
 export async function assertPrecollectionMaterialization(fixture) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-precollection-copy-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-precollection-copy-")),
+  );
   try {
     await materializeFormalPrecollectionInputs({
       runSetRoot: root,
@@ -158,7 +169,9 @@ export function validateFixturePriceSource(fixture, options = {}) {
 }
 
 export async function assertPrecollectionNoFollow(fixture) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-precollection-link-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-precollection-link-")),
+  );
   try {
     const sourceRoot = path.join(root, "sources");
     for (const [relative, source] of fixture.precollection.files)

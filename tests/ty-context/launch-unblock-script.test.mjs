@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { renderMarkdown } from "../../tools/launch_unblock_check.mjs";
 
 function baseReport(npmStatus) {
@@ -121,3 +122,5 @@ assert.match(
   readyWithCleanup,
   /Required broad launch gate is clear, but npm publish cleanup remains/,
 );
+
+test("top-level script assertions completed", () => {});

@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import {
   mkdir,
@@ -488,3 +489,5 @@ default = true
   await rm(manualRoot, { recursive: true, force: true });
   await rm(blockedRoot, { recursive: true, force: true });
 }
+
+test("top-level script assertions completed", () => {});

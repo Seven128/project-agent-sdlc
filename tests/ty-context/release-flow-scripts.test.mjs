@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { spawnSync } from "node:child_process";
 import {
   mkdirSync,
@@ -628,3 +629,5 @@ function readJsonLines(filePath) {
     .filter(Boolean)
     .map((line) => JSON.parse(line));
 }
+
+test("top-level script assertions completed", () => {});

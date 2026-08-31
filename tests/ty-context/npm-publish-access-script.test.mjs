@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import test from "node:test";
 import { summarize } from "../../tools/npm_publish_access_check.mjs";
 
 function report({ whoamiOk, registryPackage }) {
@@ -87,3 +88,5 @@ assert.equal(
   ).status,
   "registry-check-failed",
 );
+
+test("top-level script assertions completed", () => {});
