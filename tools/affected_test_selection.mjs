@@ -16,6 +16,15 @@ export {
   LONG_TASK_TRUST_TESTS,
 } from "./test_suite_policy.mjs";
 
+const PACKAGE_SUITE_CORE_OWNER_PATHS = new Set([
+  "tests/ty-context/run-package-suite.mjs",
+  "tests/ty-context/run-package-suite-completeness.mjs",
+  "tests/ty-context/test-suite-file-reporter.mjs",
+  "tools/test_suite_selection.mjs",
+  "tools/test_suite_lane_policy.mjs",
+  "tools/test_suite_policy.mjs",
+]);
+
 const SHARED_SEMANTIC_FACT_RUNTIME_PREFIXES = Object.freeze([
   "packages/ty-context/src/lib/compact-authoring-support.ts",
   "packages/ty-context/src/lib/compact-shared-structure",
@@ -1014,18 +1023,9 @@ export function selectAffectedTests(changedPaths, options = {}) {
   let mode = "selected";
 
   for (const file of normalized) {
-    if (file === "tests/ty-context/run-package-suite.mjs") {
-      tests.add(testPath("test-suite-runtime.test.mjs"));
-      tests.add(testPath("workflow-test-entrypoints.test.mjs"));
-      reasons.push(`${file}:suite_runtime_tooling`);
-      continue;
-    }
-
-    if (file === "tests/ty-context/test-suite-file-reporter.mjs") {
-      tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
-      tests.add(testPath("test-suite-runtime.test.mjs"));
-      tests.add(testPath("workflow-test-entrypoints.test.mjs"));
-      reasons.push(`${file}:suite_runtime_tooling`);
+    if (PACKAGE_SUITE_CORE_OWNER_PATHS.has(file)) {
+      mode = widen(mode, "full-suite");
+      reasons.push(`${file}:package_suite_core_owner`);
       continue;
     }
 
@@ -1084,15 +1084,12 @@ export function selectAffectedTests(changedPaths, options = {}) {
       file === "tools/package_build_fingerprint.mjs" ||
       file === "tools/affected_change_discovery.mjs" ||
       file === "tools/affected_test_selection.mjs" ||
-      file === "tools/run_affected_tests.mjs" ||
-      file === "tools/test_suite_policy.mjs"
+      file === "tools/run_affected_tests.mjs"
     ) {
       tests.add(testPath("affected-change-discovery.test.mjs"));
       tests.add(testPath("affected-test-selection.test.mjs"));
       if (file === "tools/package_build_fingerprint.mjs")
         tests.add(testPath("test-suite-runtime.test.mjs"));
-      if (file === "tools/test_suite_policy.mjs")
-        tests.add(testPath("required-critical-sentinel-runner.test.mjs"));
       tests.add(testPath("workflow-test-entrypoints.test.mjs"));
       reasons.push(`${file}:affected_test_tooling`);
       continue;
@@ -1108,8 +1105,7 @@ export function selectAffectedTests(changedPaths, options = {}) {
       file === "tools/test_title_reference_validation.mjs" ||
       file === "tools/test_title_roles.mjs" ||
       file === "tools/test_title_scope_model.mjs" ||
-      file === "tools/test_title_pattern_scope.mjs" ||
-      file === "tools/test_suite_selection.mjs"
+      file === "tools/test_title_pattern_scope.mjs"
     ) {
       tests.add(testPath("affected-test-selection.test.mjs"));
       tests.add(testPath("required-critical-sentinel-runner.test.mjs"));

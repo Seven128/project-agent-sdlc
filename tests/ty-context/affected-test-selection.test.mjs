@@ -783,20 +783,14 @@ test("affected tooling changes select discovery, selection, and entry-point cove
     "tools/affected_change_discovery.mjs",
     "tools/affected_test_selection.mjs",
     "tools/run_affected_tests.mjs",
-    "tools/test_suite_policy.mjs",
   ]) {
     const selection = selectAffectedTests([file]);
     assert.equal(selection.mode, "selected", file);
-    const runnerCoverage =
-      file === "tools/test_suite_policy.mjs"
-        ? ["tests/ty-context/required-critical-sentinel-runner.test.mjs"]
-        : [];
     assert.deepEqual(
       selection.tests,
       [
         "tests/ty-context/affected-change-discovery.test.mjs",
         "tests/ty-context/affected-test-selection.test.mjs",
-        ...runnerCoverage,
         "tests/ty-context/workflow-test-entrypoints.test.mjs",
       ],
       file,
@@ -816,7 +810,6 @@ test("required sentinel runner and reporter changes select all focused controls"
     "tools/test_title_roles.mjs",
     "tools/test_title_scope_model.mjs",
     "tools/test_title_pattern_scope.mjs",
-    "tools/test_suite_selection.mjs",
   ]) {
     const runner = selectAffectedTests([file]);
     assert.equal(runner.mode, "selected", file);
@@ -831,16 +824,6 @@ test("required sentinel runner and reporter changes select all focused controls"
     );
   }
 
-  const reporter = selectAffectedTests([
-    "tests/ty-context/test-suite-file-reporter.mjs",
-  ]);
-  assert.equal(reporter.mode, "selected");
-  assert.deepEqual(reporter.tests, [
-    "tests/ty-context/required-critical-sentinel-runner.test.mjs",
-    "tests/ty-context/test-suite-runtime.test.mjs",
-    "tests/ty-context/workflow-test-entrypoints.test.mjs",
-  ]);
-
   const fixture = selectAffectedTests([
     "tests/ty-context/required-critical-sentinel-runner-fixture.mjs",
   ]);
@@ -848,6 +831,28 @@ test("required sentinel runner and reporter changes select all focused controls"
   assert.deepEqual(fixture.tests, [
     "tests/ty-context/required-critical-sentinel-runner.test.mjs",
   ]);
+});
+
+test("package suite core owner changes fail safe to the complete release regression", () => {
+  for (const file of [
+    "tests/ty-context/run-package-suite.mjs",
+    "tests/ty-context/run-package-suite-completeness.mjs",
+    "tests/ty-context/test-suite-file-reporter.mjs",
+    "tools/test_suite_selection.mjs",
+    "tools/test_suite_lane_policy.mjs",
+    "tools/test_suite_policy.mjs",
+  ]) {
+    const selection = selectAffectedTests([file]);
+    assert.equal(selection.mode, "full-suite", file);
+    assert.equal(selection.tier, "release-regression", file);
+    assert.deepEqual(selection.tests, [], file);
+    assert.equal(selection.requires_build, true, file);
+    assert.deepEqual(
+      selection.reasons,
+      [`${file}:package_suite_core_owner`],
+      file,
+    );
+  }
 });
 
 test("pull-request template changes select workflow policy coverage", () => {

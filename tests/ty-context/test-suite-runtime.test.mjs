@@ -12,7 +12,7 @@ import {
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 import { promisify } from "node:util";
 import {
   verifyPackageBuildFingerprint,
@@ -44,12 +44,35 @@ import {
   buildFileTimingReport,
   readReporterEvents,
 } from "./test-suite-file-reporter.mjs";
-import { finalizeCompleteSuiteExecution } from "./run-package-suite-completeness.mjs";
+import {
+  assertCompleteSuiteInvocation,
+  assertCompleteSuiteLanePlan,
+  finalizeCompleteSuiteExecution,
+} from "./run-package-suite-completeness.mjs";
 import { createWorkspaceSnapshot } from "../../packages/ty-context/dist/lib/long-task-workspace.js";
 import { assertWorkspaceGitOrdering } from "./workspace-git-ordering-fixture.mjs";
 
 const exec = promisify(execFile);
 const repositoryRoot = fileURLToPath(new URL("../..", import.meta.url));
+
+async function rejectedExec(command, arguments_, options) {
+  try {
+    const result = await exec(command, arguments_, {
+      timeout: 10_000,
+      maxBuffer: 2 * 1024 * 1024,
+      windowsHide: true,
+      ...options,
+    });
+    return { code: 0, signal: null, ...result };
+  } catch (error) {
+    return {
+      code: typeof error.code === "number" ? error.code : 1,
+      signal: error.signal ?? null,
+      stdout: String(error.stdout ?? ""),
+      stderr: String(error.stderr ?? ""),
+    };
+  }
+}
 
 test("build fingerprint accepts the matching snapshot and rejects stale dist", async () => {
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-build-stamp-"));
@@ -1593,7 +1616,244 @@ test("required reporter projections reject duplicate or missing per-file summari
   ]);
 });
 
-test("complete suite execution facts require every lane and exactly one summary per root", () => {
+test("complete suite invocation and lane planning reject every unowned execution shape", () => {
+  const cleanEnvironment = {};
+  assert.equal(
+    assertCompleteSuiteInvocation({
+      argumentsAfterScript: ["long-task"],
+      execArgv: [],
+      environment: cleanEnvironment,
+    }),
+    "long-task",
+  );
+  for (const argumentsAfterScript of [
+    [],
+    ["default", "--test-name-pattern=x"],
+    ["default", "extra-position"],
+  ])
+    assert.throws(
+      () =>
+        assertCompleteSuiteInvocation({
+          argumentsAfterScript,
+          execArgv: [],
+          environment: cleanEnvironment,
+        }),
+      /complete_suite_(?:extra_arguments_forbidden|invalid_suite)/u,
+    );
+  assert.throws(
+    () =>
+      assertCompleteSuiteInvocation({
+        argumentsAfterScript: ["unknown"],
+        execArgv: [],
+        environment: cleanEnvironment,
+      }),
+    /complete_suite_invalid_suite/u,
+  );
+  assert.throws(
+    () =>
+      assertCompleteSuiteInvocation({
+        argumentsAfterScript: ["default"],
+        execArgv: ["--enable-source-maps"],
+        environment: cleanEnvironment,
+      }),
+    /complete_suite_execution_envelope_forbidden:execArgv/u,
+  );
+  for (const [key, value] of [
+    ["NODE_OPTIONS", "--import=fixture.mjs"],
+    ["NODE_OPTIONS", "--require=fixture.cjs"],
+    ["NODE_OPTIONS", "--test-only"],
+    ["NODE_TEST_CONTEXT", "child-v8"],
+    ["NODE_PATH", "external-modules"],
+  ])
+    assert.throws(
+      () =>
+        assertCompleteSuiteInvocation({
+          argumentsAfterScript: ["default"],
+          execArgv: [],
+          environment: { [key]: value },
+        }),
+      new RegExp(`complete_suite_execution_envelope_forbidden:${key}`, "u"),
+    );
+
+  const validPlan = {
+    selectedFiles: ["a.test.mjs", "b.test.mjs"],
+    lanes: [
+      { key: "safe", names: ["a.test.mjs"], concurrency: 2 },
+      { key: "exclusive", names: ["b.test.mjs"], concurrency: 1 },
+    ],
+    maxFilesPerLane: 16,
+  };
+  assert.equal(assertCompleteSuiteLanePlan(validPlan), true);
+  const invalidPlans = [
+    {
+      selectedFiles: [],
+      lanes: [],
+      maxFilesPerLane: 16,
+      error: /complete_suite_lane_plan_empty_population/u,
+    },
+    {
+      selectedFiles: ["a.test.mjs", "a.test.mjs"],
+      lanes: [{ key: "safe", names: ["a.test.mjs"], concurrency: 1 }],
+      maxFilesPerLane: 16,
+      error: /complete_suite_lane_plan_duplicate_selected_root/u,
+    },
+    {
+      ...validPlan,
+      lanes: [{ key: "", names: ["a.test.mjs"], concurrency: 1 }],
+      error: /complete_suite_lane_plan_invalid_key/u,
+    },
+    {
+      ...validPlan,
+      lanes: [
+        { key: "same", names: ["a.test.mjs"], concurrency: 1 },
+        { key: "same", names: ["b.test.mjs"], concurrency: 1 },
+      ],
+      error: /complete_suite_lane_plan_duplicate_key/u,
+    },
+    {
+      ...validPlan,
+      lanes: [{ key: "safe", names: [], concurrency: 1 }],
+      error: /complete_suite_lane_plan_empty_lane/u,
+    },
+    {
+      ...validPlan,
+      lanes: [
+        {
+          key: "safe",
+          names: ["a.test.mjs", "a.test.mjs"],
+          concurrency: 1,
+        },
+      ],
+      error: /complete_suite_lane_plan_duplicate_in_lane/u,
+    },
+    {
+      ...validPlan,
+      lanes: [
+        { key: "safe", names: ["a.test.mjs"], concurrency: 1 },
+        { key: "exclusive", names: ["a.test.mjs"], concurrency: 1 },
+      ],
+      error: /complete_suite_lane_plan_duplicate_root/u,
+    },
+    {
+      ...validPlan,
+      lanes: [
+        { key: "safe", names: ["a.test.mjs"], concurrency: 1 },
+        { key: "exclusive", names: ["c.test.mjs"], concurrency: 1 },
+      ],
+      error: /complete_suite_lane_plan_extra_root/u,
+    },
+    {
+      ...validPlan,
+      lanes: [{ key: "safe", names: ["a.test.mjs"], concurrency: 1 }],
+      error: /complete_suite_lane_plan_missing_roots/u,
+    },
+    {
+      ...validPlan,
+      maxFilesPerLane: 1,
+      lanes: [
+        {
+          key: "safe",
+          names: ["a.test.mjs", "b.test.mjs"],
+          concurrency: 1,
+        },
+      ],
+      error: /complete_suite_lane_plan_batch_limit_exceeded/u,
+    },
+  ];
+  for (const { error, ...input } of invalidPlans)
+    assert.throws(() => assertCompleteSuiteLanePlan(input), error);
+});
+
+test("complete suite runner rejects extra arguments before artifacts or complete output", async () => {
+  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-suite-entry-"));
+  const supportRoot = await mkdtemp(
+    path.join(os.tmpdir(), "ty-context-suite-entry-support-"),
+  );
+  const runner = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "run-package-suite.mjs",
+  );
+  const environment = { ...process.env, TY_CONTEXT_TEST_TIMING_DIR: root };
+  delete environment.NODE_OPTIONS;
+  delete environment.NODE_TEST_CONTEXT;
+  delete environment.NODE_PATH;
+  const importPreload = path.join(supportRoot, "preload.mjs");
+  const requirePreload = path.join(supportRoot, "preload.cjs");
+  await writeFile(importPreload, "export {};\n", "utf8");
+  await writeFile(requirePreload, "module.exports = {};\n", "utf8");
+  const invocations = [
+    ["default", "--test-name-pattern=x"],
+    ["default", "--test-name-pattern", "x"],
+    ["default", "--test-skip-pattern=x"],
+    ["default", "--test-only"],
+    ["default", "--test-shard=1/2"],
+    ["default", "--test-rerun-failures=state.json"],
+    ["default", "--test-force-exit"],
+    ["default", "--test-reporter=spec"],
+    ["default", "tests/ty-context/test-suite-runtime.test.mjs"],
+    ["default", "--future-node-option"],
+    ["default", "ordinary-position"],
+  ];
+  try {
+    for (const argumentsAfterScript of invocations) {
+      const failure = await rejectedExec(
+        process.execPath,
+        [runner, ...argumentsAfterScript],
+        { cwd: repositoryRoot, env: environment },
+      );
+      assert.notEqual(failure.code, 0, argumentsAfterScript.join(" "));
+      assert.match(
+        failure.stderr,
+        /complete_suite_extra_arguments_forbidden/u,
+        argumentsAfterScript.join(" "),
+      );
+      assert.doesNotMatch(failure.stdout, /complete_suite|test-suite-timing/u);
+      assert.deepEqual(await readdir(root), []);
+    }
+
+    const execArgvFailure = await rejectedExec(
+      process.execPath,
+      ["--enable-source-maps", runner, "default"],
+      { cwd: repositoryRoot, env: environment },
+    );
+    assert.match(
+      execArgvFailure.stderr,
+      /complete_suite_execution_envelope_forbidden:execArgv/u,
+    );
+    assert.doesNotMatch(execArgvFailure.stdout, /complete_suite/u);
+    assert.deepEqual(await readdir(root), []);
+
+    for (const [key, value] of [
+      ["NODE_OPTIONS", `--import=${pathToFileURL(importPreload).href}`],
+      ["NODE_OPTIONS", `--require=${requirePreload.replaceAll("\\", "/")}`],
+      ["NODE_OPTIONS", "--test-only"],
+      ["NODE_TEST_CONTEXT", "child-v8"],
+      ["NODE_PATH", root],
+    ]) {
+      const failure = await rejectedExec(
+        process.execPath,
+        [runner, "default"],
+        {
+          cwd: repositoryRoot,
+          env: { ...environment, [key]: value },
+        },
+      );
+      assert.match(
+        failure.stderr,
+        new RegExp(`complete_suite_execution_envelope_forbidden:${key}`, "u"),
+      );
+      assert.doesNotMatch(failure.stdout, /complete_suite/u);
+      assert.deepEqual(await readdir(root), []);
+    }
+  } finally {
+    await rm(root, { recursive: true, force: true });
+    await rm(supportRoot, { recursive: true, force: true });
+  }
+});
+
+test("complete suite execution facts require exact lane terminals and root summaries", async () => {
   const file = path.join(
     repositoryRoot,
     "tests",
@@ -1618,11 +1878,33 @@ test("complete suite execution facts require every lane and exactly one summary 
       },
     },
   };
+  const wrapperPass = {
+    type: "test:pass",
+    data: {
+      file,
+      name: file,
+      nesting: 0,
+      details: { duration_ms: 1 },
+    },
+  };
+  const lane = (key) => ({ key });
+  const completion = (laneKey, code = 0, signal = null) => ({
+    lane_key: laneKey,
+    code,
+    signal,
+    wall_time_ms: 1,
+  });
   const report = ({
-    events,
+    events = [wrapperPass, summary],
     executionError = null,
-    completionCount = 1,
-    laneCount = 1,
+    selectedForReport = [file],
+    selectedForEvaluation = selectedForReport,
+    lanes = [lane("serial")],
+    completions = [completion("serial")],
+    testStatus = executionError === null &&
+    completions.every((entry) => entry.code === 0 && entry.signal === null)
+      ? "passed"
+      : "failed",
   }) => {
     const execution = {
       result_scope: "complete-suite",
@@ -1634,18 +1916,19 @@ test("complete suite execution facts require every lane and exactly one summary 
     };
     const timing = buildFileTimingReport({
       suite: "complete-suite-completeness-probe",
-      selectedFiles: [file],
+      selectedFiles: selectedForReport,
       wallTimeMs: 1,
       execution,
       events,
-      testStatus: executionError === null ? "passed" : "failed",
+      testStatus,
       executionError,
     });
     finalizeCompleteSuiteExecution({
       execution,
       executionError,
-      completions: Array.from({ length: completionCount }, () => ({})),
-      lanes: Array.from({ length: laneCount }, () => ({})),
+      selectedFiles: selectedForEvaluation,
+      completions,
+      lanes,
       timing,
     });
     assert.equal(timing.execution.result_scope, "complete-suite");
@@ -1669,35 +1952,108 @@ test("complete suite execution facts require every lane and exactly one summary 
     registry_runtime_observation_complete: false,
   };
 
-  assert.deepEqual(facts(report({ events: [summary] })), completeFacts);
+  const passed = report({});
+  assert.deepEqual(facts(passed), completeFacts);
+  assert.equal(passed.test_status, "passed");
+
+  const failedButComplete = report({
+    completions: [completion("serial", 1)],
+    testStatus: "failed",
+  });
+  assert.deepEqual(facts(failedButComplete), completeFacts);
+  assert.equal(failedButComplete.test_status, "failed");
+
+  assert.deepEqual(
+    facts(report({ executionError: "lane_start_failed", completions: [] })),
+    incompleteFacts,
+  );
+  assert.deepEqual(facts(report({ completions: [] })), incompleteFacts);
   assert.deepEqual(
     facts(
       report({
-        events: [summary],
-        executionError: "lane_start_failed",
-        completionCount: 0,
+        completions: [completion("serial"), completion("extra")],
       }),
     ),
     incompleteFacts,
   );
   assert.deepEqual(
-    facts(report({ events: [summary], completionCount: 0 })),
+    facts(report({ completions: [completion("serial", null, null)] })),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(report({ completions: [completion("serial", null, "SIGTERM")] })),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(report({ completions: [completion("wrong")] })),
     incompleteFacts,
   );
   assert.deepEqual(
     facts(
       report({
-        events: [summary],
-        executionError: "lane_event_parse_failed",
+        lanes: [lane("one"), lane("two")],
+        completions: [completion("two"), completion("one")],
       }),
     ),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(
+      report({
+        lanes: [lane("same"), lane("same")],
+        completions: [completion("same"), completion("same")],
+      }),
+    ),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(
+      report({
+        lanes: [lane("one"), lane("two")],
+        completions: [completion("one"), completion("one")],
+      }),
+    ),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(report({ executionError: "lane_event_parse_failed" })),
     incompleteFacts,
   );
   assert.deepEqual(facts(report({ events: [] })), incompleteFacts);
+  const duplicateSummary = report({
+    events: [wrapperPass, summary, structuredClone(summary)],
+  });
+  assert.deepEqual(facts(duplicateSummary), incompleteFacts);
   assert.deepEqual(
-    facts(report({ events: [summary, structuredClone(summary)] })),
+    facts(
+      report({
+        selectedForEvaluation: [file, path.join(repositoryRoot, "other.mjs")],
+      }),
+    ),
     incompleteFacts,
   );
+  assert.deepEqual(
+    facts(
+      report({
+        events: [],
+        selectedForReport: [],
+        selectedForEvaluation: [],
+      }),
+    ),
+    incompleteFacts,
+  );
+
+  const artifact = path.join(
+    await mkdtemp(path.join(os.tmpdir(), "ty-context-incomplete-report-")),
+    "timing.json",
+  );
+  try {
+    await writeFile(artifact, JSON.stringify(duplicateSummary), "utf8");
+    const restored = JSON.parse(await readFile(artifact, "utf8"));
+    assert.deepEqual(facts(restored), incompleteFacts);
+  } finally {
+    await rm(path.dirname(artifact), { recursive: true, force: true });
+  }
 });
 
 test("final ROI verifier preserves the package pretest build in clean snapshots", async () => {

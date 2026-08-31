@@ -165,19 +165,45 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.equal(packageJson.scripts["test:composite-workflow"], undefined);
 
   const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
+  const suiteCompleteness = read(
+    "tests/ty-context/run-package-suite-completeness.mjs",
+  );
   const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
   assert.match(suiteRunner, /longTaskTestName/);
-  assert.match(suiteRunner, /long-task-trust/);
+  assert.match(suiteCompleteness, /long-task-trust/);
   assert.match(suiteRunner, /test-suite-file-reporter/);
   assert.match(suiteReporter, /test-suite-timing-v2/);
   assert.match(suiteRunner, /resolveTestTimingOutput\(repositoryRoot, suite\)/);
   assert.match(suiteRunner, /resolveSuiteWallTimeBudgetMs\(suite\)/);
   assert.match(suiteRunner, /criticalSentinelsForSuite\(suite\)/);
   assert.match(suiteRunner, /result_scope:\s*"complete-suite"/u);
-  assert.match(suiteRunner, /complete_suite:\s*false/u);
-  assert.match(suiteRunner, /semantic_test_population_executed:\s*false/u);
-  assert.match(suiteRunner, /registry_runtime_observation_complete:\s*false/u);
+  assert.match(suiteRunner, /assertCompleteSuiteInvocation/u);
+  assert.match(suiteRunner, /assertCompleteSuiteLanePlan/u);
+  assert.match(suiteRunner, /INCOMPLETE_SUITE_EXECUTION_FACTS/u);
   assert.match(suiteRunner, /finalizeCompleteSuiteExecution/u);
+  assert.match(suiteRunner, /child\.once\("close"/u);
+  assert.match(suiteRunner, /delete childEnvironment\.NODE_OPTIONS/u);
+  assert.match(suiteRunner, /delete childEnvironment\.NODE_TEST_CONTEXT/u);
+  assert.match(suiteRunner, /delete childEnvironment\.NODE_PATH/u);
+  assert.doesNotMatch(suiteRunner, /forwardedOptions/u);
+  assert.doesNotMatch(suiteRunner, /process\.argv\.slice\(3\)/u);
+  assert.doesNotMatch(suiteRunner, /\[node-test options\]/u);
+  assert.ok(
+    suiteRunner.indexOf("const suite = assertCompleteSuiteInvocation") <
+      suiteRunner.indexOf("await readdir(testRoot)"),
+    "the complete-suite invocation envelope must close before discovery",
+  );
+  assert.ok(
+    suiteRunner.indexOf("assertCompleteSuiteLanePlan") <
+      suiteRunner.indexOf("await mkdtemp"),
+    "the lane plan must close before execution artifacts exist",
+  );
+  assert.match(suiteCompleteness, /complete_suite:\s*false/u);
+  assert.match(suiteCompleteness, /evaluateCompleteSuiteExecution/u);
+  assert.match(suiteCompleteness, /completion\?\.lane_key !== laneKey/u);
+  assert.match(suiteCompleteness, /completion\.signal !== null/u);
+  assert.match(suiteCompleteness, /Number\.isInteger\(completion\.code\)/u);
+  assert.match(suiteCompleteness, /integrity\?\.required === true/u);
   assert.match(suiteReporter, /critical_sentinel_coverage/);
   assert.match(suiteReporter, /not_selected_ids/);
   assert.match(suiteReporter, /slowest_files/);
