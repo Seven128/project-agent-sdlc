@@ -19,18 +19,18 @@ import {
   buildFileTimingReport,
   readReporterEvents,
 } from "./test-suite-file-reporter.mjs";
-import { finalizeCompleteSuiteExecution } from "./run-package-suite-completeness.mjs";
+import {
+  INCOMPLETE_SUITE_EXECUTION_FACTS,
+  assertCompleteSuiteInvocation,
+  assertCompleteSuiteLanePlan,
+  finalizeCompleteSuiteExecution,
+} from "./run-package-suite-completeness.mjs";
 
-const suite = process.argv[2];
-if (
-  suite !== "default" &&
-  suite !== "long-task" &&
-  suite !== "long-task-trust"
-) {
-  throw new Error(
-    "Usage: run-package-suite.mjs <default|long-task|long-task-trust> [node-test options]",
-  );
-}
+const suite = assertCompleteSuiteInvocation({
+  argumentsAfterScript: process.argv.slice(2),
+  execArgv: process.execArgv,
+  environment: process.env,
+});
 
 const testRoot = path.dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = path.resolve(testRoot, "../..");
@@ -44,6 +44,20 @@ const availableNames = (await readdir(testRoot))
   .sort();
 const names = selectPackageTestNames(availableNames, suite);
 const files = names.map((name) => path.join(testRoot, name));
+if (files.length === 0)
+  throw new Error(`No ${suite} package tests were selected.`);
+const isolatedConcurrency = longTaskTestName.test(names[0] ?? "")
+  ? resolveLongTaskIsolatedConcurrency()
+  : 1;
+const lanePolicy = longTaskTestName.test(names[0] ?? "")
+  ? planLongTaskSuiteLanes(names, suite, isolatedConcurrency)
+  : null;
+const lanes = lanePolicy?.lanes ?? [{ key: "serial", names, concurrency: 1 }];
+assertCompleteSuiteLanePlan({
+  selectedFiles: names,
+  lanes,
+  maxFilesPerLane: lanePolicy?.max_files_per_test_process ?? files.length,
+});
 const registeredCriticalSentinels = CRITICAL_TEST_SENTINELS.filter((entry) =>
   entry.required_suites.includes(suite),
 );
@@ -54,27 +68,12 @@ const titleInventory = await assertCriticalTestTitleInventory({
   sentinels: registeredCriticalSentinels,
 });
 const wallTimeBudgetMs = resolveSuiteWallTimeBudgetMs(suite);
-const forwardedOptions = process.argv.slice(3);
-
-if (files.length === 0)
-  throw new Error(`No ${suite} package tests were selected.`);
-assertRunnerOwnsConcurrency(forwardedOptions);
-
 const timingTemporaryRoot = await mkdtemp(
   path.join(os.tmpdir(), `ty-context-${suite}-timing-`),
 );
-const isolatedConcurrency = longTaskTestName.test(names[0] ?? "")
-  ? resolveLongTaskIsolatedConcurrency()
-  : 1;
-const lanePolicy = longTaskTestName.test(names[0] ?? "")
-  ? planLongTaskSuiteLanes(names, suite, isolatedConcurrency)
-  : null;
-const lanes = lanePolicy?.lanes ?? [{ key: "serial", names, concurrency: 1 }];
 const execution = {
   result_scope: "complete-suite",
-  complete_suite: false,
-  semantic_test_population_executed: false,
-  registry_runtime_observation_complete: false,
+  ...INCOMPLETE_SUITE_EXECUTION_FACTS,
   mode:
     lanePolicy && isolatedConcurrency > 1
       ? "reviewed-isolation-lanes"
@@ -202,6 +201,7 @@ const timing = buildFileTimingReport({
 finalizeCompleteSuiteExecution({
   execution,
   executionError,
+  selectedFiles: files,
   completions,
   lanes,
   timing,
@@ -240,18 +240,19 @@ async function runLane(lane, eventFile, fixtureSeedRoot) {
     `--test-reporter=${reporterModule}`,
     `--test-reporter-destination=${eventFile}`,
   ];
-  const reporterOptions = forwardedOptions.some(
-    (option) =>
-      option === "--test-reporter" || option.startsWith("--test-reporter="),
-  )
-    ? []
-    : [
-        process.env.CI && process.env.TY_CONTEXT_VERBOSE_TESTS !== "1"
-          ? "--test-reporter=dot"
-          : "--test-reporter=spec",
-        "--test-reporter-destination=stdout",
-      ];
+  const reporterOptions = [
+    process.env.CI && process.env.TY_CONTEXT_VERBOSE_TESTS !== "1"
+      ? "--test-reporter=dot"
+      : "--test-reporter=spec",
+    "--test-reporter-destination=stdout",
+  ];
   const laneFiles = lane.names.map((name) => path.join(testRoot, name));
+  const childEnvironment = { ...process.env };
+  delete childEnvironment.NODE_OPTIONS;
+  delete childEnvironment.NODE_TEST_CONTEXT;
+  delete childEnvironment.NODE_PATH;
+  if (fixtureSeedRoot)
+    childEnvironment.TY_CONTEXT_DELIVERY_FIXTURE_SEED_ROOT = fixtureSeedRoot;
   return new Promise((resolve, reject) => {
     const child = spawn(
       process.execPath,
@@ -260,44 +261,38 @@ async function runLane(lane, eventFile, fixtureSeedRoot) {
         `--test-concurrency=${lane.concurrency}`,
         ...customReporterOptions,
         ...reporterOptions,
-        ...forwardedOptions,
         ...laneFiles,
       ],
       {
-        env: fixtureSeedRoot
-          ? {
-              ...process.env,
-              TY_CONTEXT_DELIVERY_FIXTURE_SEED_ROOT: fixtureSeedRoot,
-            }
-          : process.env,
+        env: childEnvironment,
         stdio: "inherit",
         windowsHide: true,
       },
     );
-    child.once("error", reject);
-    child.once("exit", (code, signal) =>
-      resolve({
-        code,
-        signal,
-        wall_time_ms: elapsedMilliseconds(startedAt),
-      }),
+    let settled = false;
+    let exitState = null;
+    const settle = (action) => {
+      if (settled) return;
+      settled = true;
+      action();
+    };
+    child.once("error", (error) => settle(() => reject(error)));
+    child.once("exit", (code, signal) => {
+      exitState = { code, signal };
+    });
+    child.once("close", (code, signal) =>
+      settle(() =>
+        resolve({
+          lane_key: lane.key,
+          code: exitState?.code ?? code,
+          signal: exitState?.signal ?? signal,
+          wall_time_ms: elapsedMilliseconds(startedAt),
+        }),
+      ),
     );
   });
 }
 
 function elapsedMilliseconds(startedAt) {
   return Math.max(0, Math.round(performance.now() - startedAt));
-}
-
-function assertRunnerOwnsConcurrency(options) {
-  if (
-    options.some(
-      (option) =>
-        option === "--test-concurrency" ||
-        option.startsWith("--test-concurrency="),
-    )
-  )
-    throw new Error(
-      "run-package-suite owns --test-concurrency through the reviewed isolation policy; use TY_CONTEXT_LONG_TASK_ISOLATED_CONCURRENCY=1 for serial rollback.",
-    );
 }
