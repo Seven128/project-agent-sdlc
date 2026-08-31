@@ -44,6 +44,7 @@ import {
   buildFileTimingReport,
   readReporterEvents,
 } from "./test-suite-file-reporter.mjs";
+import { finalizeCompleteSuiteExecution } from "./run-package-suite-completeness.mjs";
 import { createWorkspaceSnapshot } from "../../packages/ty-context/dist/lib/long-task-workspace.js";
 import { assertWorkspaceGitOrdering } from "./workspace-git-ordering-fixture.mjs";
 
@@ -1590,6 +1591,113 @@ test("required reporter projections reject duplicate or missing per-file summari
   assert.deepEqual(missing.file_summary_integrity.missing_files, [
     "test-suite-runtime.test.mjs",
   ]);
+});
+
+test("complete suite execution facts require every lane and exactly one summary per root", () => {
+  const file = path.join(
+    repositoryRoot,
+    "tests",
+    "ty-context",
+    "test-suite-runtime.test.mjs",
+  );
+  const summary = {
+    type: "test:summary",
+    data: {
+      file,
+      duration_ms: 1,
+      success: true,
+      counts: {
+        tests: 0,
+        failed: 0,
+        passed: 0,
+        cancelled: 0,
+        skipped: 0,
+        todo: 0,
+        topLevel: 0,
+        suites: 0,
+      },
+    },
+  };
+  const report = ({
+    events,
+    executionError = null,
+    completionCount = 1,
+    laneCount = 1,
+  }) => {
+    const execution = {
+      result_scope: "complete-suite",
+      complete_suite: false,
+      semantic_test_population_executed: false,
+      registry_runtime_observation_complete: false,
+      require_exact_file_summaries: true,
+      unknown_files_parallelized: false,
+    };
+    const timing = buildFileTimingReport({
+      suite: "complete-suite-completeness-probe",
+      selectedFiles: [file],
+      wallTimeMs: 1,
+      execution,
+      events,
+      testStatus: executionError === null ? "passed" : "failed",
+      executionError,
+    });
+    finalizeCompleteSuiteExecution({
+      execution,
+      executionError,
+      completions: Array.from({ length: completionCount }, () => ({})),
+      lanes: Array.from({ length: laneCount }, () => ({})),
+      timing,
+    });
+    assert.equal(timing.execution.result_scope, "complete-suite");
+    return timing;
+  };
+  const facts = (timing) => ({
+    complete_suite: timing.execution.complete_suite,
+    semantic_test_population_executed:
+      timing.execution.semantic_test_population_executed,
+    registry_runtime_observation_complete:
+      timing.execution.registry_runtime_observation_complete,
+  });
+  const completeFacts = {
+    complete_suite: true,
+    semantic_test_population_executed: true,
+    registry_runtime_observation_complete: true,
+  };
+  const incompleteFacts = {
+    complete_suite: false,
+    semantic_test_population_executed: false,
+    registry_runtime_observation_complete: false,
+  };
+
+  assert.deepEqual(facts(report({ events: [summary] })), completeFacts);
+  assert.deepEqual(
+    facts(
+      report({
+        events: [summary],
+        executionError: "lane_start_failed",
+        completionCount: 0,
+      }),
+    ),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(report({ events: [summary], completionCount: 0 })),
+    incompleteFacts,
+  );
+  assert.deepEqual(
+    facts(
+      report({
+        events: [summary],
+        executionError: "lane_event_parse_failed",
+      }),
+    ),
+    incompleteFacts,
+  );
+  assert.deepEqual(facts(report({ events: [] })), incompleteFacts);
+  assert.deepEqual(
+    facts(report({ events: [summary, structuredClone(summary)] })),
+    incompleteFacts,
+  );
 });
 
 test("final ROI verifier preserves the package pretest build in clean snapshots", async () => {

@@ -174,17 +174,10 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   assert.match(suiteRunner, /resolveSuiteWallTimeBudgetMs\(suite\)/);
   assert.match(suiteRunner, /criticalSentinelsForSuite\(suite\)/);
   assert.match(suiteRunner, /result_scope:\s*"complete-suite"/u);
-  assert.match(suiteRunner, /complete_suite:\s*true/u);
+  assert.match(suiteRunner, /complete_suite:\s*false/u);
   assert.match(suiteRunner, /semantic_test_population_executed:\s*false/u);
   assert.match(suiteRunner, /registry_runtime_observation_complete:\s*false/u);
-  assert.match(
-    suiteRunner,
-    /execution\.semantic_test_population_executed = completeRuntimeObservation/u,
-  );
-  assert.match(
-    suiteRunner,
-    /execution\.registry_runtime_observation_complete = completeRuntimeObservation/u,
-  );
+  assert.match(suiteRunner, /finalizeCompleteSuiteExecution/u);
   assert.match(suiteReporter, /critical_sentinel_coverage/);
   assert.match(suiteReporter, /not_selected_ids/);
   assert.match(suiteReporter, /slowest_files/);

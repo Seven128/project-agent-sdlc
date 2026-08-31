@@ -19,6 +19,7 @@ import {
   buildFileTimingReport,
   readReporterEvents,
 } from "./test-suite-file-reporter.mjs";
+import { finalizeCompleteSuiteExecution } from "./run-package-suite-completeness.mjs";
 
 const suite = process.argv[2];
 if (
@@ -71,7 +72,7 @@ const lanePolicy = longTaskTestName.test(names[0] ?? "")
 const lanes = lanePolicy?.lanes ?? [{ key: "serial", names, concurrency: 1 }];
 const execution = {
   result_scope: "complete-suite",
-  complete_suite: true,
+  complete_suite: false,
   semantic_test_population_executed: false,
   registry_runtime_observation_complete: false,
   mode:
@@ -198,12 +199,13 @@ const timing = buildFileTimingReport({
   wallTimeBudgetStatus: budgetStatus,
   executionError,
 });
-const completeRuntimeObservation =
-  executionError === null &&
-  completions.length === lanes.length &&
-  timing.file_summary_integrity.status === "passed";
-execution.semantic_test_population_executed = completeRuntimeObservation;
-execution.registry_runtime_observation_complete = completeRuntimeObservation;
+finalizeCompleteSuiteExecution({
+  execution,
+  executionError,
+  completions,
+  lanes,
+  timing,
+});
 if (timing.missing_file_count > 0 && timing.test_status === "passed") {
   timing.test_status = "failed";
   timing.status = "failed";
