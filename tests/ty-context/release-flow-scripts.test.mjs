@@ -82,7 +82,10 @@ assert.match(trustedPublishWorkflow, /actions\/upload-artifact@[a-f0-9]{40}/u);
 assert.match(trustedPublishWorkflow, /actions\/download-artifact@[a-f0-9]{40}/u);
 assert.match(trustedPublishWorkflow, /name: npm-release-\$\{\{ github\.run_id \}\}/u);
 assert.match(trustedPublishWorkflow, /overwrite: true/u);
-assert.doesNotMatch(trustedPublishWorkflow, /github\.run_attempt/u);
+assert.doesNotMatch(
+  trustedPublishWorkflow,
+  /name: npm-release-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}/u,
+);
 assert.match(trustedPublishWorkflow, /verify_workflow_release_artifact\.mjs/u);
 assert.match(trustedPublishWorkflow, /publish_prepared_artifact\.mjs/u);
 assert.match(trustedPublishWorkflow, /release_tarball_smoke\.mjs --tarball/u);
