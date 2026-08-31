@@ -7,6 +7,7 @@ import {
   mkdir,
   mkdtemp,
   readFile,
+  realpath,
   rm,
   stat,
   writeFile,
@@ -195,7 +196,9 @@ export function designFactResultFixture(
 }
 
 export async function createDeliveryFixture(options = {}) {
-  const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-delivery-"));
+  const root = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-context-delivery-")),
+  );
   try {
     const seedRoot = await resolveFixtureSeedRoot(options.fixtureSeedRoot);
     const externalConfirmation = Boolean(options.externalConfirmation);
