@@ -5,6 +5,7 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { parse } from "yaml";
 import { CRITICAL_TEST_SENTINELS } from "../../tools/test_suite_policy.mjs";
+import { assertCriticalInventoryContract } from "./workflow-critical-inventory-contract.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -23,192 +24,14 @@ test("[critical:ci-diagnostic-routing] package CI separates Trust feedback from 
   );
   const pullRequestJob = section(packageWorkflow, "pull-request", "main");
   const mainJob = section(packageWorkflow, "main");
-
-  assertWindowsLevel4RuntimeJob(windowsLevel4Job, true);
-  assert.throws(
-    () =>
-      assertWindowsLevel4RuntimeJob(
-        windowsLevel4Job.replace(
-          /\s*tests\/ty-context\/long-task-windows-job-supervisor\.test\.mjs/u,
-          "",
-        ),
-        true,
-      ),
-    /long-task-windows-job-supervisor/u,
-  );
-  assert.throws(() =>
-    assertWindowsLevel4RuntimeJob(
-      windowsLevel4Job.replace(
-        "node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement",
-        "node --version",
-      ),
-      true,
-    ),
-  );
-  assert.match(packageWorkflow, /Typecheck package and build once/);
-  assert.match(
+  assertPackageWorkflowStructure(
     packageWorkflow,
-    /main:[\s\S]*Build package\s+run: npm run build --workspace project-tiny-context-harness[\s\S]*Validate modularity waiver lifecycle/,
-  );
-  assert.match(packageWorkflow, /package check-source/);
-  assert.match(packageWorkflow, /make validate-harness/);
-  assert.match(pullRequestJob, /PR_BASE_REF: \$\{\{ github\.base_ref \}\}/);
-  assert.match(
+    windowsLevel4Job,
     pullRequestJob,
-    /PUSH_BASE_SHA: \$\{\{ github\.event\.before \}\}/,
-  );
-  assert.match(
-    pullRequestJob,
-    /git cat-file -e "\$\{PUSH_BASE_SHA\}\^\{commit\}"/,
-  );
-  assert.match(pullRequestJob, /git merge-base HEAD origin\/main/);
-  assert.match(pullRequestJob, /--base "\$modularity_base"/);
-  assert.match(pullRequestJob, /Trust boundary package tests/);
-  assert.match(pullRequestJob, /TY_CONTEXT_TEST_TIMING_DIR/);
-  assert.match(
-    pullRequestJob,
-    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v5/,
-  );
-  assert.match(
-    pullRequestJob,
-    /npm run test:trust:built --workspace project-tiny-context-harness --ignore-scripts/,
-  );
-  assert.doesNotMatch(
-    pullRequestJob,
-    /npm test --workspace project-tiny-context-harness/u,
-  );
-  assert.match(
     mainJob,
-    /Complete package tests[\s\S]*npm test --workspace project-tiny-context-harness --ignore-scripts/,
   );
-  assert.match(mainJob, /TY_CONTEXT_TEST_TIMING_DIR/);
-  assert.match(
-    mainJob,
-    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v5/,
-  );
-  assert.doesNotMatch(packageWorkflow, /TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON/);
-  assert.match(packageWorkflow, /set -o pipefail/);
-  assert.match(packageWorkflow, /tee package-test\.log/);
-  assert.match(packageWorkflow, /Upload package test diagnostics/);
-  assert.match(packageWorkflow, /Upload package test timing/);
-  assert.match(packageWorkflow, /uses: actions\/upload-artifact@[a-f0-9]{40}/);
-  assert.match(packageWorkflow, /if-no-files-found: ignore/);
-  assert.equal(
-    countOccurrences(packageWorkflow, COMPLETE_LONG_TASK_COMMAND),
-    1,
-  );
-  assert.match(packageWorkflow, /node tools\/quickstart_smoke\.mjs/);
-  assert.match(packageWorkflow, /npm run preview:pack/);
-
-  assert.equal(
-    packageJson.scripts["test:default:built"],
-    "node ../../tests/ty-context/run-package-suite.mjs default",
-  );
-  assert.equal(
-    packageJson.scripts["test:default"],
-    "npm run build && npm run test:default:built",
-  );
-  assert.equal(
-    packageJson.scripts["test:built"],
-    "npm run test:default:built && npm run test:long-task-workflow:built",
-  );
-  assert.equal(
-    packageJson.scripts["test:trust:built"],
-    "npm run test:default:built && npm run test:long-task-trust:built",
-  );
-  assert.equal(
-    packageJson.scripts["test:trust"],
-    "npm run build && npm run test:trust:built",
-  );
-  assert.equal(packageJson.scripts.pretest, "npm run build");
-  assert.equal(packageJson.scripts.test, "npm run test:built");
-  assert.equal(
-    packageJson.scripts["test:long-task-workflow:built"],
-    "node ../../tests/ty-context/run-package-suite.mjs long-task",
-  );
-  assert.equal(
-    packageJson.scripts["test:long-task-workflow"],
-    "npm run build && npm run test:long-task-workflow:built",
-  );
-  assert.equal(
-    packageJson.scripts["test:long-task-trust:built"],
-    "node ../../tests/ty-context/run-package-suite.mjs long-task-trust",
-  );
-  assert.equal(
-    packageJson.scripts["test:long-task-trust"],
-    "npm run build && npm run test:long-task-trust:built",
-  );
-  assert.equal(
-    packageJson.scripts["test:long-task-performance"],
-    "npm run build && node ../../tests/ty-context/long-task-performance.mjs",
-  );
-  const performanceProbe = read("tests/ty-context/long-task-performance.mjs");
-  assert.match(
-    performanceProbe,
-    /addGlobalClaim\(target, \{ counterfactual: true \}\)/u,
-  );
-  assert.doesNotMatch(performanceProbe, /key: "performance-global"/u);
-  assert.ok(
-    performanceProbe.indexOf(
-      "const globalCounterfactual = await measureGlobalCounterfactualFixture();",
-    ) <
-      performanceProbe.indexOf(
-        "const fixture = await createDeliveryFixture();",
-      ),
-    "small semantic performance fixtures must fail before the 10k-file repository is seeded",
-  );
-  assert.match(performanceProbe, /uniqueExecutionDurationMs/u);
-  assert.match(performanceProbe, /"default-v1"/u);
-  assert.match(performanceProbe, /"windows-v1"/u);
-  assert.match(performanceProbe, /large_repository_seed_ms/u);
-  assert.match(performanceProbe, /probe_total_ms/u);
-  assert.equal(packageJson.scripts["test:composite-workflow"], undefined);
-
-  const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
-  const suiteCompleteness = read(
-    "tests/ty-context/run-package-suite-completeness.mjs",
-  );
-  const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
-  assert.match(suiteRunner, /longTaskTestName/);
-  assert.match(suiteCompleteness, /long-task-trust/);
-  assert.match(suiteRunner, /test-suite-file-reporter/);
-  assert.match(suiteReporter, /test-suite-timing-v2/);
-  assert.match(suiteRunner, /resolveTestTimingOutput\(repositoryRoot, suite\)/);
-  assert.match(suiteRunner, /resolveSuiteWallTimeBudgetMs\(suite\)/);
-  assert.match(suiteRunner, /criticalSentinelsForSuite\(suite\)/);
-  assert.match(suiteRunner, /result_scope:\s*"complete-suite"/u);
-  assert.match(suiteRunner, /assertCompleteSuiteInvocation/u);
-  assert.match(suiteRunner, /assertCompleteSuiteLanePlan/u);
-  assert.match(suiteRunner, /INCOMPLETE_SUITE_EXECUTION_FACTS/u);
-  assert.match(suiteRunner, /finalizeCompleteSuiteExecution/u);
-  assert.match(suiteRunner, /child\.once\("close"/u);
-  assert.match(suiteRunner, /delete childEnvironment\.NODE_OPTIONS/u);
-  assert.match(suiteRunner, /delete childEnvironment\.NODE_TEST_CONTEXT/u);
-  assert.match(suiteRunner, /delete childEnvironment\.NODE_PATH/u);
-  assert.doesNotMatch(suiteRunner, /forwardedOptions/u);
-  assert.doesNotMatch(suiteRunner, /process\.argv\.slice\(3\)/u);
-  assert.doesNotMatch(suiteRunner, /\[node-test options\]/u);
-  assert.ok(
-    suiteRunner.indexOf("const suite = assertCompleteSuiteInvocation") <
-      suiteRunner.indexOf("await readdir(testRoot)"),
-    "the complete-suite invocation envelope must close before discovery",
-  );
-  assert.ok(
-    suiteRunner.indexOf("assertCompleteSuiteLanePlan") <
-      suiteRunner.indexOf("await mkdtemp"),
-    "the lane plan must close before execution artifacts exist",
-  );
-  assert.match(suiteCompleteness, /complete_suite:\s*false/u);
-  assert.match(suiteCompleteness, /evaluateCompleteSuiteExecution/u);
-  assert.match(suiteCompleteness, /completion\?\.lane_key !== laneKey/u);
-  assert.match(suiteCompleteness, /completion\.signal !== null/u);
-  assert.match(suiteCompleteness, /Number\.isInteger\(completion\.code\)/u);
-  assert.match(suiteCompleteness, /integrity\?\.required === true/u);
-  assert.match(suiteReporter, /critical_sentinel_coverage/);
-  assert.match(suiteReporter, /not_selected_ids/);
-  assert.match(suiteReporter, /slowest_files/);
-  assert.match(suiteRunner, /wall_time_budget_status/);
-  assert.match(suiteRunner, /CI[\s\S]*--test-reporter=dot/);
+  assertPackageScriptContract(packageJson);
+  assertCompleteSuiteSourceContract();
 });
 
 test("every platform-specific Long-Task sentinel has same-platform complete runtime evidence", () => {
@@ -243,108 +66,7 @@ test("every platform-specific Long-Task sentinel has same-platform complete runt
 });
 
 test("complete and one-sentinel runners share parsed suite-wide critical title inventory", () => {
-  const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
-  const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
-  const suitePolicy = read("tools/test_suite_policy.mjs");
-  const suiteSelection = read("tools/test_suite_selection.mjs");
-  const titleInventory = read("tools/test_title_inventory.mjs");
-  const titleAnalysis = read("tools/test_title_static_analysis.mjs");
-  const titleDestructuringRoles = read(
-    "tools/test_title_destructuring_roles.mjs",
-  );
-  const titleModuleEdges = read("tools/test_title_module_edges.mjs");
-  const titleRegistration = read(
-    "tools/test_title_registration_resolution.mjs",
-  );
-  const titleExpressionRoles = read("tools/test_title_expression_roles.mjs");
-  const titleReferenceValidation = read(
-    "tools/test_title_reference_validation.mjs",
-  );
-  const titleRoles = read("tools/test_title_roles.mjs");
-  const titleScopeModel = read("tools/test_title_scope_model.mjs");
-  const titlePatternScope = read("tools/test_title_pattern_scope.mjs");
-  const sentinelRunner = read("tools/run_required_critical_sentinel.mjs");
-
-  assert.match(suiteRunner, /selectPackageTestNames\(availableNames, suite\)/u);
-  assert.match(suiteRunner, /assertCriticalTestTitleInventory/u);
-  assert.match(suiteRunner, /critical_title_inventory/u);
-  assert.match(suiteRunner, /require_exact_file_summaries/u);
-  assert.match(suitePolicy, /LONG_TASK_TRUST_TEST_FILES/u);
-  assert.match(suiteSelection, /export function selectPackageTestNames/u);
-  assert.match(suiteSelection, /LONG_TASK_TRUST_TEST_FILES/u);
-  assert.match(suiteSelection, /\^long-task-/u);
-  assert.match(sentinelRunner, /assertCriticalTestTitleInventory/u);
-  assert.match(sentinelRunner, /selectPackageTestNames/u);
-  assert.match(titleInventory, /from "acorn"/u);
-  assert.match(titleInventory, /analyzeNodeTestProgram/u);
-  assert.match(titleInventory, /local_module_edges/u);
-  assert.match(titleInventory, /isWithinDirectory/u);
-  assert.match(titleInventory, /critical_occurrences/u);
-  assert.match(
-    suiteRunner,
-    /declaredCriticalOccurrences: titleInventory\.critical_occurrences/u,
-  );
-  assert.match(
-    sentinelRunner,
-    /declaredCriticalOccurrences:[\s\S]*critical_occurrences/u,
-  );
-  assert.match(suiteReporter, /declaration_mismatch_ids/u);
-  assert.match(suiteReporter, /file_summary_integrity/u);
-  assert.match(suiteReporter, /summary_terminal_count/u);
-  assert.match(titleAnalysis, /critical_test_title_inventory_dynamic_title/u);
-  assert.match(titleAnalysis, /resolveRegistrationRoles/u);
-  assert.match(titleAnalysis, /resolveDestructuringRoles/u);
-  assert.match(titleDestructuringRoles, /bindingScope/u);
-  assert.match(titleDestructuringRoles, /evaluationScope/u);
-  assert.match(titleDestructuringRoles, /resolveStaticPropertyName/u);
-  assert.match(titleDestructuringRoles, /resolveConstructorAccessRole/u);
-  assert.match(titleDestructuringRoles, /AssignmentExpression/u);
-  assert.match(titleDestructuringRoles, /ForInStatement/u);
-  assert.match(titleDestructuringRoles, /ForOfStatement/u);
-  assert.match(
-    titleModuleEdges,
-    /critical_test_title_inventory_dynamic_module_specifier/u,
-  );
-  assert.match(
-    titleModuleEdges,
-    /critical_test_title_inventory_unsupported_dynamic_import/u,
-  );
-  assert.match(titleInventory, /createRequire/u);
-  assert.match(titleRegistration, /resolveImmutableAliases/u);
-  assert.match(titleRegistration, /get-builtin-module/u);
-  assert.match(titleExpressionRoles, /get-builtin-module/u);
-  assert.match(titleExpressionRoles, /dynamic-code/u);
-  assert.match(titleExpressionRoles, /constructor-access/u);
-  assert.match(titleExpressionRoles, /constructor-identity-method/u);
-  assert.match(
-    titleReferenceValidation,
-    /critical_test_title_inventory_unsupported_node_test_reference/u,
-  );
-  assert.match(titleRoles, /NODE_TEST_FUNCTION_EXPORTS/u);
-  assert.match(titleRoles, /NODE_TEST_SUITE_EXPORTS/u);
-  assert.match(titleRoles, /registerHooks/u);
-  assert.match(titleScopeModel, /buildNodeTestScopeModel/u);
-  assert.match(titleScopeModel, /createScope/u);
-  assert.match(titleScopeModel, /function-parameters/u);
-  assert.match(titlePatternScope, /bindScopePattern/u);
-  assert.match(sentinelRunner, /required-critical-sentinel-report-v1/u);
-  assert.match(sentinelRunner, /projection_status/u);
-  assert.match(sentinelRunner, /verified_ids/u);
-  assert.match(sentinelRunner, /registry_runtime_observation_complete/u);
-  assert.match(sentinelRunner, /applicableCriticalSentinels/u);
-  assert.match(sentinelRunner, /require_exact_file_summaries/u);
-  assert.match(sentinelRunner, /\.\.\.selectedFiles/u);
-  assert.match(sentinelRunner, /spawnCommandOnce/u);
-  assert.match(sentinelRunner, /REGISTRATION_PROJECTION_TIMEOUT_MS = 300_000/u);
-  assert.doesNotMatch(titleInventory, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleAnalysis, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleDestructuringRoles, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleModuleEdges, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleRegistration, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleReferenceValidation, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleRoles, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titleScopeModel, /grep|execFile|spawn/u);
-  assert.doesNotMatch(titlePatternScope, /grep|execFile|spawn/u);
+  assertCriticalInventoryContract(read);
 });
 
 test("publish, tarball, and consumer gates retain complete release boundaries", () => {
@@ -524,6 +246,203 @@ test("affected-test launcher stays portable and has a Windows gate", () => {
   assert.match(npmCommandSpec, /cmd\.exe/);
   assert.match(npmCommandSpec, /"call", "npm"/);
 });
+
+function assertPackageWorkflowStructure(
+  packageWorkflow,
+  windowsLevel4Job,
+  pullRequestJob,
+  mainJob,
+) {
+  assertWindowsLevel4RuntimeJob(windowsLevel4Job, true);
+  assert.throws(
+    () =>
+      assertWindowsLevel4RuntimeJob(
+        windowsLevel4Job.replace(
+          /\s*tests\/ty-context\/long-task-windows-job-supervisor\.test\.mjs/u,
+          "",
+        ),
+        true,
+      ),
+    /long-task-windows-job-supervisor/u,
+  );
+  assert.throws(() =>
+    assertWindowsLevel4RuntimeJob(
+      windowsLevel4Job.replace(
+        "node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement",
+        "node --version",
+      ),
+      true,
+    ),
+  );
+  assert.match(packageWorkflow, /Typecheck package and build once/);
+  assert.match(
+    packageWorkflow,
+    /main:[\s\S]*Build package\s+run: npm run build --workspace project-tiny-context-harness[\s\S]*Validate modularity waiver lifecycle/,
+  );
+  assert.match(packageWorkflow, /package check-source/);
+  assert.match(packageWorkflow, /make validate-harness/);
+  assert.match(pullRequestJob, /PR_BASE_REF: \$\{\{ github\.base_ref \}\}/);
+  assert.match(
+    pullRequestJob,
+    /PUSH_BASE_SHA: \$\{\{ github\.event\.before \}\}/,
+  );
+  assert.match(
+    pullRequestJob,
+    /git cat-file -e "\$\{PUSH_BASE_SHA\}\^\{commit\}"/,
+  );
+  assert.match(pullRequestJob, /git merge-base HEAD origin\/main/);
+  assert.match(pullRequestJob, /--base "\$modularity_base"/);
+  assert.match(pullRequestJob, /Trust boundary package tests/);
+  assert.match(pullRequestJob, /TY_CONTEXT_TEST_TIMING_DIR/);
+  assert.match(
+    pullRequestJob,
+    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v5/,
+  );
+  assert.match(
+    pullRequestJob,
+    /npm run test:trust:built --workspace project-tiny-context-harness --ignore-scripts/,
+  );
+  assert.doesNotMatch(
+    pullRequestJob,
+    /npm test --workspace project-tiny-context-harness/u,
+  );
+  assert.match(
+    mainJob,
+    /Complete package tests[\s\S]*npm test --workspace project-tiny-context-harness --ignore-scripts/,
+  );
+  assert.match(mainJob, /TY_CONTEXT_TEST_TIMING_DIR/);
+  assert.match(
+    mainJob,
+    /TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE:\s*github-ubuntu-v5/,
+  );
+  assert.doesNotMatch(packageWorkflow, /TY_CONTEXT_TEST_SUITE_BUDGETS_MS_JSON/);
+  assert.match(packageWorkflow, /set -o pipefail/);
+  assert.match(packageWorkflow, /tee package-test\.log/);
+  assert.match(packageWorkflow, /Upload package test diagnostics/);
+  assert.match(packageWorkflow, /Upload package test timing/);
+  assert.match(packageWorkflow, /uses: actions\/upload-artifact@[a-f0-9]{40}/);
+  assert.match(packageWorkflow, /if-no-files-found: ignore/);
+  assert.equal(
+    countOccurrences(packageWorkflow, COMPLETE_LONG_TASK_COMMAND),
+    1,
+  );
+  assert.match(packageWorkflow, /node tools\/quickstart_smoke\.mjs/);
+  assert.match(packageWorkflow, /npm run preview:pack/);
+}
+
+function assertPackageScriptContract(packageJson) {
+  assert.equal(
+    packageJson.scripts["test:default:built"],
+    "node ../../tests/ty-context/run-package-suite.mjs default",
+  );
+  assert.equal(
+    packageJson.scripts["test:default"],
+    "npm run build && npm run test:default:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:built"],
+    "npm run test:default:built && npm run test:long-task-workflow:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:trust:built"],
+    "npm run test:default:built && npm run test:long-task-trust:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:trust"],
+    "npm run build && npm run test:trust:built",
+  );
+  assert.equal(packageJson.scripts.pretest, "npm run build");
+  assert.equal(packageJson.scripts.test, "npm run test:built");
+  assert.equal(
+    packageJson.scripts["test:long-task-workflow:built"],
+    "node ../../tests/ty-context/run-package-suite.mjs long-task",
+  );
+  assert.equal(
+    packageJson.scripts["test:long-task-workflow"],
+    "npm run build && npm run test:long-task-workflow:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:long-task-trust:built"],
+    "node ../../tests/ty-context/run-package-suite.mjs long-task-trust",
+  );
+  assert.equal(
+    packageJson.scripts["test:long-task-trust"],
+    "npm run build && npm run test:long-task-trust:built",
+  );
+  assert.equal(
+    packageJson.scripts["test:long-task-performance"],
+    "npm run build && node ../../tests/ty-context/long-task-performance.mjs",
+  );
+  const performanceProbe = read("tests/ty-context/long-task-performance.mjs");
+  assert.match(
+    performanceProbe,
+    /addGlobalClaim\(target, \{ counterfactual: true \}\)/u,
+  );
+  assert.doesNotMatch(performanceProbe, /key: "performance-global"/u);
+  assert.ok(
+    performanceProbe.indexOf(
+      "const globalCounterfactual = await measureGlobalCounterfactualFixture();",
+    ) <
+      performanceProbe.indexOf(
+        "const fixture = await createDeliveryFixture();",
+      ),
+    "small semantic performance fixtures must fail before the 10k-file repository is seeded",
+  );
+  assert.match(performanceProbe, /uniqueExecutionDurationMs/u);
+  assert.match(performanceProbe, /"default-v1"/u);
+  assert.match(performanceProbe, /"windows-v1"/u);
+  assert.match(performanceProbe, /large_repository_seed_ms/u);
+  assert.match(performanceProbe, /probe_total_ms/u);
+  assert.equal(packageJson.scripts["test:composite-workflow"], undefined);
+}
+
+function assertCompleteSuiteSourceContract() {
+  const suiteRunner = read("tests/ty-context/run-package-suite.mjs");
+  const suiteCompleteness = read(
+    "tests/ty-context/run-package-suite-completeness.mjs",
+  );
+  const suiteReporter = read("tests/ty-context/test-suite-file-reporter.mjs");
+  assert.match(suiteRunner, /longTaskTestName/);
+  assert.match(suiteCompleteness, /long-task-trust/);
+  assert.match(suiteRunner, /test-suite-file-reporter/);
+  assert.match(suiteReporter, /test-suite-timing-v2/);
+  assert.match(suiteRunner, /resolveTestTimingOutput\(repositoryRoot, suite\)/);
+  assert.match(suiteRunner, /resolveSuiteWallTimeBudgetMs\(suite\)/);
+  assert.match(suiteRunner, /criticalSentinelsForSuite\(suite\)/);
+  assert.match(suiteRunner, /result_scope:\s*"complete-suite"/u);
+  assert.match(suiteRunner, /assertCompleteSuiteInvocation/u);
+  assert.match(suiteRunner, /assertCompleteSuiteLanePlan/u);
+  assert.match(suiteRunner, /INCOMPLETE_SUITE_EXECUTION_FACTS/u);
+  assert.match(suiteRunner, /finalizeCompleteSuiteExecution/u);
+  assert.match(suiteRunner, /child\.once\("close"/u);
+  assert.match(suiteRunner, /delete childEnvironment\.NODE_OPTIONS/u);
+  assert.match(suiteRunner, /delete childEnvironment\.NODE_TEST_CONTEXT/u);
+  assert.match(suiteRunner, /delete childEnvironment\.NODE_PATH/u);
+  assert.doesNotMatch(suiteRunner, /forwardedOptions/u);
+  assert.doesNotMatch(suiteRunner, /process\.argv\.slice\(3\)/u);
+  assert.doesNotMatch(suiteRunner, /\[node-test options\]/u);
+  assert.ok(
+    suiteRunner.indexOf("const suite = assertCompleteSuiteInvocation") <
+      suiteRunner.indexOf("await readdir(testRoot)"),
+    "the complete-suite invocation envelope must close before discovery",
+  );
+  assert.ok(
+    suiteRunner.indexOf("assertCompleteSuiteLanePlan") <
+      suiteRunner.indexOf("await mkdtemp"),
+    "the lane plan must close before execution artifacts exist",
+  );
+  assert.match(suiteCompleteness, /complete_suite:\s*false/u);
+  assert.match(suiteCompleteness, /evaluateCompleteSuiteExecution/u);
+  assert.match(suiteCompleteness, /completion\?\.lane_key !== laneKey/u);
+  assert.match(suiteCompleteness, /completion\.signal !== null/u);
+  assert.match(suiteCompleteness, /Number\.isInteger\(completion\.code\)/u);
+  assert.match(suiteCompleteness, /integrity\?\.required === true/u);
+  assert.match(suiteReporter, /critical_sentinel_coverage/);
+  assert.match(suiteReporter, /not_selected_ids/);
+  assert.match(suiteReporter, /slowest_files/);
+  assert.match(suiteRunner, /wall_time_budget_status/);
+  assert.match(suiteRunner, /CI[\s\S]*--test-reporter=dot/);
+}
 
 function read(relativePath) {
   return readFileSync(path.join(repoRoot, relativePath), "utf8");

@@ -8,6 +8,7 @@ import {
   nearestVariableScope,
   resolveScopeBinding,
 } from "./test_title_scope_bindings.mjs";
+import { ignoredAstKey, importedName } from "./test_title_scope_primitives.mjs";
 
 export { resolveScopeBinding };
 
@@ -292,12 +293,4 @@ function markDefinition(node, scope, parent, model) {
   model.scopeByNode.set(node, scope);
   if (parent) model.parentByNode.set(node, parent);
   model.definitionNodes.add(node);
-}
-
-function importedName(imported) {
-  return imported?.type === "Identifier" ? imported.name : imported?.value;
-}
-
-function ignoredAstKey(key) {
-  return key === "end" || key === "loc" || key === "range" || key === "start";
 }

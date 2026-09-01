@@ -1,6 +1,6 @@
 import { resolveStaticString } from "./test_title_module_edges.mjs";
+import { resolveConstructorAccessRole } from "./test_title_constructor_roles.mjs";
 import {
-  resolveConstructorAccessRole,
   resolveNodeTestExpression,
   resolvePropertyRole,
 } from "./test_title_expression_roles.mjs";

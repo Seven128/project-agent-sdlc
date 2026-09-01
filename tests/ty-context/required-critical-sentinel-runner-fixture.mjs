@@ -71,6 +71,10 @@ export async function createFixture({
     "utf8",
   );
   await copyFile(
+    path.join(repositoryRoot, "tools", "required_critical_sentinel_report.mjs"),
+    path.join(toolsRoot, "required_critical_sentinel_report.mjs"),
+  );
+  await copyFile(
     path.join(repositoryRoot, "tools", "test_title_inventory.mjs"),
     path.join(toolsRoot, "test_title_inventory.mjs"),
   );
@@ -99,12 +103,20 @@ export async function createFixture({
     path.join(toolsRoot, "test_title_expression_roles.mjs"),
   );
   await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_constructor_roles.mjs"),
+    path.join(toolsRoot, "test_title_constructor_roles.mjs"),
+  );
+  await copyFile(
     path.join(repositoryRoot, "tools", "test_title_scope_model.mjs"),
     path.join(toolsRoot, "test_title_scope_model.mjs"),
   );
   await copyFile(
     path.join(repositoryRoot, "tools", "test_title_scope_bindings.mjs"),
     path.join(toolsRoot, "test_title_scope_bindings.mjs"),
+  );
+  await copyFile(
+    path.join(repositoryRoot, "tools", "test_title_scope_primitives.mjs"),
+    path.join(toolsRoot, "test_title_scope_primitives.mjs"),
   );
   await copyFile(
     path.join(repositoryRoot, "tools", "test_title_pattern_scope.mjs"),
