@@ -49,7 +49,7 @@
     "harnessFolderName": ".codex"
   },
   "devDependencies": {
-    "acorn": "^8.16.0",
-    "prettier": "^3.9.5"
+    "acorn": "^8.18.0",
+    "prettier": "^3.9.6"
   }
 }
