@@ -18,6 +18,7 @@ import {
 import { validateContractForActivation } from "./long-task-activation-validation.js";
 import { parseDeliveryContractBundle } from "./long-task-delivery-parser.js";
 import {
+  canonicalExistingLongTaskWorkdir,
   changedWorkspacePaths,
   changedWorkspacePathsFromHead,
   repoRelative,
@@ -42,7 +43,13 @@ export async function preflightDeliveryContract(
 ): Promise<AuthoringPreflightResultV1> {
   const diagnostics: AuthoringPreflightDiagnosticV1[] = [];
   const repository = await repositoryRoot(projectRootInput);
-  const workdir = path.resolve(workdirInput);
+  let workdir: string;
+  try {
+    workdir = await canonicalExistingLongTaskWorkdir(repository, workdirInput);
+  } catch (error) {
+    addDiagnosticError(diagnostics, error);
+    return emptyPreflightResult(normalizeAuthoringDiagnostics(diagnostics));
+  }
   let parsed;
   try {
     parsed = await parseDeliveryContractBundle(workdir, repository, {

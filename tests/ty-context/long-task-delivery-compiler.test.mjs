@@ -1,7 +1,14 @@
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import {
+  chmod,
+  mkdir,
+  readFile,
+  readdir,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { pathToFileURL } from "node:url";
@@ -64,7 +71,7 @@ const DESIGN_ROOT_SOURCE_ITEM_KEY = "design-root-constraint";
 const DESIGN_ROOT_CLAIM = "control.main.location";
 const DESIGN_ROOT_STATEMENT = "main content";
 const execFileAsync = promisify(execFile);
-let cachedPlaywrightTestModulePromise;
+let cachedPlaywrightPackagePromise;
 
 test("compiles V2 generated Claim/Outcome/Check ids and frozen runner targets", async () => {
   const fixture = await createDeliveryFixture({ twoOutcomes: true });
@@ -3080,12 +3087,13 @@ async function attachDesignResourceHandoff(
         }
       : {},
   );
-  const playwrightTestModuleUrl = await cachedPlaywrightTestModule(
-    fixture.root,
-  );
+  const playwrightBridge = await fixturePlaywrightBridge(fixture.root);
   await writeFile(
     path.join(fixture.root, "tests", "ui.spec.mjs"),
-    `import { test, expect } from ${JSON.stringify(playwrightTestModuleUrl)};
+    `import { test, expect } from ${JSON.stringify(playwrightBridge.testModule)};
+if (process.env.TY_CONTEXT_PLAYWRIGHT_FIXTURE_BRIDGE !== ${JSON.stringify(playwrightBridge.identity)}) {
+  throw new Error("playwright_fixture_bridge_not_active");
+}
 test("design handoff fixture smoke", async () => {
   expect(true).toBe(true);
 });
@@ -3591,12 +3599,13 @@ function attachClonedFeasibilityTarget(
   };
 }
 
-function cachedPlaywrightTestModule(cwd) {
-  cachedPlaywrightTestModulePromise ??= resolveCachedPlaywrightTestModule(cwd);
-  return cachedPlaywrightTestModulePromise;
+async function fixturePlaywrightBridge(cwd) {
+  cachedPlaywrightPackagePromise ??= resolveCachedPlaywrightPackage(cwd);
+  const selected = await cachedPlaywrightPackagePromise;
+  return writeFixturePlaywrightBridge(cwd, selected);
 }
 
-async function resolveCachedPlaywrightTestModule(cwd) {
+async function resolveCachedPlaywrightPackage(cwd) {
   const cache =
     process.env.npm_config_cache ??
     (process.platform === "win32"
@@ -3629,19 +3638,61 @@ async function resolveCachedPlaywrightTestModule(cwd) {
   });
   const selected = candidates.at(-1);
   if (!selected) throw new Error("playwright_test_module_not_cached");
-  prependExecutablePath(path.join(path.dirname(selected.packageRoot), ".bin"));
-  return pathToFileURL(path.join(selected.packageRoot, "test.mjs")).href;
+  return selected;
 }
 
-function prependExecutablePath(directory) {
-  const key =
-    Object.keys(process.env).find((name) => name.toLowerCase() === "path") ??
-    "PATH";
-  const entries = (process.env[key] ?? "")
-    .split(path.delimiter)
-    .filter(Boolean);
-  if (!entries.includes(directory))
-    process.env[key] = [directory, ...entries].join(path.delimiter);
+async function writeFixturePlaywrightBridge(cwd, selected) {
+  const bridgeRoot = path.join(cwd, "node_modules", "playwright");
+  const binRoot = path.join(cwd, "node_modules", ".bin");
+  const testModule = path.join(selected.packageRoot, "test.mjs");
+  const cliModule = selected.cliPath;
+  const [testBytes, cliBytes] = await Promise.all([
+    readFile(testModule),
+    readFile(cliModule),
+  ]);
+  const identity = sha256Text(
+    `${selected.version}\0${sha256Text(testBytes)}\0${sha256Text(cliBytes)}`,
+  );
+  await Promise.all([
+    mkdir(bridgeRoot, { recursive: true }),
+    mkdir(binRoot, { recursive: true }),
+  ]);
+  await Promise.all([
+    writeFile(
+      path.join(bridgeRoot, "package.json"),
+      `${JSON.stringify(
+        {
+          name: "playwright",
+          version: selected.version,
+          private: true,
+          type: "module",
+          bin: { playwright: "cli.mjs" },
+          exports: { "./test": "./test.mjs" },
+        },
+        null,
+        2,
+      )}\n`,
+    ),
+    writeFile(
+      path.join(bridgeRoot, "test.mjs"),
+      `export * from ${JSON.stringify(pathToFileURL(testModule).href)};\n`,
+    ),
+    writeFile(
+      path.join(bridgeRoot, "cli.mjs"),
+      `process.env.TY_CONTEXT_PLAYWRIGHT_FIXTURE_BRIDGE = ${JSON.stringify(identity)};\nawait import(${JSON.stringify(pathToFileURL(cliModule).href)});\n`,
+    ),
+    writeFile(
+      path.join(binRoot, "playwright.cmd"),
+      `@ECHO off\r\n"${process.execPath}" "%~dp0\\..\\playwright\\cli.mjs" %*\r\n`,
+    ),
+    writeFile(
+      path.join(binRoot, "playwright"),
+      '#!/usr/bin/env node\nimport("../playwright/cli.mjs");\n',
+    ),
+  ]);
+  if (process.platform !== "win32")
+    await chmod(path.join(binRoot, "playwright"), 0o755);
+  return { testModule: "playwright/test", identity };
 }
 
 async function cachedPlaywrightCandidates(cache) {
@@ -3676,8 +3727,26 @@ async function cachedPlaywrightCandidates(cache) {
       const manifest = JSON.parse(
         await readFile(path.join(packageRoot, "package.json"), "utf8"),
       );
+      if (
+        typeof manifest.version !== "string" ||
+        manifest.version.trim() !== manifest.version ||
+        manifest.version.length === 0
+      )
+        continue;
+      const cliRelative =
+        typeof manifest.bin === "string"
+          ? manifest.bin
+          : manifest.bin?.playwright;
+      if (
+        typeof cliRelative !== "string" ||
+        path.isAbsolute(cliRelative) ||
+        cliRelative.split(/[\\/]/u).includes("..")
+      )
+        continue;
+      const cliPath = path.join(packageRoot, ...cliRelative.split("/"));
+      await readFile(cliPath, "utf8");
       await readFile(path.join(packageRoot, "test.mjs"), "utf8");
-      candidates.push({ packageRoot, version: manifest.version });
+      candidates.push({ packageRoot, version: manifest.version, cliPath });
     } catch {
       // This cache entry does not contain a complete Playwright package.
     }

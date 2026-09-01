@@ -27,7 +27,11 @@ import {
 import type { AuthorityRevisionProposalV2 } from "./long-task-authority-revision-types.js";
 import { captureVerifierIdentity } from "./long-task-verifier-identity.js";
 import { verifierAuthorityDiff } from "./long-task-verifier-authority.js";
-import { repoRelative, repositoryRoot } from "./long-task-workspace.js";
+import {
+  canonicalExistingLongTaskWorkdir,
+  repoRelative,
+  repositoryRoot,
+} from "./long-task-workspace.js";
 import { compileExternalConfirmationIdentityAssurances } from "./long-task-external-confirmation-attestation.js";
 import { assertNoUnfinishedContextMutationForAuthority } from "./context-mutation/mutation-journal.js";
 import { currentActiveAuthorityLockToken } from "./long-task-active-authority-lock-context.js";
@@ -66,7 +70,10 @@ async function compileDeliveryContractLocked(
   // captured. commitActiveAuthority repeats freshness under a later lock when
   // compilation and binding are separate calls.
   await assertNoUnfinishedContextMutationForAuthority(repository);
-  const workdir = path.resolve(workdirInput);
+  const workdir = await canonicalExistingLongTaskWorkdir(
+    repository,
+    workdirInput,
+  );
   const workdirRelative = repoRelative(repository, workdir);
   if (!workdirRelative)
     throw new Error("long_task_workdir_must_not_be_repository_root");

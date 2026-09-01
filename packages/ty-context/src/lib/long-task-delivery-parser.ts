@@ -1,4 +1,4 @@
-import { readFile } from "node:fs/promises";
+import { readFile, realpath } from "node:fs/promises";
 import path from "node:path";
 import {
   materializeLongTaskCompactCarrier,
@@ -30,7 +30,10 @@ import {
   parseTask,
 } from "./long-task-root-shape.js";
 import { parseSemanticFactManifestRef } from "./long-task-semantic-fact-shape.js";
-import { repositoryRoot } from "./long-task-workspace.js";
+import {
+  canonicalExistingLongTaskWorkdir,
+  repositoryRoot,
+} from "./long-task-workspace.js";
 import {
   assertNoSemanticDriftMigration,
   semanticDriftMigrationFields,
@@ -62,11 +65,14 @@ export async function parseDeliveryContractBundle(
   repositoryInput?: string,
   options: ParseDeliveryContractOptions = {},
 ): Promise<ParsedDeliveryContractV2> {
-  const workdir = path.resolve(workdirInput);
-  const file = path.join(workdir, DELIVERY_CONTRACT_FILE);
   const repository = repositoryInput
-    ? path.resolve(repositoryInput)
-    : await repositoryRoot(workdir);
+    ? await realpath(path.resolve(repositoryInput))
+    : await repositoryRoot(workdirInput);
+  const workdir = await canonicalExistingLongTaskWorkdir(
+    repository,
+    workdirInput,
+  );
+  const file = path.join(workdir, DELIVERY_CONTRACT_FILE);
   const raw = await readFile(
     await assertProtectedRepositoryFile(repository, file, "delivery_contract"),
     "utf8",

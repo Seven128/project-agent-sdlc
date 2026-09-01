@@ -1,5 +1,12 @@
 import assert from "node:assert/strict";
-import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  realpath,
+  rm,
+  symlink,
+  writeFile,
+} from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -8,6 +15,8 @@ import {
   parseDeliveryContractBundle,
   parseDeliveryContractText,
 } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { repositoryRoot } from "../../packages/ty-context/dist/lib/long-task-git.js";
+import { canonicalExistingLongTaskWorkdir } from "../../packages/ty-context/dist/lib/long-task-workspace.js";
 import {
   createDeliveryFixture,
   deliveryContract,
@@ -63,6 +72,41 @@ test("runner cwd alone may use repository-root dot", () => {
   contract.outcomes[0].acceptance.checks[0].runner.cwd = ".";
   const parsed = parseDeliveryContractText(YAML.stringify(contract));
   assert.equal(parsed.outcomes[0].acceptance.checks[0].runner.cwd, ".");
+});
+
+test("repository root canonicalizes lexical aliases before deriving file identities", async () => {
+  const physical = await realpath(
+    await mkdtemp(path.join(os.tmpdir(), "ty-context-physical-root-")),
+  );
+  const alias = `${physical}-alias`;
+  try {
+    await mkdir(path.join(physical, ".git"));
+    await mkdir(path.join(physical, ".long-task"));
+    await symlink(
+      physical,
+      alias,
+      process.platform === "win32" ? "junction" : "dir",
+    );
+    const repository = await repositoryRoot(alias);
+    assert.equal(repository, physical);
+    assert.equal(
+      await canonicalExistingLongTaskWorkdir(
+        repository,
+        path.join(alias, ".long-task"),
+      ),
+      path.join(physical, ".long-task"),
+    );
+    assert.equal(
+      await canonicalExistingLongTaskWorkdir(
+        alias,
+        path.join(alias, ".long-task"),
+      ),
+      path.join(physical, ".long-task"),
+    );
+  } finally {
+    await rm(alias, { recursive: true, force: true });
+    await rm(physical, { recursive: true, force: true });
+  }
 });
 
 test("outcome_files uses the same exact-path canonicalization", async () => {

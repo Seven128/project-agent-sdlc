@@ -25,6 +25,10 @@ import {
 } from "./long-task-command-args.js";
 import { explainLongTask } from "./long-task-explain.js";
 import { handleLongTaskRevisionCommand } from "./long-task-revision.js";
+import {
+  canonicalLongTaskCommandWorkdir,
+  resolveLongTaskCommandWorkdir,
+} from "./long-task-workdir.js";
 import { previewVerificationExecution } from "../lib/long-task-verification-preview.js";
 import {
   externalConfirmationStatus,
@@ -38,9 +42,7 @@ export async function longTask(args: string[]): Promise<void> {
   const subcommand = args[0] ?? "help";
   if (subcommand === "help") return help();
   if (subcommand === "external") return external(args.slice(1));
-  const workdirArgument = args[1];
-  if (!workdirArgument) throw new Error(`${subcommand} requires <workdir>`);
-  const workdir = path.resolve(process.cwd(), workdirArgument);
+  const workdir = await resolveLongTaskCommandWorkdir(subcommand, args[1]);
 
   if (subcommand === "init") {
     rejectUnknown(args.slice(2), []);
@@ -168,7 +170,10 @@ async function external(args: string[]): Promise<void> {
     throw new Error("external requires prepare|submit|status|rotate|revoke");
   if (!workdirArgument)
     throw new Error(`external ${action} requires <workdir>`);
-  const workdir = path.resolve(process.cwd(), workdirArgument);
+  const workdir = await canonicalLongTaskCommandWorkdir(
+    path.resolve(process.cwd(), workdirArgument),
+    false,
+  );
   const commandArgs = args.slice(2);
   if (action === "prepare") {
     const confirmation = option(commandArgs, "--confirmation");

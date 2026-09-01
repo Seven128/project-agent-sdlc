@@ -1,5 +1,5 @@
 import { spawn } from "node:child_process";
-import { stat } from "node:fs/promises";
+import { realpath, stat } from "node:fs/promises";
 import path from "node:path";
 
 export class GitCommandError extends Error {
@@ -30,9 +30,9 @@ export class GitCommandError extends Error {
 export async function repositoryRoot(start: string): Promise<string> {
   const resolved = path.resolve(start);
   const gitEntry = await stat(path.join(resolved, ".git")).catch(() => null);
-  if (gitEntry?.isDirectory() || gitEntry?.isFile()) return resolved;
-  return path.resolve(
-    await gitOutput(resolved, ["rev-parse", "--show-toplevel"]),
+  if (gitEntry?.isDirectory() || gitEntry?.isFile()) return realpath(resolved);
+  return realpath(
+    path.resolve(await gitOutput(resolved, ["rev-parse", "--show-toplevel"])),
   );
 }
 
