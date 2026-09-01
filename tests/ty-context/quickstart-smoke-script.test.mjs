@@ -13,6 +13,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { npmCommandSpec } from "../../tools/npm_command_spec.mjs";
+import { parsePackJson } from "../../tools/release_publish_helpers.mjs";
 
 const repoRoot = path.resolve(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -171,9 +172,9 @@ try {
   });
   assert.ifError(packResult.error);
   assert.equal(packResult.status, 0, packResult.stderr || packResult.stdout);
-  const packedFiles = JSON.parse(packResult.stdout)[0].files.map(
-    (entry) => entry.path,
-  );
+  const pack = parsePackJson(packResult.stdout);
+  assert.ok(Array.isArray(pack.files), "npm pack result must include files");
+  const packedFiles = pack.files.map((entry) => entry.path);
   assert.ok(packedFiles.includes("assets/tools/validate_context.py"));
   assert.equal(
     packedFiles.some(
