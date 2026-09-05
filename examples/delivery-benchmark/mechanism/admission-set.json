@@ -462,25 +462,25 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "b53a4020de8e3fe2daae11015788d65f3efdfe256c065edbd868f647eb8b12dc",
+              "bundle_sha256": "0d0cd6f75e6f69d0ae9980e50639dee97207e49f1e659dd586c7b36f5961633c",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dsa_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-system-authoring/SKILL.md",
-                  "content_sha256": "02669a449267e115d4d99f25d5f2632f0c34a66ba37f5823e4795191876a8db9"
+                  "content_sha256": "0e2473636ae12646da3a28f4c44fbd0efabd22de9c2a5564779624c257dbb088"
                 },
                 {
                   "kind": "worktree",
                   "label": "dsa_reasoning_candidate",
                   "path": ".codex/ty-context-managed/skills/design-system-authoring/references/system-design-reasoning.md",
-                  "content_sha256": "e32284c0564afa70e47adc06966cb9eb6c152a563fb86b63bdf5b0eda06e81d2"
+                  "content_sha256": "22574a6c773c0ad53194db43439ced2b42e16c3906bcd9cfd2a4174d5494b5bf"
                 },
                 {
                   "kind": "worktree",
                   "label": "dsa_provider_candidate",
                   "path": ".codex/ty-context-managed/skills/design-system-authoring/references/open-design-design-system-provider.md",
-                  "content_sha256": "03b06e592a2f412a06e526317c8140fce99a255f99707dc52d78a0a9a5bc1280"
+                  "content_sha256": "621d633ab76b375a08dd02e07e39e16de18c67bfb81839a184a379e0a4968845"
                 },
                 {
                   "kind": "worktree",
