@@ -1,7 +1,7 @@
 {
   "name": "project-tiny-context-harness",
-  "version": "0.11.0",
-  "description": "Minimal project memory and validation harness for AI coding agents.",
+  "version": "0.12.0",
+  "description": "Durable project facts and a short development contract for coding agents.",
   "license": "MIT",
   "author": "Seven128",
   "homepage": "https://github.com/Seven128/project-tiny-context-harness#readme",
@@ -48,33 +48,18 @@
     "source-mappings.yaml"
   ],
   "scripts": {
-    "build": "node ../../tools/package_build_fingerprint.mjs build",
+    "build": "node ../../tools/build_package.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test:default:built": "node ../../tests/ty-context/run-package-suite.mjs default",
-    "test:default": "npm run build && npm run test:default:built",
-    "test:built": "npm run test:default:built && npm run test:long-task-workflow:built",
-    "test:trust:built": "npm run test:default:built && npm run test:long-task-trust:built",
-    "test:trust": "npm run build && npm run test:trust:built",
     "pretest": "npm run build",
-    "test": "npm run test:built",
-    "test:workflow-default:built": "node --test --test-concurrency=1 ../../tests/ty-context/workflow-contract-routing.test.mjs",
-    "test:delivery-contract:built": "node --test --test-concurrency=1 ../../tests/ty-context/long-task-compact-authoring.test.mjs ../../tests/ty-context/long-task-compact-semantic-carrier.test.mjs ../../tests/ty-context/long-task-authoring-claims.test.mjs ../../tests/ty-context/long-task-authoring-preflight.test.mjs ../../tests/ty-context/long-task-authority-authoring-fields.test.mjs ../../tests/ty-context/long-task-playwright-ac-evidence.test.mjs ../../tests/ty-context/long-task-delivery-parser.test.mjs ../../tests/ty-context/long-task-delivery-compiler.test.mjs ../../tests/ty-context/long-task-delivery-risk.test.mjs ../../tests/ty-context/long-task-claim-coverage.test.mjs ../../tests/ty-context/long-task-closure-invariants.test.mjs ../../tests/ty-context/long-task-source-authority-closure.test.mjs ../../tests/ty-context/long-task-evidence-sensitivity-policy.test.mjs ../../tests/ty-context/long-task-global-evidence-sensitivity.test.mjs ../../tests/ty-context/long-task-source-risk-binding.test.mjs ../../tests/ty-context/long-task-non-completing-source.test.mjs ../../tests/ty-context/long-task-playwright-trust-boundary.test.mjs ../../tests/ty-context/long-task-planned-counterfactual.test.mjs ../../tests/ty-context/long-task-public-contract-example.test.mjs ../../tests/ty-context/long-task-release-tarball-contract.test.mjs ../../tests/ty-context/long-task-semantic-assurance-closure.test.mjs ../../tests/ty-context/long-task-semantic-drift-closure.test.mjs ../../tests/ty-context/long-task-semantic-drift-lifecycle.test.mjs ../../tests/ty-context/long-task-workspace-scope.test.mjs",
-    "test:delivery-contract": "npm run build && npm run test:delivery-contract:built",
-    "test:long-task-workflow:built": "node ../../tests/ty-context/run-package-suite.mjs long-task",
-    "test:long-task-workflow": "npm run build && npm run test:long-task-workflow:built",
-    "test:long-task-trust:built": "node ../../tests/ty-context/run-package-suite.mjs long-task-trust",
-    "test:long-task-trust": "npm run build && npm run test:long-task-trust:built",
-    "test:long-task-performance": "npm run build && node ../../tests/ty-context/long-task-performance.mjs",
+    "test": "node ../../tests/ty-context/run-package-suite.mjs",
+    "test:built": "node ../../tests/ty-context/run-package-suite.mjs",
     "prepack": "npm run build"
   },
   "engines": {
     "node": ">=24"
   },
   "dependencies": {
-    "@google/design.md": "0.4.0",
-    "impeccable": "^3.6.0",
     "mdast-util-from-markdown": "^2.0.3",
-    "re2js": "2.8.6",
     "smol-toml": "1.8.0",
     "toml-eslint-parser": "1.0.3",
     "yaml": "^2.9.0"
@@ -82,5 +67,14 @@
   "devDependencies": {
     "@types/node": "^24",
     "typescript": "^7.0.2"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   }
 }

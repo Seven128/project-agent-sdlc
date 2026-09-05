@@ -33,15 +33,12 @@ test("manifest_rejects_unknown_field", async () => {
   );
 });
 
-test("manifest_requires_exactly_one_default", async () => {
+test("manifest_allows_no_default_area", async () => {
   await withProject(
     { manifest: baseManifest().replace("default = true", "default = false") },
     async (root) => {
       const report = await validate(root);
-      assert.match(
-        report.errors.join("\n"),
-        /exactly one.*default = true.*found 0/,
-      );
+      assert.deepEqual(report.errors, []);
     },
   );
 });
@@ -135,11 +132,11 @@ read_policy: optional
       const errors = report.errors.join("\n");
       assert.match(
         errors,
-        /context_role deployment does not match manifest role verification/,
+        /context_role does not match requested manifest role verification/,
       );
       assert.match(
         errors,
-        /read_policy optional does not match manifest read_policy default/,
+        /read_policy does not match requested manifest read_policy default/,
       );
     },
   );
@@ -209,7 +206,7 @@ role = "foundation"
   await rm(outside, { recursive: true, force: true });
 });
 
-test("context_rejects_placeholder_only_content", async () => {
+test("context_allows_placeholder_only_content", async () => {
   const placeholder = `# Area Context: main
 
 ## Responsibility
@@ -220,12 +217,12 @@ test("context_rejects_placeholder_only_content", async () => {
     { extraFiles: { "project_context/areas/main.md": placeholder } },
     async (root) => {
       const report = await validate(root);
-      assert.match(report.errors.join("\n"), /concrete fact paragraph/);
+      assert.deepEqual(report.errors, []);
     },
   );
 });
 
-test("cjk_fake_verification_claim_rejected", async () => {
+test("cjk_historical_verification_text_is_not_a_structural_error", async () => {
   const area = `# Area Context: main
 
 ## Responsibility
@@ -240,15 +237,12 @@ test("cjk_fake_verification_claim_rejected", async () => {
     { extraFiles: { "project_context/areas/main.md": area } },
     async (root) => {
       const report = await validate(root);
-      assert.match(
-        report.errors.join("\n"),
-        /must list verification entry points/,
-      );
+      assert.deepEqual(report.errors, []);
     },
   );
 });
 
-test("fake_claim_in_second_verification_section_rejected", async () => {
+test("verification_text_in_multiple_sections_is_not_a_structural_error", async () => {
   const area = `# Area Context: main
 
 ## Responsibility
@@ -267,10 +261,7 @@ test("fake_claim_in_second_verification_section_rejected", async () => {
     { extraFiles: { "project_context/areas/main.md": area } },
     async (root) => {
       const report = await validate(root);
-      assert.match(
-        report.errors.join("\n"),
-        /must list verification entry points/,
-      );
+      assert.deepEqual(report.errors, []);
     },
   );
 });

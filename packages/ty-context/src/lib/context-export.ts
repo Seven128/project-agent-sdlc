@@ -12,6 +12,9 @@ import {
   writeTextIfChanged,
 } from "./fs.js";
 import { harnessRoot } from "./harness-root.js";
+import { assertSupportedSchema } from "./schema-guard.js";
+import { withMaintenanceLock } from "./maintenance-lock.js";
+import { writeMaintenanceText } from "./maintenance-write.js";
 import {
   SAFE_EXAMPLE_FILE_NAMES,
   shouldExcludeRelativePath,
@@ -75,16 +78,23 @@ export async function runExportContext(
   projectRoot: string,
   options: ExportContextOptions = {},
 ): Promise<ExportContextReport> {
+  if (!options.check)
+    await assertSupportedSchema(projectRoot, "export-context");
   const requestedModeCount =
     Number(options.full === true) + Number(options.code === true);
   if (requestedModeCount !== 1) {
     throw new Error("export-context requires exactly one of --full or --code");
   }
 
-  if (options.code) {
-    return runCodeImplementationExport(projectRoot, options);
-  }
-  return runFullContextExport(projectRoot, options);
+  const execute = () =>
+    options.code
+      ? runCodeImplementationExport(projectRoot, options)
+      : runFullContextExport(projectRoot, options);
+  if (options.check) return execute();
+  return withMaintenanceLock(projectRoot, "export", async () => {
+    await assertSupportedSchema(projectRoot, "export-context");
+    return execute();
+  });
 }
 
 async function runFullContextExport(
@@ -172,8 +182,7 @@ async function runFullContextExport(
   ].join("\n");
 
   if (!options.check) {
-    await ensureDir(path.dirname(outputPath));
-    await writeTextIfChanged(outputPath, content);
+    await writeMaintenanceText(projectRoot, outputRelativePath, content);
   }
 
   return {
@@ -271,8 +280,7 @@ async function runCodeImplementationExport(
   ].join("\n");
 
   if (!options.check) {
-    await ensureDir(path.dirname(outputPath));
-    await writeTextIfChanged(outputPath, content);
+    await writeMaintenanceText(projectRoot, outputRelativePath, content);
   }
 
   return {

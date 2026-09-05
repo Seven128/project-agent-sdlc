@@ -3,18 +3,16 @@ import {
   CONTEXT_MANIFEST_PATH,
   defaultContextManifestTemplate,
 } from "./context-manifest.js";
-import {
-  architectureContextTemplate,
-  areaContextTemplate,
-  globalContextTemplate,
-  verificationContextTemplate,
-} from "./context-templates.js";
+import { globalContextTemplate } from "./context-templates.js";
 import { writeConfigIfMissing } from "./config.js";
-import { createDesignMdIfMissing, DESIGN_MD_PATH } from "./design-md.js";
 import { harnessConfigPath, harnessRoot } from "./harness-root.js";
 import { ensureDir, pathExists, writeTextIfChanged } from "./fs.js";
 import { assertSupportedSchema } from "./schema-guard.js";
-import { runSync } from "./sync-engine.js";
+import { syncStartupInstructions } from "./sync-engine.js";
+import { withMaintenanceLock } from "./maintenance-lock.js";
+import { captureMutationFileState } from "./context-mutation/mutation-file-state.js";
+import { writeMaintenanceText } from "./maintenance-write.js";
+import { assertNoUnfinishedContextMutation } from "./context-mutation/mutation-command-support.js";
 
 export interface InitOptions {
   adopt: boolean;
@@ -25,41 +23,37 @@ export async function runInit(
   projectRoot: string,
   options: InitOptions,
 ): Promise<string[]> {
-  const report: string[] = [];
   await assertSupportedSchema(projectRoot, "init");
-  const existingEntries = await projectHasExistingFiles(projectRoot);
-  if (existingEntries && !options.adopt && !options.force) {
+  return withMaintenanceLock(projectRoot, "sync", async () => {
+    const report: string[] = [];
+    await assertSupportedSchema(projectRoot, "init");
+    await assertNoUnfinishedContextMutation(projectRoot);
+    const existingEntries = await projectHasExistingFiles(projectRoot);
+    if (existingEntries && !options.adopt && !options.force) {
+      report.push(
+        "Project is not empty; continuing with non-destructive init. Use --adopt to mark this as an existing project adoption.",
+      );
+    }
+
+    const configPath = await harnessConfigPath(projectRoot);
+    if (await writeConfigIfMissing(projectRoot)) {
+      report.push(`created ${configPath}`);
+    } else {
+      report.push(`kept existing ${configPath}`);
+    }
+
+    await createProjectContext(projectRoot, report);
+
+    const syncReport = await syncStartupInstructions(projectRoot);
     report.push(
-      "Project is not empty; continuing with non-destructive init. Use --adopt to mark this as an existing project adoption.",
+      `sync changed=${syncReport.changed.length} skipped=${syncReport.skipped.length} blocked=${syncReport.blocked.length}`,
     );
-  }
-
-  const configPath = await harnessConfigPath(projectRoot);
-  if (await writeConfigIfMissing(projectRoot)) {
-    report.push(`created ${configPath}`);
-  } else {
-    report.push(`kept existing ${configPath}`);
-  }
-
-  await createProjectContext(projectRoot, report);
-  await createDesignMd(projectRoot, report);
-
-  const syncReport = await runSync(projectRoot);
-  report.push(
-    `sync changed=${syncReport.changed.length} skipped=${syncReport.skipped.length} blocked=${syncReport.blocked.length}`,
-  );
-  report.push(...(syncReport.notices ?? []));
-  report.push(options.adopt ? "adopt mode complete" : "init complete");
-  return report;
-}
-
-async function createDesignMd(
-  projectRoot: string,
-  report: string[],
-): Promise<void> {
-  if (await createDesignMdIfMissing(projectRoot)) {
-    report.push(`created ${DESIGN_MD_PATH}`);
-  }
+    report.push(...(syncReport.notices ?? []));
+    if (syncReport.blocked.length)
+      throw new Error(`init incomplete: ${syncReport.blocked.join("; ")}`);
+    report.push(options.adopt ? "adopt mode complete" : "init complete");
+    return report;
+  });
 }
 
 async function projectHasExistingFiles(projectRoot: string): Promise<boolean> {
@@ -76,25 +70,17 @@ async function createProjectContext(
   projectRoot: string,
   report: string[],
 ): Promise<void> {
-  const areasRoot = path.join(projectRoot, "project_context", "areas");
-  await ensureDir(areasRoot);
   const files: Array<[string, string]> = [
     [CONTEXT_MANIFEST_PATH, defaultContextManifestTemplate()],
     ["project_context/global.md", globalContextTemplate()],
-    ["project_context/architecture.md", architectureContextTemplate()],
-    ["project_context/areas/main.md", areaContextTemplate("main")],
-    [
-      "project_context/areas/main/verification.md",
-      verificationContextTemplate("main"),
-    ],
   ];
   for (const [relative, content] of files) {
-    const target = path.join(projectRoot, relative);
-    if (await pathExists(target)) {
+    const before = await captureMutationFileState(projectRoot, relative);
+    if (before.exists) {
       report.push(`kept existing ${relative}`);
       continue;
     }
-    if (await writeTextIfChanged(target, content)) {
+    if (await writeMaintenanceText(projectRoot, relative, content, before)) {
       report.push(`created ${relative}`);
     }
   }

@@ -36,7 +36,7 @@ test("context register dry-run is deterministic, byte-preserving and writes noth
     assert.match(first.manifest.diff, /\+triggers = \["weather", "天气"\]/u);
     assert.deepEqual(first.default_footprint.added, []);
     assert.deepEqual(first.default_footprint.removed, []);
-    assert.equal(first.default_footprint.changed, true);
+    assert.equal(first.default_footprint.changed, false); // manifest is routing metadata, not default body
     assert.equal(await readContextMutationJournal(root), null);
   } finally {
     await rm(root, { recursive: true, force: true });
@@ -148,7 +148,7 @@ test("context register preserves an NFD physical parent while exposing one NFC C
   }
 });
 
-test("context register rejects placeholders, front-matter conflicts and legacy policy creation", async () => {
+test("context register allows TODO content but rejects front-matter conflicts and legacy policy creation", async () => {
   const placeholderRoot = await createContextProject({
     extraFiles: {
       [contextPath]: `---
@@ -170,10 +170,7 @@ read_policy: on-demand
     },
   });
   try {
-    await assert.rejects(
-      registerContext(registerInput(placeholderRoot)),
-      /cannot be only TODO or placeholder text/u,
-    );
+    assert.equal((await registerContext(registerInput(placeholderRoot))).applied, false);
     await assert.rejects(
       registerContext(registerInput(mismatchRoot)),
       /does not match requested manifest role/u,

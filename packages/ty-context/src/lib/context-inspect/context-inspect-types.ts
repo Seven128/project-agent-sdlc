@@ -6,21 +6,6 @@ import type {
   ContextStableKeyConflict,
   ContextStableKeyDeclaration,
 } from "../context-markdown/context-markdown-types.js";
-import type {
-  ContextRouteAmbiguity,
-  ContextRouteCandidate,
-  ContextRouteUnresolved,
-} from "../context-router/context-route-types.js";
-
-export interface ContextInspectRoute {
-  complete: boolean;
-  catalog_valid: boolean;
-  selected: boolean;
-  candidate: ContextRouteCandidate | null;
-  ambiguous: ContextRouteAmbiguity[];
-  unresolved: ContextRouteUnresolved[];
-}
-
 export interface ContextInspectResult {
   schema_version: 1;
   path: string;
@@ -40,15 +25,10 @@ export interface ContextInspectResult {
   references: ContextMarkdownReference[];
   stable_key_declarations: ContextStableKeyDeclaration[];
   stable_key_conflicts: ContextStableKeyConflict[];
-  route: ContextInspectRoute | null;
   diagnostics: CatalogDiagnostic[];
 }
 
 export interface ContextInspectInput {
   project_root: string;
   context_path: string;
-  route_task?: string;
-  route_paths?: string[];
-  route_terms?: string[];
-  route_case_sensitive?: boolean;
 }

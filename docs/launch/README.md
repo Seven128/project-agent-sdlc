@@ -1,4 +1,6 @@
-# Launch Kit
+# Historical launch kit
+
+The packets and scripts below describe earlier releases and are retained as history. They are not current 0.12.0 instructions or release prerequisites; some referenced commands have retired. Use the [current README](../../README.md), [0.12.0 release notes](github-release-0.12.0.md), and current GitHub workflows for installation and release preparation.
 
 This is the maintainer launch kit for Project Tiny Context Harness. It is copy-ready material for public release posts, repository metadata, demo scripting and submission prep.
 

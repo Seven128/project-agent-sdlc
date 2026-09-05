@@ -20,10 +20,7 @@ import {
   readContextMutationJournal,
   updateContextMutationJournal,
 } from "./mutation-journal.js";
-import {
-  contextMutationAffectedPaths,
-  withContextMutationAuthorityInterlock,
-} from "./mutation-long-task-guard.js";
+import { withContextMutationInterlock } from "./mutation-interlock.js";
 import {
   validateLiveContextMutation,
   validateRolledBackContextMutation,
@@ -76,11 +73,8 @@ export async function completeContextMutation(
   repository: string,
 ): Promise<ContextMutationStatus> {
   const initial = await requiredJournal(repository);
-  return withContextMutationAuthorityInterlock(
-    repository,
-    contextMutationAffectedPaths(initial),
-    async () => completeContextMutationLocked(repository, initial),
-    "recovery",
+  return withContextMutationInterlock(repository, async () =>
+    completeContextMutationLocked(repository, initial),
   );
 }
 
@@ -147,11 +141,8 @@ export async function rollbackContextMutation(
   repository: string,
 ): Promise<ContextMutationStatus> {
   const initial = await requiredJournal(repository);
-  return withContextMutationAuthorityInterlock(
-    repository,
-    contextMutationAffectedPaths(initial),
-    async () => rollbackContextMutationLocked(repository, initial),
-    "recovery",
+  return withContextMutationInterlock(repository, async () =>
+    rollbackContextMutationLocked(repository, initial),
   );
 }
 

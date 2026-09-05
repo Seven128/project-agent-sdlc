@@ -85,7 +85,7 @@ test("legacy diagnostics preserve the established default footprint", async () =
   }
 });
 
-test("TypeScript and portable Python consume the same Context rule contract", async () => {
+test("Library and CLI consume the same Context rule contract", async () => {
   const neverPath = "project_context/areas/main/never.md";
   const root = await createCatalogProject(neverPath);
   try {
@@ -97,44 +97,29 @@ test("TypeScript and portable Python consume the same Context rule contract", as
     assert.match(warnings, /default_children selects .*never\.md/u);
     assert.match(warnings, /unregistered Context Markdown file/u);
 
-    const portable = runPortableValidator(root);
-    assert.equal(portable.status, 0, portable.stderr);
-    assert.match(portable.stderr, /uses legacy read_policy always/u);
-    assert.match(portable.stderr, /uses legacy read_policy never-default/u);
-    assert.match(portable.stderr, /default_children selects .*never\.md/u);
-    assert.match(portable.stderr, /unregistered Context Markdown file/u);
+    const cliResult = runCliValidator(root);
+    assert.equal(cliResult.status, 0, cliResult.stderr);
+    assert.match(cliResult.stderr, /uses legacy read_policy always/u);
+    assert.match(cliResult.stderr, /uses legacy read_policy never-default/u);
+    assert.match(cliResult.stderr, /default_children selects .*never\.md/u);
+    assert.match(cliResult.stderr, /unregistered Context Markdown file/u);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
 });
 
-test("managed, package and source-workspace portable rules stay byte-identical", async () => {
+test("canonical and packaged Context rules stay byte-identical", async () => {
   const paths = [
     ".codex/ty-context-managed/minimal_tools/context_rules.json",
     "packages/ty-context/assets/tools/context_rules.json",
-    "tools/context_rules.json",
   ];
   const contents = await Promise.all(
     paths.map((entry) => readFile(path.join(repository, entry), "utf8")),
   );
   assert.equal(contents[1], contents[0]);
-  assert.equal(contents[2], contents[0]);
 });
 
-test("managed, package and source-workspace portable validators stay byte-identical", async () => {
-  const paths = [
-    ".codex/ty-context-managed/minimal_tools/validate_context.py",
-    "packages/ty-context/assets/tools/validate_context.py",
-    "tools/validate_context.py",
-  ];
-  const contents = await Promise.all(
-    paths.map((entry) => readFile(path.join(repository, entry), "utf8")),
-  );
-  assert.equal(contents[1], contents[0]);
-  assert.equal(contents[2], contents[0]);
-});
-
-test("TypeScript and portable Python agree on NFC identity and portability collisions", async (t) => {
+test("Library and CLI agree on NFC identity and portability collisions", async (t) => {
   const decomposed = "project_context/areas/main/Cafe\u0301.md";
   const composed = decomposed.normalize("NFC");
   const upper = "project_context/areas/main/A.md";
@@ -212,12 +197,12 @@ default = false
     const root = await createContextProject(fixture);
     try {
       const typescript = await runValidator(root, "validate-context");
-      const portable = runPortableValidator(root);
+      const cliResult = runCliValidator(root);
       assert.equal(typescript.errors.length > 0, fixture.blocked);
-      assert.equal(portable.status !== 0, fixture.blocked, portable.stderr);
+      assert.equal(cliResult.status !== 0, fixture.blocked, cliResult.stderr);
       if (fixture.pattern) {
         assert.match(typescript.errors.join("\n"), fixture.pattern);
-        assert.match(portable.stderr, fixture.pattern);
+        assert.match(cliResult.stderr, fixture.pattern);
       }
     } finally {
       await rm(root, { recursive: true, force: true });
@@ -249,9 +234,9 @@ default = false
           return;
         }
         const typescript = await runValidator(root, "validate-context");
-        const portable = runPortableValidator(root);
+        const cliResult = runCliValidator(root);
         assert.deepEqual(typescript.errors, []);
-        assert.equal(portable.status, 0, portable.stderr);
+        assert.equal(cliResult.status, 0, cliResult.stderr);
         assert.ok(
           (await inspectDefaultContextFootprint(root)).files.some(
             (entry) => entry.path === composed,
@@ -281,13 +266,13 @@ default = false
       try {
         for (const root of roots) {
           const typescript = await runValidator(root, "validate-context");
-          const portable = runPortableValidator(root);
+          const cliResult = runCliValidator(root);
           assert.match(
             typescript.errors.join("\n"),
             /Context paths .*normalize to the same NFC repository path/u,
           );
           assert.match(
-            portable.stderr,
+            cliResult.stderr,
             /Context paths .*normalize to the same NFC repository path/u,
           );
         }
@@ -329,7 +314,7 @@ default = false
           return;
         }
         const typescript = await runValidator(root, "validate-context");
-        const portable = runPortableValidator(root);
+        const cliResult = runCliValidator(root);
         const collision =
           /Context files .*normalize to the same NFC repository path/u;
         assert.equal(
@@ -337,7 +322,7 @@ default = false
           1,
         );
         assert.equal(
-          portable.stderr
+          cliResult.stderr
             .split(/\r?\n/u)
             .filter((entry) => collision.test(entry)).length,
           1,
@@ -349,7 +334,7 @@ default = false
           ),
         );
         assert.match(
-          portable.stderr,
+          cliResult.stderr,
           new RegExp(`${uppercase.replace(".", "\\.")}.*unregistered`, "u"),
         );
       } finally {
@@ -393,14 +378,14 @@ read_policy = "on-demand"
       });
       try {
         const typescript = await runValidator(root, "validate-context");
-        const portable = runPortableValidator(root);
+        const cliResult = runCliValidator(root);
         assert.deepEqual(typescript.errors, []);
-        assert.equal(portable.status, 0, portable.stderr);
+        assert.equal(cliResult.status, 0, cliResult.stderr);
         const typescriptPaths = (typescript.warnings ?? [])
           .filter((entry) => entry.includes("unregistered Context Markdown"))
           .map((entry) => entry.split(" is an unregistered", 1)[0])
           .filter((entry) => expected.includes(entry));
-        const portablePaths = portable.stderr
+        const cliPaths = cliResult.stderr
           .split(/\r?\n/u)
           .filter((entry) => entry.includes("unregistered Context Markdown"))
           .map(
@@ -411,7 +396,7 @@ read_policy = "on-demand"
           )
           .filter((entry) => expected.includes(entry));
         assert.deepEqual(typescriptPaths, expected);
-        assert.deepEqual(portablePaths, expected);
+        assert.deepEqual(cliPaths, expected);
       } finally {
         await rm(root, { recursive: true, force: true });
       }
@@ -869,21 +854,8 @@ function contractContext(name) {
 `;
 }
 
-function runPortableValidator(cwd) {
-  const script = path.join(repository, "tools", "validate_context.py");
-  const commands =
-    process.platform === "win32"
-      ? ["python", "python3"]
-      : ["python3", "python"];
-  for (const command of commands) {
-    const result = spawnSync(command, [script], {
-      cwd,
-      encoding: "utf8",
-      windowsHide: true,
-    });
-    if (!result.error || result.error.code !== "ENOENT") return result;
-  }
-  throw new Error("portable_python_unavailable");
+function runCliValidator(cwd) {
+  return spawnSync(process.execPath,[path.join(repository,"packages/ty-context/dist/cli.js"),"validate-context"],{cwd,encoding:"utf8",windowsHide:true});
 }
 
 async function hasDistinctPhysicalSpelling(root, physical, canonical) {

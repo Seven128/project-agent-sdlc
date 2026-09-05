@@ -12,6 +12,17 @@ import { AGENTS_BLOCK_MARKERS } from "./managed-file.js";
 import { SOURCE_MAPPINGS_PATH } from "./paths.js";
 import type { SourceMapping, SourceMappingsFile } from "./types.js";
 import { parseYaml } from "./yaml.js";
+import { assertSupportedSchema } from "./schema-guard.js";
+import { withMaintenanceLock } from "./maintenance-lock.js";
+import {
+  writeMaintenanceText,
+  removeMaintenanceFile,
+} from "./maintenance-write.js";
+import { captureMutationFileState } from "./context-mutation/mutation-file-state.js";
+import {
+  resolveInsideRepository,
+  ensureSafeRepositoryDirectory,
+} from "./repository-path-safety.js";
 
 export interface PackageSourceSyncReport {
   changed: string[];
@@ -24,12 +35,16 @@ export interface PackageSourceCheckReport {
 export async function syncSource(
   projectRoot: string,
 ): Promise<PackageSourceSyncReport> {
-  const report: PackageSourceSyncReport = { changed: [] };
-  for (const mapping of await readSourceMappings(projectRoot)) {
-    const changed = await applyMapping(projectRoot, mapping);
-    report.changed.push(...changed);
-  }
-  return report;
+  await assertSupportedSchema(projectRoot, "package sync-source");
+  return withMaintenanceLock(projectRoot, "sync", async () => {
+    await assertSupportedSchema(projectRoot, "package sync-source");
+    const report: PackageSourceSyncReport = { changed: [] };
+    for (const mapping of await readSourceMappings(projectRoot)) {
+      const changed = await applyMapping(projectRoot, mapping);
+      report.changed.push(...changed);
+    }
+    return report;
+  });
 }
 
 export async function checkSource(
@@ -83,17 +98,33 @@ async function applyMapping(
   projectRoot: string,
   mapping: SourceMapping,
 ): Promise<string[]> {
-  const target = path.join(projectRoot, mapping.target);
+  const target = resolveInsideRepository(
+    projectRoot,
+    mapping.target,
+    "source_mapping_target",
+  );
   const rendered = await renderMapping(projectRoot, mapping);
   if (typeof rendered === "string") {
-    return (await writeTextIfChanged(target, rendered)) ? [mapping.target] : [];
+    return (await writeMaintenanceText(projectRoot, mapping.target, rendered))
+      ? [mapping.target]
+      : [];
   }
-  await ensureDir(target);
+  await ensureSafeRepositoryDirectory(
+    projectRoot,
+    mapping.target,
+    "source_mapping_target",
+  );
   const changed: string[] = [];
   const expectedRelatives = new Set(rendered.map((item) => item.relative));
   for (const item of rendered) {
     const targetFile = path.join(target, item.relative);
-    if (await writeTextIfChanged(targetFile, item.content)) {
+    if (
+      await writeMaintenanceText(
+        projectRoot,
+        path.relative(projectRoot, targetFile).replaceAll("\\", "/"),
+        item.content,
+      )
+    ) {
       changed.push(`${mapping.target}/${item.relative}`);
     }
   }
@@ -103,7 +134,14 @@ async function applyMapping(
     }
     const relative = path.relative(target, targetFile);
     if (!expectedRelatives.has(relative)) {
-      await fs.rm(targetFile, { force: true });
+      const targetRelative = path
+        .relative(projectRoot, targetFile)
+        .replaceAll("\\", "/");
+      await removeMaintenanceFile(
+        projectRoot,
+        targetRelative,
+        await captureMutationFileState(projectRoot, targetRelative),
+      );
       changed.push(`${mapping.target}/${relative}`);
     }
   }
@@ -114,7 +152,11 @@ async function renderMapping(
   projectRoot: string,
   mapping: SourceMapping,
 ): Promise<string | Array<{ relative: string; content: string }>> {
-  const source = path.join(projectRoot, mapping.source);
+  const source = resolveInsideRepository(
+    projectRoot,
+    mapping.source,
+    "source_mapping_input",
+  );
   if (mapping.mode === "copy-file") {
     return readText(source);
   }

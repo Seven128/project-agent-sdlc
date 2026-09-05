@@ -29,6 +29,7 @@ export interface ContextNodeEntry {
 }
 
 export interface ContextManifest {
+  default_files?: string[];
   areas: ContextAreaEntry[];
   contexts: ContextNodeEntry[];
 }
@@ -117,7 +118,13 @@ export function parseContextManifest(
     }
   }
 
-  return { manifest: { areas, contexts }, errors };
+  const default_files = optionalStringArray(
+    parsed,
+    "default_files",
+    file,
+    errors,
+  );
+  return { manifest: { areas, contexts, default_files }, errors };
 }
 
 function tableArray(

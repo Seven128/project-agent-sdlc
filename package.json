@@ -12,44 +12,18 @@
     "packages/*"
   ],
   "scripts": {
+    "build": "npm run build --workspace project-tiny-context-harness",
     "test": "npm test --workspace project-tiny-context-harness",
-    "test:affected": "node tools/run_affected_tests.mjs",
-    "test:affected:list": "node tools/run_affected_tests.mjs --list",
-    "test:long-task:trust": "node tools/run_affected_tests.mjs --scope trust",
-    "test:long-task:focused": "node tools/run_affected_tests.mjs --scope long-task",
-    "test:delivery-contract:focused": "node tools/run_affected_tests.mjs --scope delivery-contract",
-    "verify:active-source-portability": "node tools/verify_active_source_portability.mjs",
-    "test:structural-cost": "node tools/structural_closure_cost_gate.mjs --artifact .artifacts/structural-closure-cost/report.json",
-    "launch:check": "node tools/launch_readiness_check.mjs --offline",
-    "launch:strict-external": "node tools/launch_readiness_check.mjs --strict-external",
-    "launch:github-metadata": "node tools/github_metadata_update.mjs",
-    "launch:npm-access": "node tools/npm_publish_access_check.mjs",
-    "launch:unblock": "node tools/launch_unblock_check.mjs",
-    "launch:next": "node tools/launch_next_steps.mjs",
-    "launch:external-prs": "node tools/external_pr_packet_check.mjs",
-    "launch:demo": "node tools/launch_demo_capture.mjs",
-    "launch:metrics": "node tools/launch_metrics_snapshot.mjs",
-    "launch:hn-snapshot": "node tools/launch_hn_snapshot.mjs",
-    "launch:feedback-note": "node tools/launch_feedback_note.mjs",
-    "preview:pack": "node tools/source_preview_pack.mjs --clean",
-    "smoke:quickstart": "node tools/quickstart_smoke.mjs --clean",
-    "smoke:open-design": "node tools/open_design_live_smoke.mjs",
-    "release:sync-version": "node tools/sync_release_version.mjs",
-    "release:check-version": "node tools/sync_release_version.mjs --check",
-    "release:github": "node tools/github_release_publish.mjs",
-    "release:prepare": "node tools/release_prepare.mjs",
-    "release:publish": "node tools/release_publish.mjs",
-    "release:npm": "node tools/release_npm.mjs",
-    "release:tarball-smoke": "node tools/release_tarball_smoke.mjs",
+    "test:affected": "npm test",
     "format": "prettier --write \"packages/ty-context/src/**/*.ts\"",
     "format:check": "prettier --check \"packages/ty-context/src/**/*.ts\"",
-    "ty-context": "node packages/ty-context/dist/cli.js"
+    "ty-context": "node packages/ty-context/dist/cli.js",
+    "release:prepare": "npm run build && node tools/prepare_release.mjs"
   },
   "tyContext": {
     "harnessFolderName": ".codex"
   },
   "devDependencies": {
-    "acorn": "^8.16.0",
     "prettier": "^3.9.5"
   }
 }

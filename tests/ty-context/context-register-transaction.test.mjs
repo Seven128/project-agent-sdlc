@@ -70,8 +70,6 @@ test("mutation journal public surfaces distinguish current v3, recovery-readable
     "README.md",
     "README.zh-CN.md",
     "packages/ty-context/README.md",
-    "packages/ty-context/assets/README.md",
-    "packages/ty-context/assets/README.zh-CN.md",
     "packages/ty-context/migrations/README.md",
   ];
   for (const surface of surfaces) {

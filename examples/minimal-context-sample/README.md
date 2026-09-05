@@ -18,7 +18,7 @@ npm test
 npm run validate-context
 ```
 
-The test covers the tiny label-suggestion behavior. The Context validation checks that the recovery surface exists and does not store fake test-result claims.
+The test covers the tiny label-suggestion behavior. Context validation checks structure and explicitly declared local dependencies; it does not judge factual truth or historical test-result wording.
 
 ## Recovery Surface
 
@@ -37,7 +37,7 @@ project_context/
 Then ask a fresh agent:
 
 ```text
-Read AGENTS.md and project_context/** first. Summarize the project goal, non-goals, architecture boundaries, validation entry points and next safe action before proposing code changes.
+Read the default Context and relevant label-routing owner, then implement the requested change and run the sample tests.
 ```
 
 A useful answer should recover that this project suggests labels, does not write labels to GitHub, owns suggestion behavior in `src/label-routing/**` and validates changes with `npm test`.

@@ -2,10 +2,7 @@ import { compareUtf8Paths } from "../context-catalog/catalog-paths.js";
 import type { ContextCatalog } from "../context-catalog/catalog-types.js";
 import type { ContextRole } from "../context-catalog/catalog-portable-contract.js";
 import type { ContextMarkdownCatalogAnalysis } from "../context-markdown/context-markdown-types.js";
-import type {
-  ContextInspectResult,
-  ContextInspectRoute,
-} from "./context-inspect-types.js";
+import type { ContextInspectResult } from "./context-inspect-types.js";
 
 const CORE_ROLES = new Map<string, ContextRole>([
   ["project_context/global.md", "global"],
@@ -16,7 +13,6 @@ export function projectContextInspection(input: {
   catalog: ContextCatalog;
   markdown: ContextMarkdownCatalogAnalysis;
   context_path: string;
-  route: ContextInspectRoute | null;
 }): ContextInspectResult {
   const fileAnalysis = input.markdown.files.find(
     (candidate) => candidate.path === input.context_path,
@@ -61,7 +57,6 @@ export function projectContextInspection(input: {
     stable_key_conflicts: input.markdown.declaration_conflicts.filter(
       (conflict) => declarationKeys.has(`${conflict.type}\0${conflict.id}`),
     ),
-    route: input.route,
     diagnostics: input.catalog.diagnostics.filter(
       (diagnostic) =>
         diagnostic.severity === "error" ||

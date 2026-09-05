@@ -1,6 +1,10 @@
 import path from "node:path";
 import { pathExists, readText, writeTextIfChanged } from "./fs.js";
-import { normalizeHarnessFolderName } from "./harness-root.js";
+import { normalizeHarnessFolderName, harnessRoot } from "./harness-root.js";
+import { captureMutationFileState } from "./context-mutation/mutation-file-state.js";
+import { assertSupportedSchema, rawSchemaVersion } from "./schema-guard.js";
+import { withMaintenanceLock } from "./maintenance-lock.js";
+import { writeMaintenanceText } from "./maintenance-write.js";
 
 export async function packageHarnessRoot(
   projectRoot: string,
@@ -24,26 +28,51 @@ export async function writePackageHarnessRoot(
   projectRoot: string,
   folderName: string,
 ): Promise<boolean> {
-  const normalized = normalizeHarnessFolderName(folderName);
-  const packagePath = path.join(projectRoot, "package.json");
-  const packageJson = (await pathExists(packagePath))
-    ? parsePackageJson(await readText(packagePath))
-    : {};
-  const existingConfig = packageJson.tyContext;
-  const nextConfig =
-    existingConfig &&
-    typeof existingConfig === "object" &&
-    !Array.isArray(existingConfig)
-      ? {
-          ...(existingConfig as Record<string, unknown>),
-          harnessFolderName: normalized,
-        }
-      : { harnessFolderName: normalized };
-  const next = {
-    ...packageJson,
-    tyContext: nextConfig,
-  };
-  return writeTextIfChanged(packagePath, `${JSON.stringify(next, null, 2)}\n`);
+  await assertSupportedSchema(projectRoot, "init");
+  return withMaintenanceLock(projectRoot, "sync", async () => {
+    await assertSupportedSchema(projectRoot, "init");
+    const normalized = normalizeHarnessFolderName(folderName);
+    const current = await harnessRoot(projectRoot);
+    if (
+      current !== normalized &&
+      ((await rawSchemaVersion(projectRoot)) !== undefined ||
+        (
+          await captureMutationFileState(
+            projectRoot,
+            `${normalized}/config.yaml`,
+          )
+        ).exists)
+    )
+      throw new Error(
+        "init cannot relocate or switch an existing installation; preserve both configurations and migrate the root explicitly",
+      );
+    const before = await captureMutationFileState(projectRoot, "package.json");
+    const packageJson = before.exists
+      ? parsePackageJson(
+          Buffer.from(before.bytes_base64!, "base64").toString("utf8"),
+        )
+      : {};
+    const existingConfig = packageJson.tyContext;
+    const nextConfig =
+      existingConfig &&
+      typeof existingConfig === "object" &&
+      !Array.isArray(existingConfig)
+        ? {
+            ...(existingConfig as Record<string, unknown>),
+            harnessFolderName: normalized,
+          }
+        : { harnessFolderName: normalized };
+    const next = {
+      ...packageJson,
+      tyContext: nextConfig,
+    };
+    return writeMaintenanceText(
+      projectRoot,
+      "package.json",
+      `${JSON.stringify(next, null, 2)}\n`,
+      before,
+    );
+  });
 }
 
 function parsePackageJson(content: string): Record<string, unknown> {

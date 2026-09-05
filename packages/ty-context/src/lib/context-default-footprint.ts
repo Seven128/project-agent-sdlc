@@ -115,6 +115,7 @@ function physicalDefaultPaths(manifest: ContextManifest): Map<string, string> {
   ])
     addOwner(core);
   for (const area of manifest.areas) addOwner(area.context);
+  for (const file of manifest.default_files ?? []) addOwner(file);
   for (const context of manifest.contexts) addOwner(context.path);
   for (const context of manifest.contexts)
     for (const child of context.default_children) {

@@ -30,7 +30,9 @@ export async function upgrade(args: string[] = []): Promise<void> {
     return;
   }
 
-  const report = await runUpgradeReport(process.cwd());
+  const report = await runUpgradeReport(process.cwd(), {
+    sessions_stopped: options.sessions_stopped,
+  });
   if (options.json) {
     console.log(JSON.stringify(report, null, 2));
     if (report.blocked) {
@@ -50,8 +52,14 @@ function parseArgs(args: string[]): {
   check: boolean;
   json: boolean;
   help: boolean;
+  sessions_stopped: boolean;
 } {
-  const options = { check: false, json: false, help: false };
+  const options = {
+    check: false,
+    json: false,
+    help: false,
+    sessions_stopped: false,
+  };
   for (const arg of args) {
     if (arg === "--check") {
       options.check = true;
@@ -59,6 +67,8 @@ function parseArgs(args: string[]): {
       options.json = true;
     } else if (arg === "--help" || arg === "-h") {
       options.help = true;
+    } else if (arg === "--sessions-stopped") {
+      options.sessions_stopped = true;
     } else {
       throw new Error(`unknown upgrade argument: ${arg}`);
     }
@@ -72,6 +82,8 @@ function printHelp(): void {
   upgrade --check      Print the upgrade plan without writing files
   upgrade --check --json
                        Print the upgrade plan as JSON
+  upgrade --sessions-stopped
+                       Retire schema 4 or resume after stopping relevant old host sessions
 
 Update modes:
   sync-only            No migrations are pending

@@ -1,4 +1,5 @@
 import path from "node:path";
+import { assertSupportedSchema } from "./schema-guard.js";
 import {
   artifactReport,
   buildManifest,
@@ -41,6 +42,8 @@ export async function runSourcePackExport(
   projectRoot: string,
   options: SourcePackOptions,
 ): Promise<SourcePackReport> {
+  if (!options.check)
+    await assertSupportedSchema(projectRoot, "export-context");
   const maxPackFiles = options.maxPackFiles ?? DEFAULT_MAX_PACK_FILES;
   validateMaxPackFiles(options.mode, maxPackFiles);
   const now = options.now ?? new Date();
@@ -198,7 +201,7 @@ export async function runSourcePackExport(
   }
   if (!options.check) {
     await writeArtifactSet(projectRoot, outputDir, artifacts);
-    await pruneTimestampedExports(projectRoot, 0);
+    await pruneTimestampedExports(projectRoot, options.prune ?? 0);
   }
   return {
     mode: options.mode,

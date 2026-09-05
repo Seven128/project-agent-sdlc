@@ -7,7 +7,7 @@ import {
   normalizeContextPath,
 } from "../context-catalog/catalog-paths.js";
 import { analyzeContextMarkdownCatalog } from "../context-markdown/context-markdown-analysis.js";
-import { routeContext } from "../context-router/context-route.js";
+
 import { projectContextInspection } from "./context-inspect-projection.js";
 import type {
   ContextInspectInput,
@@ -62,39 +62,11 @@ export async function inspectContext(
       { cause: error },
     );
   }
-  const routeRequested =
-    input.route_task !== undefined ||
-    (input.route_paths?.length ?? 0) > 0 ||
-    (input.route_terms?.length ?? 0) > 0;
-  let route: ContextInspectResult["route"] = null;
-  if (routeRequested) {
-    const routed = await routeContext({
-      project_root: projectRoot,
-      task: input.route_task ?? "",
-      paths: input.route_paths ?? [],
-      explicit_terms: input.route_terms ?? [],
-      case_sensitive: input.route_case_sensitive,
-    });
-    const candidate = [
-      ...routed.candidates,
-      ...routed.unregistered_matches,
-    ].find((entry) => entry.path === contextPath);
-    route = {
-      complete: routed.complete,
-      catalog_valid: routed.catalog_valid,
-      selected: Boolean(candidate),
-      candidate: candidate ?? null,
-      ambiguous: routed.ambiguous,
-      unresolved: routed.unresolved,
-    };
-  }
-
   try {
     return projectContextInspection({
       catalog,
       markdown,
       context_path: contextPath,
-      route,
     });
   } catch (error) {
     throw new CliCommandError(CLI_EXIT_CODES.internal, message(error), {

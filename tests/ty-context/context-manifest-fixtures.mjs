@@ -9,7 +9,7 @@ export async function createContextProject({
   const root = await mkdtemp(path.join(os.tmpdir(), "ty-context-manifest-"));
   const files = {
     ".agent/config.yaml":
-      'core:\n  package: project-tiny-context-harness\n  schema_version: "4"\n',
+      'core:\n  package: project-tiny-context-harness\n  schema_version: "5"\n',
     "project_context/global.md": globalContext(),
     "project_context/architecture.md": architectureContext(),
     "project_context/context.toml": manifest,
@@ -26,7 +26,9 @@ export async function createContextProject({
 }
 
 export function baseManifest() {
-  return `[[areas]]
+  return `default_files = ["project_context/architecture.md"]
+
+[[areas]]
 id = "main"
 root = "."
 context = "project_context/areas/main.md"

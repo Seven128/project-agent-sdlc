@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { execFile } from "node:child_process";
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile, symlink } from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -10,6 +10,28 @@ import { fileURLToPath } from "node:url";
 import { runSourcePackExport } from "../../packages/ty-context/dist/lib/source-pack-export.js";
 
 const execFileAsync = promisify(execFile);
+
+test("source-pack preserves unlisted user files and refuses edited generated outputs",async(t)=>{
+ const root=await createSourcePackProject();t.after(()=>rm(root,{recursive:true,force:true}));
+ const report=await runSourcePackExport(root,{mode:"source-pack"});
+ await writeFile(path.join(report.outputDirectory,"user-notes.md"),"Keep my notes");
+ await runSourcePackExport(root,{mode:"source-pack"});
+ assert.equal(await readFile(path.join(report.outputDirectory,"user-notes.md"),"utf8"),"Keep my notes");
+ await writeFile(path.join(report.outputDirectory,"code-index.md"),"User-edited index");
+ await assert.rejects(runSourcePackExport(root,{mode:"source-pack"}),/export_conflict/);
+ assert.equal(await readFile(path.join(report.outputDirectory,"code-index.md"),"utf8"),"User-edited index");
+});
+
+test("source-pack refuses an output directory junction without deleting or changing its target",async(t)=>{
+ const root=await createSourcePackProject(),outside=await mkdtemp(path.join(os.tmpdir(),"tiny-export-outside-"));
+ t.after(()=>rm(root,{recursive:true,force:true}));t.after(()=>rm(outside,{recursive:true,force:true}));
+ await writeFile(path.join(outside,"original.md"),"Outside bytes");
+ await mkdir(path.join(root,"tmp/ty-context/context-exports"),{recursive:true});
+ await symlink(outside,path.join(root,"tmp/ty-context/context-exports/latest"),process.platform==="win32"?"junction":"dir");
+ await assert.rejects(runSourcePackExport(root,{mode:"source-pack"}),/unsafe_repository_directory|symlink/);
+ assert.deepEqual(await readdir(outside),["original.md"]);
+ assert.equal(await readFile(path.join(outside,"original.md"),"utf8"),"Outside bytes");
+});
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
 const cliPath = path.join(repoRoot, "packages", "ty-context", "dist", "cli.js");
 
@@ -49,9 +71,9 @@ test("source-pack writes bounded latest artifacts with manifest schema", async (
     assert.equal(report.wrote, true);
     assert.equal(report.outputRelativePath, "tmp/ty-context/context-exports/latest");
     assert.ok(report.artifacts.length <= 5);
-    assert.ok((await listFiles(report.outputDirectory)).length <= 5);
-    await assert.rejects(stat(path.join(root, "tmp", "ty-context", "context-exports", "latest", "stale.md")));
-    await assert.rejects(stat(path.join(root, "tmp", "ty-context", "context-exports", "20260601T080910Z")));
+    assert.ok((await listFiles(report.outputDirectory)).length <= 6); // generated files plus the unowned note
+    assert.equal(await readFile(path.join(report.outputDirectory,"stale.md"),"utf8"),"old\n");
+    assert.equal(await readFile(path.join(root,"tmp/ty-context/context-exports/20260601T080910Z/old.md"),"utf8"),"old\n");
     await assert.rejects(stat(path.join(root, "tmp", "ty-context", "context-exports", "20260607T080910Z")));
 
     const manifest = JSON.parse(await readFile(path.join(report.outputDirectory, "source-pack-manifest.json"), "utf8"));
@@ -125,7 +147,7 @@ test("redaction strict fails before writing and profile paths cannot escape", as
 
     await writeFile(
       path.join(root, ".agent", "config.yaml"),
-      'source_packs:\n  bad:\n    code:\n      - "../outside.ts"\n',
+      'core:\n  package: project-tiny-context-harness\n  schema_version: "5"\nsource_packs:\n  bad:\n    code:\n      - "../outside.ts"\n',
       "utf8"
     );
     await assert.rejects(runSourcePackExport(root, { mode: "task-context", taskName: "bad", profile: "bad" }), /repo-relative/);
@@ -188,7 +210,7 @@ async function createSourcePackProject() {
   await writeFile(path.join(root, "Makefile"), "test:\n\tnpm test\nvalidate:\n\tnpm run build\n", "utf8");
   await writeFile(
     path.join(root, ".agent", "config.yaml"),
-    'source_packs:\n  demo:\n    context:\n      - "project_context/areas/main.md"\n    code:\n      - "packages/app/src/**"\n    exclude:\n      - "**/*.generated.*"\n    verification:\n      - "node should-not-run.js"\n    max_bundle_characters: 200000\n',
+    'core:\n  package: project-tiny-context-harness\n  schema_version: "5"\nsource_packs:\n  demo:\n    context:\n      - "project_context/areas/main.md"\n    code:\n      - "packages/app/src/**"\n    exclude:\n      - "**/*.generated.*"\n    verification:\n      - "node should-not-run.js"\n    max_bundle_characters: 200000\n',
     "utf8"
   );
   await writeFile(path.join(root, ".env.example"), "API_TOKEN=super-secret-value\n", "utf8");

@@ -96,6 +96,21 @@ export async function validateCatalogManifestPath(
     );
     return false;
   }
+  if (allowFile) {
+    try {
+      await assertSafeRepositoryFilePath(
+        projectRoot,
+        physicalRelative,
+        `catalog_file:${source}`,
+      );
+    } catch (error) {
+      addError(
+        "manifest_path_unsafe_file",
+        `Unsafe declared Context file ${rawPath}: ${message(error)}`,
+      );
+      return false;
+    }
+  }
   return true;
 }
 

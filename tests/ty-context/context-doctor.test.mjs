@@ -1,126 +1,19 @@
 import assert from "node:assert/strict";
-import { spawnSync } from "node:child_process";
-import { rm } from "node:fs/promises";
+import {mkdtemp,writeFile,rm} from "node:fs/promises";
+import {spawnSync} from "node:child_process";
+import os from "node:os";
 import path from "node:path";
+import {fileURLToPath} from "node:url";
 import test from "node:test";
-import { fileURLToPath } from "node:url";
-import { runDoctor } from "../../packages/ty-context/dist/lib/doctor.js";
-import {
-  baseManifest,
-  createContextProject,
-} from "./context-manifest-fixtures.mjs";
-
-const repository = fileURLToPath(new URL("../..", import.meta.url));
-const cli = path.join(repository, "packages", "ty-context", "dist", "cli.js");
-
-test("Doctor reports full Context distribution, size, lines, fan-out, explicit links and declared-key conflicts as advisory", async () => {
-  const contexts = ["one", "two", "three", "four"];
-  const manifest = `${baseManifest()}\n${contexts
-    .map(
-      (name) => `[[context]]
-path = "project_context/areas/main/${name}.md"
-role = "contract"
-read_policy = "on-demand"
-triggers = ["shared-trigger"]
-`,
-    )
-    .join("\n")}`;
-  const root = await createContextProject({
-    manifest,
-    extraFiles: Object.fromEntries([
-      ...contexts.map((name, index) => [
-        `project_context/areas/main/${name}.md`,
-        `# ${name}\n${"x".repeat(20 + index)}\n${
-          index === 0
-            ? "[missing](missing.md)\n<!-- ty-context-declare Fact-ID: SHARED-001 -->\n"
-            : index === 1
-              ? "<!-- ty-context-declare Fact-ID: SHARED-001 -->\n"
-              : ""
-        }`,
-      ]),
-      ["project_context/areas/main/unregistered.md", "# Unregistered\n"],
-    ]),
-  });
-  try {
-    const report = await runDoctor(root, {
-      context_file_soft_budget_bytes: 16,
-      long_line_code_points: 10,
-      trigger_fanout_contexts: 4,
-    });
-    assert.deepEqual(report.errors, []);
-    assert.ok(
-      report.info.some((line) => line.startsWith("all Context Markdown:")),
-    );
-    assert.ok(
-      report.info.some((line) =>
-        line.includes("Context distribution: default=") &&
-        line.includes("on-demand=4 file(s)") &&
-        line.includes("unregistered=1 file(s)"),
-      ),
-    );
-    assert.ok(
-      report.info.some((line) => line.includes("largest on-demand Context:")),
-    );
-    assert.ok(
-      report.info.some(
-        (line) =>
-          line.includes('Context trigger: "shared-trigger"') &&
-          line.includes("4 Context(s)"),
-      ),
-    );
-    assert.ok(
-      report.warnings.some((line) =>
-        line.includes("all-Context per-file soft budget"),
-      ),
-    );
-    assert.ok(
-      report.warnings.some((line) => line.includes("Unicode code points")),
-    );
-    assert.ok(
-      report.warnings.some(
-        (line) => line.includes("fans out to 4 Contexts") && line.includes("bytes"),
-      ),
-    );
-    assert.ok(
-      report.warnings.some(
-        (line) => line.includes("missing explicit Markdown Context reference"),
-      ),
-    );
-    assert.ok(
-      report.warnings.some(
-        (line) =>
-          line.includes("Fact-ID SHARED-001") &&
-          line.includes("multiple candidate owners"),
-      ),
-    );
-    assert.ok(
-      report.warnings.some((line) => line.includes("unregistered Context")),
-    );
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
-});
-
-test("Doctor keeps new findings non-blocking by default and exposes opt-in strict mode", async () => {
-  const root = await createContextProject({
-    extraFiles: {
-      "project_context/areas/main/unregistered.md": "# Unregistered\n",
-    },
-  });
-  try {
-    const normal = spawnSync(process.execPath, [cli, "doctor"], {
-      cwd: root,
-      encoding: "utf8",
-    });
-    const strict = spawnSync(process.execPath, [cli, "doctor", "--strict"], {
-      cwd: root,
-      encoding: "utf8",
-    });
-    assert.equal(normal.status, 0, normal.stderr);
-    assert.match(normal.stderr, /warning: .*unregistered Context/u);
-    assert.equal(strict.status, 1);
-    assert.match(strict.stderr, /warning: .*unregistered Context/u);
-  } finally {
-    await rm(root, { recursive: true, force: true });
-  }
+import {runInit} from "../../packages/ty-context/dist/lib/init.js";
+import {runDoctor} from "../../packages/ty-context/dist/lib/doctor.js";
+const cli=fileURLToPath(new URL("../../packages/ty-context/dist/cli.js",import.meta.url));
+test("doctor size advice is nonblocking by default and strict is an explicit choice",async(t)=>{
+ const root=await mkdtemp(path.join(os.tmpdir(),"tiny-doctor-"));t.after(()=>rm(root,{recursive:true,force:true}));
+ await runInit(root,{adopt:false,force:false});await writeFile(path.join(root,"project_context/global.md"),"Durable information.\n".repeat(100));
+ const report=await runDoctor(root,{context_file_soft_budget_bytes:10});assert.deepEqual(report.errors,[]);assert.match(report.warnings.join("\n"),/Review long default Context/);
+ const args=[cli,"doctor","--context-file-soft-budget","10"];
+ assert.equal(spawnSync(process.execPath,args,{cwd:root}).status,0);
+ assert.equal(spawnSync(process.execPath,[...args,"--strict"],{cwd:root}).status,1);
+ assert.notEqual(spawnSync(process.execPath,[cli,"doctor","--max-line-length","20"],{cwd:root}).status,0);
 });

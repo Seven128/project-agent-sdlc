@@ -11,10 +11,7 @@ import {
   mutationStateBytes,
 } from "../context-mutation/mutation-command-support.js";
 import { executeContextMutationPlan } from "../context-mutation/mutation-commit.js";
-import {
-  assertContextMutationOutsideActiveLongTask,
-  contextMutationAffectedPaths,
-} from "../context-mutation/mutation-long-task-guard.js";
+
 import {
   replaceContextManifestPath,
   type ManifestPathReplacementResult,
@@ -42,6 +39,7 @@ import type {
   ContextMoveResult,
 } from "./context-move-types.js";
 import { CliCommandError } from "../cli-exit.js";
+import { assertSupportedSchema } from "../schema-guard.js";
 
 const MANIFEST_PATH = "project_context/context.toml";
 
@@ -53,15 +51,13 @@ export interface PlannedContextMove {
 export async function moveContext(
   input: ContextMoveInput,
 ): Promise<ContextMoveResult> {
+  if (input.apply)
+    await assertSupportedSchema(input.project_root, "context move");
   const planned = await planContextMove(input);
   if (!input.apply) return planned.result;
   // Preserve the established fail-fast diagnostic before evaluating a
   // potentially inapplicable move. executeContextMutationPlan repeats this
   // guard while holding the shared Authority interlock to close the race.
-  await assertContextMutationOutsideActiveLongTask(
-    input.project_root,
-    contextMutationAffectedPaths(planned.plan),
-  );
   if (!planned.result.can_apply)
     mutationCatalogFailure(
       "context move cannot apply until every reported unresolved reference and scan limit is cleared",

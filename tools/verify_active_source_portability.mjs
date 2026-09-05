@@ -41,9 +41,7 @@ export const DEFAULT_ACTIVE_SOURCE_PORTABILITY_SURFACES = Object.freeze([
       "README.zh-CN.md",
       "PROJECT_SPEC.md",
       "packages/ty-context/README.md",
-      "docs/design-resource-authoring-implementation-source.md",
-      "docs/dra-incremental-authoring-review-development-source.md",
-      "docs/page-level-uiux-authority-design-source.md",
+      "docs/launch/github-release-0.12.0.md",
     ],
   },
   {
@@ -60,8 +58,7 @@ export const DEFAULT_ACTIVE_SOURCE_PORTABILITY_SURFACES = Object.freeze([
     key: "runtime-resolved-source",
     type: "files",
     paths: [
-      "docs/symbolic-denotation-efficiency.md",
-      "docs/long-task-real-capability-closure.md",
+      "packages/ty-context/migrations/README.md",
     ],
   },
 ]);

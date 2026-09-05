@@ -10,7 +10,7 @@ import type {
   ContextControllingSourceDeclaration,
   ContextControllingSourceRawDeclaration,
 } from "./context-markdown/context-markdown-types.js";
-import { normalizeRepositoryFile } from "./long-task-paths.js";
+import { normalizeRepositoryFile } from "./repository-path-safety.js";
 import { assertSafeRepositoryFilePath } from "./repository-path-safety.js";
 
 export async function resolveContextControllingSourceDeclaration(

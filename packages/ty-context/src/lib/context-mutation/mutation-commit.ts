@@ -18,10 +18,7 @@ import {
   removeContextMutationJournal,
   updateContextMutationJournal,
 } from "./mutation-journal.js";
-import {
-  contextMutationAffectedPaths,
-  withContextMutationAuthorityInterlock,
-} from "./mutation-long-task-guard.js";
+import { withContextMutationInterlock } from "./mutation-interlock.js";
 import { validateLiveContextMutation } from "./mutation-live-validation.js";
 import type {
   ContextMutationJournal,
@@ -52,10 +49,8 @@ export async function executeContextMutationPlan(
   plan: ContextMutationPlan,
   options: ExecuteContextMutationOptions = {},
 ): Promise<void> {
-  await withContextMutationAuthorityInterlock(
-    repository,
-    contextMutationAffectedPaths(plan),
-    async () => executeContextMutationPlanLocked(repository, plan, options),
+  await withContextMutationInterlock(repository, async () =>
+    executeContextMutationPlanLocked(repository, plan, options),
   );
 }
 

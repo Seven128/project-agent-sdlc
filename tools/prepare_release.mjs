@@ -1,0 +1,22 @@
+import {spawnSync} from "node:child_process";
+import {mkdirSync,appendFileSync,readFileSync} from "node:fs";
+import path from "node:path";
+import {fileURLToPath} from "node:url";
+import {prepareSchema4Fixture} from "./prepare_schema4_fixture.mjs";
+
+const repository=fileURLToPath(new URL("..",import.meta.url));
+const output=path.join(repository,".artifacts/releases");
+mkdirSync(output,{recursive:true});
+const npmCli=process.env.npm_execpath ?? path.join(path.dirname(process.execPath),"node_modules/npm/bin/npm-cli.js");
+const pack=spawnSync(process.execPath,[npmCli,"pack","--ignore-scripts","--json","--pack-destination",output],{cwd:path.join(repository,"packages/ty-context"),encoding:"utf8",windowsHide:true});
+if(pack.status!==0)throw Error(pack.stderr || String(pack.error));
+const result=JSON.parse(pack.stdout);
+if(result.length!==1 || path.basename(result[0].filename)!==result[0].filename)throw Error("Unexpected pack output");
+const tarball=path.join(output,result[0].filename);
+const original=readFileSync(tarball);
+const baseline=prepareSchema4Fixture(repository);
+const smoke=spawnSync(process.execPath,["--test",path.join(repository,"tests/ty-context/tarball-consumer.test.mjs")],{cwd:repository,env:{...process.env,TY_CONTEXT_SCHEMA4_ROOT:baseline,TY_CONTEXT_TARBALL:tarball},stdio:"inherit",windowsHide:true});
+if(smoke.status!==0)throw Error("Tarball consumer verification failed");
+if(!original.equals(readFileSync(tarball)))throw Error("Tarball changed during consumer verification");
+if(process.env.GITHUB_ENV)appendFileSync(process.env.GITHUB_ENV,`TINY_CONTEXT_TARBALL=${tarball}\n`);
+console.log(`Prepared and consumed ${tarball}. No package was published.`);

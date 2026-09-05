@@ -97,18 +97,6 @@ const CONFIG_JSON_NAMES = new Set([
   "vite.config.json",
 ]);
 
-export type ModularityAnalysisCapability =
-  "js-ts-heuristic" | "python-heuristic" | "line-only";
-
-const JS_TS_HEURISTIC_EXTENSIONS = new Set([
-  ".cjs",
-  ".js",
-  ".jsx",
-  ".mjs",
-  ".ts",
-  ".tsx",
-]);
-
 export function shouldIncludeCodeFile(relative: string): boolean {
   if (shouldExcludeRelativePath(relative)) {
     return false;
@@ -126,22 +114,6 @@ export function shouldIncludeCodeFile(relative: string): boolean {
     return isConfigJson(lower);
   }
   return CODE_FILE_EXTENSIONS.some((extension) => lower.endsWith(extension));
-}
-
-export function modularityAnalysisCapability(
-  relative: string,
-): ModularityAnalysisCapability | undefined {
-  if (!shouldIncludeCodeFile(relative)) {
-    return undefined;
-  }
-  const extension = path.posix.extname(toPosix(relative).toLowerCase());
-  if (JS_TS_HEURISTIC_EXTENSIONS.has(extension)) {
-    return "js-ts-heuristic";
-  }
-  if (extension === ".py") {
-    return "python-heuristic";
-  }
-  return "line-only";
 }
 
 export function shouldExcludeRelativePath(relative: string): boolean {

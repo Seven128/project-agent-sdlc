@@ -2,6 +2,7 @@ import {
   appendContextManifestBlock,
   type ManifestContextBlockInput,
 } from "../context-mutation/manifest-lossless-patch.js";
+import { assertSupportedSchema } from "../schema-guard.js";
 import {
   captureMutationFileState,
   mutationFileStateFromBytes,
@@ -45,6 +46,8 @@ const MANIFEST_PATH = "project_context/context.toml";
 export async function registerContext(
   input: ContextRegisterInput,
 ): Promise<ContextRegisterResult> {
+  if (input.apply)
+    await assertSupportedSchema(input.project_root, "context register");
   const planned = await planContextRegistration(input);
   if (!input.apply) return planned.result;
   try {

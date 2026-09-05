@@ -1,13 +1,10 @@
 core:
   package: project-tiny-context-harness
-  schema_version: "4"
+  schema_version: "5"
 managed_files:
   - path: AGENTS.md
     strategy: merge-block
-  - path: .codex/skills
-    strategy: managed
 never_overwrite:
   - project_context/**
   - src/**
   - tests/**
-

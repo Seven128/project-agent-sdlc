@@ -23,18 +23,7 @@ export function renderContextInspectText(result: ContextInspectResult): string {
   lines.push(
     `stable_key_declarations=${result.stable_key_declarations.length} conflicts=${result.stable_key_conflicts.length}`,
   );
-  if (result.route) {
-    lines.push(
-      `route complete=${result.route.complete} catalog_valid=${result.route.catalog_valid} selected=${result.route.selected}`,
-    );
-    if (result.route.candidate)
-      for (const reason of result.route.candidate.reasons)
-        lines.push(`  ${reason.kind}: ${reason.input} — ${reason.detail}`);
-    else
-      lines.push(
-        "  no path, trigger, bounded literal or manual selection reason matched this Context",
-      );
-  }
+
   for (const diagnostic of result.diagnostics)
     lines.push(
       `${diagnostic.severity}: ${diagnostic.code}: ${diagnostic.message}`,

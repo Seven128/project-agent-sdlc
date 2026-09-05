@@ -56,23 +56,41 @@ export async function validateCatalogManifest(
     diagnostics.push(catalogDiagnostic(code, "warning", message, location));
   };
 
-  if (manifest.areas.length === 0) {
-    addError(
-      "manifest_area_missing",
-      "project_context/context.toml must declare at least one [[areas]] entry",
-    );
-  }
-
   const areaIds = new Map<string, string>();
   const registeredPaths = new Set<string>();
   const filesByPath = new Map(contextFiles.map((file) => [file.path, file]));
   const registeredPathSpellings = new Map<string, string>();
   const registeredPathCases = new Map<string, string>();
   const defaultAreas = manifest.areas.filter((area) => area.default);
-  if (manifest.areas.length > 0 && defaultAreas.length !== 1) {
+  if (defaultAreas.length > 1) {
     addError(
       "manifest_default_area_count",
-      `project_context/context.toml must mark exactly one [[areas]] entry with default = true; found ${defaultAreas.length}`,
+      `project_context/context.toml may mark at most one [[areas]] entry with default = true; found ${defaultAreas.length}`,
+    );
+  }
+
+  const directDefaults = new Set<string>();
+  for (const file of [
+    "project_context/global.md",
+    ...(manifest.default_files ?? []),
+  ]) {
+    const key = normalizeContextPath(file);
+    if (directDefaults.has(key))
+      addError(
+        "manifest_default_file_duplicate",
+        `Duplicate default file: ${file}`,
+      );
+    directDefaults.add(key);
+    await validateCatalogManifestPath(
+      projectRoot,
+      file,
+      path.join(projectRoot, "project_context"),
+      "default file",
+      true,
+      addError,
+      fileOverrides,
+      directoryOverrides,
+      filesByPath,
     );
   }
 

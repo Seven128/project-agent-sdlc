@@ -5,8 +5,6 @@ interface DoctorCommandOptions {
   strict: boolean;
   help: boolean;
   context_file_soft_budget_bytes: number;
-  long_line_code_points: number;
-  trigger_fanout_contexts: number;
 }
 
 export async function doctor(args: string[] = []): Promise<void> {
@@ -39,24 +37,14 @@ function parseDoctorArgs(args: string[]): DoctorCommandOptions {
     help: false,
     context_file_soft_budget_bytes:
       CONTEXT_DOCTOR_DEFAULTS.context_file_soft_budget_bytes,
-    long_line_code_points: CONTEXT_DOCTOR_DEFAULTS.long_line_code_points,
-    trigger_fanout_contexts: CONTEXT_DOCTOR_DEFAULTS.trigger_fanout_contexts,
   };
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === "--strict") options.strict = true;
     else if (argument === "--help" || argument === "-h") options.help = true;
-    else if (argument === "--max-line-length")
-      index = readPositiveInteger(args, index, argument, (value) => {
-        options.long_line_code_points = value;
-      });
     else if (argument === "--context-file-soft-budget")
       index = readPositiveInteger(args, index, argument, (value) => {
         options.context_file_soft_budget_bytes = value;
-      });
-    else if (argument === "--trigger-fanout-threshold")
-      index = readPositiveInteger(args, index, argument, (value) => {
-        options.trigger_fanout_contexts = value;
       });
     else throw new Error(`unknown doctor argument: ${argument}`);
   }
@@ -79,12 +67,5 @@ function readPositiveInteger(
 }
 
 function doctorHelp(): string {
-  return `ty-context doctor [--strict]
-  [--max-line-length <code-points>]
-  [--context-file-soft-budget <bytes>]
-  [--trigger-fanout-threshold <contexts>]
-
-All new size, line, fan-out, unregistered-file, explicit-link and stable-key
-findings are advisory by default. --strict is opt-in and exits nonzero when a
-warning exists; projects must adopt it explicitly before using it in CI.`;
+  return "ty-context doctor [--strict] [--context-file-soft-budget <bytes>]\nChecks installation, structural Context, default body sizes and observable root startup overrides. Size findings are advisory unless --strict is selected; this does not verify factual or product correctness.";
 }

@@ -58,12 +58,10 @@ test("default Context selection includes only core, default areas and default-ro
   assert.deepEqual(
     [...selected.keys()],
     [
-      "project_context/architecture.md",
-      "project_context/areas/main.md",
+        "project_context/areas/main.md",
       "project_context/areas/main/checks.md",
       "project_context/areas/main/verification.md",
-      "project_context/context.toml",
-      "project_context/global.md",
+        "project_context/global.md",
     ],
   );
   assert.deepEqual(
@@ -99,13 +97,11 @@ test("default Context projection uses canonical NFC keys and UTF-8 byte order in
   assert.deepEqual(
     [...selected.keys()],
     [
-      "project_context/architecture.md",
-      "project_context/areas/main.md",
+        "project_context/areas/main.md",
       "project_context/areas/main/Café.md",
       privateUse,
       supplementary,
-      "project_context/context.toml",
-      "project_context/global.md",
+        "project_context/global.md",
     ],
   );
   assert.ok(compareUtf8Paths(privateUse, supplementary) < 0);
@@ -337,10 +333,8 @@ test("repository-common defaults keep sparse workspace Context on-demand", () =>
   assert.deepEqual(
     [...selected.keys()],
     [
-      "project_context/architecture.md",
-      "project_context/areas/repository.md",
-      "project_context/context.toml",
-      "project_context/global.md",
+        "project_context/areas/repository.md",
+        "project_context/global.md",
     ],
   );
   assert.equal(
@@ -395,7 +389,7 @@ triggers = ["test"]
     );
 
     const report = await inspectDefaultContextFootprint(root);
-    assert.equal(report.files.length, 5);
+    assert.equal(report.files.length, 3);
     assert.equal(
       report.total_bytes,
       report.files.reduce((total, file) => total + file.bytes, 0),
@@ -473,9 +467,7 @@ test("source workspace keeps specialized role Context out of the default read pa
   assert.ok(report.total_bytes > 0);
   assert.deepEqual(report.duplicate_groups, []);
   for (const required of [
-    "project_context/context.toml",
     "project_context/global.md",
-    "project_context/architecture.md",
     "project_context/areas/harness-package.md",
   ])
     assert.ok(paths.includes(required), required);

@@ -58,6 +58,13 @@ export function replaceContextManifestPath(
   const owners: AST.TOMLStringValue[] = [];
   const children: AST.TOMLStringValue[] = [];
   for (const node of ast.body[0].body) {
+    if (node.type === "TOMLKeyValue" && staticKey(node) === "default_files") {
+      if (node.value.type !== "TOMLArray")
+        invalid("default_files_array_required");
+      for (const element of node.value.elements)
+        collectExactString(element, fromPath, children);
+      continue;
+    }
     if (
       node.type !== "TOMLTable" ||
       node.kind !== "array" ||
@@ -232,6 +239,12 @@ function manifestHasExactManifestPath(
   expected: string,
 ): boolean {
   for (const node of ast.body[0].body) {
+    if (
+      node.type === "TOMLKeyValue" &&
+      staticKey(node) === "default_files" &&
+      containsExactString(node.value, expected)
+    )
+      return true;
     if (
       node.type !== "TOMLTable" ||
       node.kind !== "array" ||

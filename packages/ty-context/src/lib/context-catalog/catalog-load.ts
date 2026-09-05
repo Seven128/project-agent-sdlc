@@ -3,6 +3,7 @@ import path from "node:path";
 import { CONTEXT_MANIFEST_PATH } from "../context-manifest.js";
 import { parseContextManifest } from "../context-manifest-schema.js";
 import { pathExists } from "../fs.js";
+import { rawSchemaVersion } from "../schema-guard.js";
 import { selectDefaultContextPaths } from "./catalog-default-footprint.js";
 import {
   catalogDiagnostic,
@@ -146,6 +147,25 @@ export async function loadContextCatalog(
   );
   addUnregisteredDiagnostics(diagnostics, unregisteredContextFiles);
 
+  let defaults = parsed.manifest;
+  try {
+    const version = await rawSchemaVersion(projectRoot);
+    if (version !== undefined && Number(version) < 5)
+      defaults = {
+        ...defaults,
+        default_files: [
+          ...new Set([
+            ...(defaults.default_files ?? []),
+            "project_context/architecture.md",
+          ]),
+        ],
+      };
+  } catch (error) {
+    diagnostics.push(
+      catalogDiagnostic("config_invalid", "error", String(error)),
+    );
+  }
+
   return {
     project_root: projectRoot,
     manifest_path: manifestPath,
@@ -157,7 +177,7 @@ export async function loadContextCatalog(
     ),
     context_files: contextFiles,
     unregistered_context_files: unregisteredContextFiles,
-    default_footprint: selectDefaultContextPaths(parsed.manifest),
+    default_footprint: selectDefaultContextPaths(defaults),
     roles_by_path: sortedContextMap(validation.roles_by_path),
     read_policies_by_path: sortedContextMap(validation.read_policies_by_path),
     diagnostics: sortCatalogDiagnostics(diagnostics),

@@ -1,4 +1,5 @@
 import { CLI_EXIT_CODES, CliCommandError } from "../cli-exit.js";
+import { assertSupportedSchema } from "../schema-guard.js";
 import { loadContextCatalog } from "../context-catalog/catalog-load.js";
 import { normalizeContextPath } from "../context-catalog/catalog-paths.js";
 import {
@@ -18,6 +19,7 @@ import { publishContextScaffold } from "./context-create-write.js";
 export async function createContextScaffold(
   input: ContextCreateInput,
 ): Promise<ContextCreateResult> {
+  await assertSupportedSchema(input.project_root, "context create");
   const contextPath = normalizeContextCreatePath(input.context_path);
   const role = normalizeContextRole(input.role);
   if (!role)

@@ -1,3 +1,4 @@
+default_files = ["project_context/architecture.md"]
 # Context graph for the Minimal Context sample repository.
 
 [[areas]]

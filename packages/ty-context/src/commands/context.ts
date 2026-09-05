@@ -4,6 +4,7 @@ import { contextInspect } from "./context-inspect.js";
 import { contextMove } from "./context-move.js";
 import { contextRegister } from "./context-register.js";
 import { contextTransaction } from "./context-transaction.js";
+import { contextList } from "./context-list.js";
 
 export async function context(args: string[]): Promise<void> {
   const [subcommand = "help", ...rest] = args;
@@ -12,6 +13,7 @@ export async function context(args: string[]): Promise<void> {
     return;
   }
   if (subcommand === "create") return contextCreate(rest);
+  if (subcommand === "list") return contextList(rest);
   if (subcommand === "inspect") return contextInspect(rest);
   if (subcommand === "move") return contextMove(rest);
   if (subcommand === "register") return contextRegister(rest);
@@ -24,6 +26,7 @@ export async function context(args: string[]): Promise<void> {
 
 function contextHelp(): string {
   return `ty-context context commands:
+  context list --default [--json]
   context create --path <project_context/file.md> --role <role> [--format text|json]
   context inspect <project_context/file.md> [options]
   context move --from <project_context/file.md> --to <project_context/file.md> [--apply]

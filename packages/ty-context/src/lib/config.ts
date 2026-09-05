@@ -1,9 +1,11 @@
 import path from "node:path";
 import { CANONICAL_CORE_PACKAGE, CURRENT_SCHEMA_VERSION } from "./constants.js";
-import type { HarnessConfig, HarnessProfile } from "./types.js";
-import { harnessConfigPath, harnessPath, harnessRoot } from "./harness-root.js";
+import type { HarnessConfig } from "./types.js";
+import { harnessConfigPath, harnessRoot } from "./harness-root.js";
 import { pathExists, readText, writeTextIfChanged } from "./fs.js";
 import { parseYaml, stringifyYaml } from "./yaml.js";
+import { captureMutationFileState } from "./context-mutation/mutation-file-state.js";
+import { writeMaintenanceText } from "./maintenance-write.js";
 
 export function defaultConfig(root: string): HarnessConfig {
   return {
@@ -11,28 +13,7 @@ export function defaultConfig(root: string): HarnessConfig {
       package: CANONICAL_CORE_PACKAGE,
       schema_version: CURRENT_SCHEMA_VERSION,
     },
-    profiles: {
-      enabled: ["core-portable", "workflow-default"],
-    },
-    modularity: {
-      limit: 300,
-      policy: "strict_except_generated",
-    },
-    managed_files: [
-      { path: "AGENTS.md", strategy: "merge-block" },
-      { path: "Makefile", strategy: "merge-block" },
-      { path: harnessPath(root, "skills"), strategy: "managed" },
-      {
-        path: harnessPath(root, "ty-context-managed", "context_templates"),
-        strategy: "managed",
-      },
-      {
-        path: harnessPath(root, "ty-context-managed", "make", "ty-context.mk"),
-        strategy: "managed",
-      },
-      { path: "tools", strategy: "managed" },
-      { path: ".github/workflows/harness.yml", strategy: "create-if-missing" },
-    ],
+    managed_files: [{ path: "AGENTS.md", strategy: "merge-block" }],
     never_overwrite: ["project_context/**", "DESIGN.md", "src/**", "tests/**"],
   };
 }
@@ -56,14 +37,17 @@ export async function writeConfigIfMissing(
   projectRoot: string,
 ): Promise<boolean> {
   const root = await harnessRoot(projectRoot);
-  const configPath = path.join(
-    projectRoot,
-    await harnessConfigPath(projectRoot),
-  );
-  if (await pathExists(configPath)) {
+  const configPath = await harnessConfigPath(projectRoot);
+  const before = await captureMutationFileState(projectRoot, configPath);
+  if (before.exists) {
     return false;
   }
-  await writeTextIfChanged(configPath, stringifyYaml(defaultConfig(root)));
+  await writeMaintenanceText(
+    projectRoot,
+    configPath,
+    stringifyYaml(defaultConfig(root)),
+    before,
+  );
   return true;
 }
 
@@ -71,6 +55,15 @@ export function normalizeConfig(
   value: Partial<HarnessConfig>,
   root = ".agent",
 ): HarnessConfig {
+  if (!value || typeof value !== "object" || Array.isArray(value))
+    throw new Error("invalid harness config object");
+  if (
+    String(value.core?.schema_version) === CURRENT_SCHEMA_VERSION &&
+    ("profiles" in value || "modularity" in value)
+  )
+    throw new Error(
+      "retired_config_fields: schema 5 does not support profiles or modularity; preserve the file and reconcile changes from old CLI use",
+    );
   const fallback = defaultConfig(root);
   return {
     core: {
@@ -78,30 +71,7 @@ export function normalizeConfig(
       schema_version:
         value.core?.schema_version ?? fallback.core.schema_version,
     },
-    profiles: {
-      enabled: normalizeProfiles(value.profiles?.enabled),
-    },
-    modularity: value.modularity,
     managed_files: value.managed_files ?? fallback.managed_files,
     never_overwrite: value.never_overwrite ?? fallback.never_overwrite,
   };
-}
-
-const VALID_PROFILES = new Set<HarnessProfile>([
-  "core-portable",
-  "workflow-default",
-  "long-task",
-]);
-
-function normalizeProfiles(
-  value: HarnessProfile[] | undefined,
-): HarnessProfile[] {
-  const source = value ?? ["core-portable", "workflow-default"];
-  const enabled = source.filter((profile): profile is HarnessProfile =>
-    VALID_PROFILES.has(profile),
-  );
-  for (const required of ["core-portable", "workflow-default"] as const) {
-    if (!enabled.includes(required)) enabled.push(required);
-  }
-  return [...new Set(enabled)];
 }

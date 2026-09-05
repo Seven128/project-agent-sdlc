@@ -3,30 +3,8 @@ export interface HarnessConfig {
     package: string;
     schema_version: string;
   };
-  profiles: {
-    enabled: HarnessProfile[];
-  };
-  modularity?: HarnessModularityConfig;
   managed_files: ManagedFile[];
   never_overwrite: string[];
-}
-
-export type HarnessProfile = "core-portable" | "workflow-default" | "long-task";
-
-export interface HarnessModularityConfig {
-  limit?: number;
-  policy?: "scoped_waivers" | "strict_except_generated";
-  waivers?: ModularityWaiverConfig[];
-}
-
-export interface ModularityWaiverConfig {
-  path?: string;
-  category?: string;
-  owner?: string;
-  introduced_at?: string;
-  reason?: string;
-  tracking_issue?: string;
-  expiry_condition?: string;
 }
 
 export interface ManagedFile {

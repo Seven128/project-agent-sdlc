@@ -14,7 +14,7 @@ import {
 const repository = fileURLToPath(new URL("../..", import.meta.url));
 const cli = path.join(repository, "packages", "ty-context", "dist", "cli.js");
 
-test("context inspect reports owner metadata, default membership, backlinks, stable keys and Router reasons", async () => {
+test("context inspect reports owner metadata, default membership, backlinks and stable keys", async () => {
   const target = "project_context/areas/main/weather.md";
   const manifest = `${baseManifest()}\n[[context]]
 path = "${target}"
@@ -40,7 +40,6 @@ Durable weather map rules.
     const result = await inspectContext({
       project_root: root,
       context_path: target,
-      route_task: "修改天气地图",
     });
     assert.equal(result.schema_version, 1);
     assert.equal(result.registration, "registered");
@@ -60,20 +59,7 @@ Durable weather map rules.
     );
     assert.equal(result.stable_key_declarations.length, 1);
     assert.equal(result.stable_key_conflicts.length, 1);
-    assert.equal(result.route?.selected, true);
-    assert.ok(
-      result.route?.candidate?.reasons.some(
-        (reason) => reason.kind === "trigger" && reason.input === "天气地图",
-      ),
-    );
-
-    const missed = await inspectContext({
-      project_root: root,
-      context_path: target,
-      route_task: "unrelated task",
-      route_case_sensitive: true,
-    });
-    assert.equal(missed.route?.selected, false);
+    assert.equal("route" in result, false);
   } finally {
     await rm(root, { recursive: true, force: true });
   }
@@ -99,7 +85,7 @@ test("context inspect supports unregistered files and produces byte-stable JSON"
     const result = JSON.parse(first.stdout);
     assert.equal(result.registration, "unregistered");
     assert.equal(result.role, null);
-    assert.equal(result.route, null);
+    assert.equal("route" in result, false);
     assert.ok(
       result.diagnostics.some(
         (entry) => entry.code === "context_file_unregistered",
@@ -192,7 +178,7 @@ read_policy = "on-demand"
         (warning) =>
           warning.includes(canonicalSource) && warning.includes("missing"),
       ).length,
-      2,
+      0,
     );
   } finally {
     await rm(root, { recursive: true, force: true });

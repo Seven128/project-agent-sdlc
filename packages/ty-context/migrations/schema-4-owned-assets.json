@@ -1,0 +1,170 @@
+{
+  "baseline": "8cf2391295cbec271f148dc44f074bedeea767b5",
+  "package_version": "0.11.0",
+  "files": [
+    {
+      "path": ".codex/agents/long-task-implementation.toml",
+      "sha256": "dd6f0f29ca9f452e1fcf934f9ec472a6ca4fd66a6f3be53c42823fdcb5f2aa7d"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/architecture.md",
+      "sha256": "05727cd0b4f2308811be59936798ac9322cc8f1009e95e99705c679d72b1ba0c"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/area.md",
+      "sha256": "64d2bf9eaaf8bed1bda4db5567172afca19298cd6579243a423d56b31214335b"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/context.toml",
+      "sha256": "1a1c49d3613fd8e7b993460cca56a2f3d9239c536ef726e88c8051b177706929"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/deployment.md",
+      "sha256": "d9977aae6b344b9dbee1df36909af6013f4569652c303758ce3ccb559a29faa4"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/global.md",
+      "sha256": "af1356447e9697408fe0d42c0a060cd9f8d89d00ffde3c29b11bdef97247e193"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/product-surface-contract.md",
+      "sha256": "475f7f82c383f8a0bc76480d95fb72774107b42f6f478b589bb1fc8863a32bca"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/screen-contract.md",
+      "sha256": "9470eabe4c7ee9982c2eb4d8cc21d2b9ecc3cc286249435c1e0a24bb0a85be06"
+    },
+    {
+      "path": "{root}/ty-context-managed/context_templates/verification.md",
+      "sha256": "290e1f7d0b3624906771d12a8b79933fd2faf143a51749787c063aa3e5893208"
+    },
+    {
+      "path": ".github/workflows/harness.yml",
+      "sha256": "c640ae4ab1eb4573277771f2560c5bac1637deba50ce6a44ce1888afe96139ae"
+    },
+    {
+      "path": "{root}/ty-context-managed/make/ty-context.mk",
+      "sha256": "97f3051e953ef06ab379c75f77931dea9887e55ae0eb5e9e6938de7b43cab14b"
+    },
+    {
+      "path": "{root}/skills/context_development_engineer/references/engineering-design-reasoning.md",
+      "sha256": "ff86970f6a43458c0f1373cbc42f2bbe97d5d41e49b82a865cf30f1a0c90789e"
+    },
+    {
+      "path": "{root}/skills/context_development_engineer/SKILL.md",
+      "sha256": "a4c52f9244f6c5df22c968e9712abe35b3c121013b9e9f647ee8aa91c327e9d0"
+    },
+    {
+      "path": "{root}/skills/context_full_project_export/SKILL.md",
+      "sha256": "dc4af5730e54bdac26c64999b3370f7cb688bb33270f3f1580c0015200ac0f5d"
+    },
+    {
+      "path": "{root}/skills/context_harness_upgrade/SKILL.md",
+      "sha256": "67ab784c021bb2a015781e5567f5c010531b6dfd4d58f7fa162a36650b9d5fc5"
+    },
+    {
+      "path": "{root}/skills/context_product_plan/SKILL.md",
+      "sha256": "f31e6fbfd5c1d7f1a6b83d0dfdab8c80d364ead3d028fd190dcc2d29d5ccdf75"
+    },
+    {
+      "path": "{root}/skills/context_surface_contract/SKILL.md",
+      "sha256": "b159b7c4674fec3194e7835bc0393dc4eb8946fc5721253798482f69bd9a9e87"
+    },
+    {
+      "path": "{root}/skills/context_uiux_design/references/task-uiux-analysis.md",
+      "sha256": "4e5806a1c2d47163a8f9bf964f0c9e0ddb5793efe3732e79cfb69d85037bf1b4"
+    },
+    {
+      "path": "{root}/skills/context_uiux_design/SKILL.md",
+      "sha256": "dabf9f98c7b0990f2e42d45549a15c7852597fd14b56e7fd6122a0d7ff230d5f"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/authority-delta-assessment.md",
+      "sha256": "d68b9d478ac6e0563384073a76f39624705138e7e036daf3429e180408e848d5"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/downstream-handoff.md",
+      "sha256": "019c691b4fe01adf7f8a81b784c51f209fc0cf975fd491ee876dfd98a4fa78e2"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/formal-selected-web-app-handoff.md",
+      "sha256": "b436e4b555e206248d5d93072c85bb2336adb80a9e75b4af30d41793c5252005"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/implementation-feasibility.md",
+      "sha256": "6a9af7a54c42bd173a483a1c45a6681338cd9af521f76c8ea4f8b0cfa8b41dce"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/open-design-provider.md",
+      "sha256": "cb5feb506d71c551ae07bd7340b95bdb1e52224ab9161ce9da1793dbe6dd7613"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/recovery-and-writeback.md",
+      "sha256": "524cd13e0d5b94e784b596b7f2985479dac8760d000c72424ef0028ead32578c"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/references/resource-selection.md",
+      "sha256": "b1690e2992d4a8eaf92d3ede8de94161cc96fdd6a252545aaae13ec0bf8762c8"
+    },
+    {
+      "path": "{root}/skills/design-resource-authoring/SKILL.md",
+      "sha256": "555523161ee6095f8a387e31a9b54af5205490537397a256a67d6366ffa770b2"
+    },
+    {
+      "path": "{root}/skills/design-system-authoring/agents/openai.yaml",
+      "sha256": "a562fd7aaf1e7e329bb2dcf7ce4ba25aa815dc858cd63f069b61aa6307bafea5"
+    },
+    {
+      "path": "{root}/skills/design-system-authoring/references/authority-adoption.md",
+      "sha256": "4bdd35e2775ddc0289de93a811febb53b25716e55dc9e44c590725afb22d170f"
+    },
+    {
+      "path": "{root}/skills/design-system-authoring/references/open-design-design-system-provider.md",
+      "sha256": "621d633ab76b375a08dd02e07e39e16de18c67bfb81839a184a379e0a4968845"
+    },
+    {
+      "path": "{root}/skills/design-system-authoring/references/showcase-projection.md",
+      "sha256": "93d58db1088e9926397c8c6327509dec3ecced212a52164f1597aa9bca2e2cd8"
+    },
+    {
+      "path": "{root}/skills/design-system-authoring/references/system-design-reasoning.md",
+      "sha256": "22574a6c773c0ad53194db43439ced2b42e16c3906bcd9cfd2a4174d5494b5bf"
+    },
+    {
+      "path": "{root}/skills/design-system-authoring/SKILL.md",
+      "sha256": "0e2473636ae12646da3a28f4c44fbd0efabd22de9c2a5564779624c257dbb088"
+    },
+    {
+      "path": "{root}/skills/long-task-workflow/agents/openai.yaml",
+      "sha256": "f3458a75b27013d2ce3a0875a667cd89304313047375ece3ba90e36ac5440d06"
+    },
+    {
+      "path": "{root}/skills/long-task-workflow/references/authority-lifecycle.md",
+      "sha256": "065e36fb60b326ad81e512e92ce0215ac52332021c8df29fbcb4241e23666350"
+    },
+    {
+      "path": "{root}/skills/long-task-workflow/references/contract-authoring.md",
+      "sha256": "ee490c8335b4eae04359470bb12f3f65cfa6dd21cbab65dc5ce067d7029cf84e"
+    },
+    {
+      "path": "{root}/skills/long-task-workflow/references/evidence-design.md",
+      "sha256": "02b517ecdad4edda75154f1e1b2beac39a0a5b5767a564ab473bf466b638adc6"
+    },
+    {
+      "path": "{root}/skills/long-task-workflow/references/source-authoring.md",
+      "sha256": "d85ae52d44ba48ffcaf1026814755e41b0f5a4a348cfe2f9f819e847fad450c0"
+    },
+    {
+      "path": "{root}/skills/long-task-workflow/SKILL.md",
+      "sha256": "92055aa78371f4649b1a59b7e7c069ea845cdcce23da580e3db4cb86cfb1320a"
+    },
+    {
+      "path": "tools/context_rules.json",
+      "sha256": "1c373fcb5510f6c38a772b638fe01a8b8e96b2230540a1514811819e90b01086"
+    },
+    {
+      "path": "tools/validate_context.py",
+      "sha256": "a263a6a911a7a51e7387184061d6a166e620313f12e7e55d3813b8322aad96ad"
+    }
+  ]
+}

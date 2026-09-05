@@ -137,7 +137,7 @@ test("concurrent creators use no-replace publication and exactly one complete Ro
     await rm(root, { recursive: true, force: true });
   }
 });
-test("context create rejects registered targets and its scaffold cannot satisfy recoverability", async () => {
+test("context create rejects registered targets and TODO scaffolds remain structurally valid", async () => {
   const registeredPath = "project_context/areas/main/registered.md";
   const registered = await createContextProject({
     manifest: `${baseManifest()}\n[[context]]\npath = "${registeredPath}"\nrole = "domain"\nread_policy = "on-demand"\n`,
@@ -165,11 +165,7 @@ test("context create rejects registered targets and its scaffold cannot satisfy 
       "utf8",
     );
     const validation = runCli(root, ["validate-context"]);
-    assert.equal(validation.status, 1);
-    assert.match(
-      `${validation.stdout}\n${validation.stderr}`,
-      /cannot be only TODO or placeholder text/u,
-    );
+    assert.equal(validation.status, 0, validation.stderr);
   } finally {
     await rm(registered, { recursive: true, force: true });
     await rm(root, { recursive: true, force: true });

@@ -8,6 +8,34 @@ export interface SafeRepositoryPath {
   relative: string;
 }
 
+/** Canonical, literal local file locator; this does not establish file existence. */
+export function normalizeRepositoryFile(
+  value: string,
+  label = "repository_file",
+): string {
+  if (/[\0\r\n\t]/u.test(value))
+    throw new Error(`unsafe_path:${label}:control_character`);
+  const slashed = value.replace(/\\/gu, "/");
+  const normalized = slashed.startsWith("./") ? slashed.slice(2) : slashed;
+  if (
+    !normalized ||
+    path.posix.isAbsolute(normalized) ||
+    normalized.startsWith("//") ||
+    /^[A-Za-z]:/u.test(normalized)
+  )
+    throw new Error(`unsafe_path:${label}:${value}`);
+  const segments = normalized.split("/");
+  if (segments.some((segment) => !segment) || segments.includes(".."))
+    throw new Error(`unsafe_path:${label}:${value}`);
+  if (segments.includes("."))
+    throw new Error(
+      `non_canonical_repository_path_dot_segment:${label}:${value}`,
+    );
+  if (/[*?\[\]{}]/u.test(normalized))
+    throw new Error(`unsupported_repository_path_syntax:${label}:${value}`);
+  return normalized;
+}
+
 export function resolveInsideRepository(
   rootInput: string,
   relativeInput: string,

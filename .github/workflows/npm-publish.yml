@@ -1,202 +1,64 @@
 name: npm Trusted Publish
-
 on:
   workflow_dispatch:
     inputs:
       expected_version:
-        description: "Must match packages/ty-context/package.json version."
+        description: Must match the package version.
         required: true
-        default: "0.11.0"
+        default: '0.12.0'
       dry_run:
-        description: "Optional prepare-only diagnostic; false prepares once and publishes the same artifact."
+        description: Prepare and test without publishing.
         required: true
         type: boolean
         default: true
-
 permissions:
   contents: read
-
 jobs:
-  windows-level4-runtime:
-    runs-on: windows-latest
+  verify:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: "24"
-          cache: "npm"
-      - name: Install dependencies
-        run: npm ci
-      - name: Build package once
-        run: npm run build --workspace project-tiny-context-harness
-      - name: Verify Windows Level 4 runtime boundaries
-        run: node --test --test-concurrency=1 tests/ty-context/long-task-level4-acquisition.test.mjs tests/ty-context/long-task-level4-package-promotion.test.mjs
-      - name: Verify Windows finalization tree settlement
-        run: node tools/run_required_critical_sentinel.mjs long-task-trust windows-finalization-tree-settlement
-      - name: Complete Windows Long-Task package suite
-        env:
-          TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/windows
-        run: npm run test:long-task-workflow:built --workspace project-tiny-context-harness --ignore-scripts
-      - name: Upload Windows Long-Task timing
-        if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: windows-long-task-timing-publish-${{ github.run_id }}-${{ github.run_attempt }}
-          path: .artifacts/test-timing/windows/*.json
-          if-no-files-found: error
-          retention-days: 14
-
-  prepare:
-    needs: windows-level4-runtime
-    runs-on: ubuntu-latest
-    outputs:
-      filename: ${{ steps.release-artifact.outputs.filename }}
-    steps:
-      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
-        with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Ensure npm supports trusted publishing
-        run: |
-          npm install -g npm@12.0.1
-          npm --version
-          node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim(); if (v !== '12.0.1') throw new Error('npm CLI 12.0.1 is required for this release workflow');"
-
-      - name: Check package version
-        shell: bash
-        run: |
-          PACKAGE_VERSION="$(node -p "require('./packages/ty-context/package.json').version")"
-          if [ "$PACKAGE_VERSION" != "${{ inputs.expected_version }}" ]; then
-            echo "Expected ${{ inputs.expected_version }} but package is $PACKAGE_VERSION" >&2
-            exit 1
-          fi
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Check TypeScript formatting
-        run: npm run format:check
-
-      - name: Build package
-        run: npm run build --workspace project-tiny-context-harness
-
-      - name: Typecheck package
-        run: npm run typecheck --workspace project-tiny-context-harness
-
-      - name: Validate modularity waiver lifecycle
-        run: node packages/ty-context/dist/cli.js check-modularity --config-only --fail-on-warning
-
-      - name: Complete package tests
-        env:
-          TY_CONTEXT_TEST_TIMING_DIR: .artifacts/test-timing/publish
-          TY_CONTEXT_TEST_SUITE_BUDGET_PROFILE: github-ubuntu-v5
-        run: npm test --workspace project-tiny-context-harness
-
-      - name: Upload package test timing
-        if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: package-test-timing-publish-${{ github.run_id }}
-          path: .artifacts/test-timing/publish/*.json
-          if-no-files-found: ignore
-          retention-days: 14
-          overwrite: true
-
-      - name: Check release version surfaces
-        run: npm run release:check-version
-
-      - name: Check package canonical source drift
-        run: node packages/ty-context/dist/cli.js package check-source
-
-      - name: Validate Context and touched-source modularity
-        run: make validate-harness
-
-      - name: Quickstart smoke
-        run: node tools/quickstart_smoke.mjs
-
-      - name: Pack once and bind the release artifact
-        id: release-artifact
-        shell: bash
-        run: |
-          mkdir -p .artifacts/releases/prepared
-          npm pack --json --workspace project-tiny-context-harness --pack-destination .artifacts/releases/prepared > .artifacts/releases/prepared/pack-result.json
-          node tools/workflow_release_artifact.mjs \
-            --version "${{ inputs.expected_version }}" \
-            --dry-run "true" \
-            --source-commit "${{ github.sha }}" \
-            --pack-json .artifacts/releases/prepared/pack-result.json \
-            --tarball-dir .artifacts/releases/prepared \
-            --result .artifacts/releases/prepared/workflow-release-artifact.json
-          FILENAME="$(node -p "require('./.artifacts/releases/prepared/workflow-release-artifact.json').filename")"
-          echo "filename=$FILENAME" >> "$GITHUB_OUTPUT"
-
-      - name: Install and test the exact packed tarball
-        run: node tools/release_tarball_smoke.mjs --tarball ".artifacts/releases/prepared/${{ steps.release-artifact.outputs.filename }}"
-
-      - name: Upload the verified release artifact
-        id: upload-release-artifact
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
-        with:
-          name: npm-release-${{ github.run_id }}
-          path: |
-            .artifacts/releases/prepared/${{ steps.release-artifact.outputs.filename }}
-            .artifacts/releases/prepared/workflow-release-artifact.json
-          if-no-files-found: error
-          retention-days: 7
-          overwrite: true
-
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - run: node packages/ty-context/dist/cli.js package check-source
   publish:
-    if: ${{ !inputs.dry_run }}
-    needs: prepare
+    needs: verify
     runs-on: ubuntu-latest
     environment: npm-publish
     permissions:
-      contents: write
+      contents: read
       id-token: write
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
-
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
         with:
-          node-version: "24"
-          registry-url: "https://registry.npmjs.org"
-
-      - name: Ensure npm supports trusted publishing
-        run: |
-          npm install -g npm@12.0.1
-          npm --version
-          node -e "const v=require('child_process').execFileSync('npm',['--version'],{encoding:'utf8'}).trim(); if (v !== '12.0.1') throw new Error('npm CLI 12.0.1 is required for this release workflow');"
-
-      - name: Download the verified release artifact
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - run: npm ci
+      - name: Check requested version
+        env:
+          EXPECTED_VERSION: ${{ inputs.expected_version }}
+        run: node -e "if(require('./packages/ty-context/package.json').version !== process.env.EXPECTED_VERSION) throw Error('version mismatch')"
+      - run: npm run build
+      - name: Pack and verify the exact artifact
+        run: node tools/prepare_release.mjs
+      - uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f # v7.0.0
         with:
-          name: npm-release-${{ github.run_id }}
-          path: .artifacts/releases/prepared
-
-      - name: Verify the prepared artifact handoff
-        run: |
-          node tools/verify_workflow_release_artifact.mjs \
-            --version "${{ inputs.expected_version }}" \
-            --source-commit "${{ github.sha }}" \
-            --attestation .artifacts/releases/prepared/workflow-release-artifact.json \
-            --tarball ".artifacts/releases/prepared/${{ needs.prepare.outputs.filename }}"
-
-      - name: Publish or verify the exact package artifact
-        env:
-          NPM_CONFIG_PROVENANCE: "true"
-        run: |
-          node tools/publish_prepared_artifact.mjs \
-            --version "${{ inputs.expected_version }}" \
-            --tarball ".artifacts/releases/prepared/${{ needs.prepare.outputs.filename }}"
-
-      - name: Create or update GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: node tools/github_release_publish.mjs --version "${{ inputs.expected_version }}" --target "${{ github.sha }}"
+          name: npm-package-${{ github.run_id }}
+          path: .artifacts/releases/*.tgz
+          if-no-files-found: error
+      - name: Publish the tested tarball
+        if: ${{ !inputs.dry_run }}
+        run: npm publish "$TINY_CONTEXT_TARBALL" --access public --provenance

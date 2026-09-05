@@ -1,6 +1,0 @@
-interface:
-  display_name: "Design System Authoring"
-  short_description: "Generate and adopt a project design system"
-  default_prompt: "Use $design-system-authoring to generate, select, and adopt an Open Design design system for this project."
-policy:
-  allow_implicit_invocation: false

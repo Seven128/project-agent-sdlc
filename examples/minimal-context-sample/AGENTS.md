@@ -19,3 +19,19 @@ Read the relevant Context before changing sample code. If a change creates a dur
 - `npm test`
 - `npm run validate-context`
 
+<!-- ty-context:managed:begin -->
+# Tiny Context development contract
+
+Tiny Context preserves durable project facts and this short development contract. It does not manage tasks or certify product completion.
+
+- Understand the user's requirements, default Context and relevant owners. Use clear source material directly; clarify real gaps without manufacturing plans, design documents or handoffs.
+- Start with `project_context/global.md` and project-declared defaults. `ty-context context list --default` is optional. Without the CLI, read the manifest directly: default Areas, `read_policy = "default"` nodes and their transitive `default_children`; `default_files` selects files without traversing their children. Pre-schema-5 projects also default to architecture.md. Do not install a CLI over the network merely to read files, or repeat unchanged reads. A failed query is not an empty set: resolve uncertainties material to the current change and report the remainder.
+- Follow relevant dependencies to additional Context. Reading other workspaces does not authorize editing them. Stay within the user's scope, preserve unrelated changes and respect project business, technical and safety constraints. Distinguish requirements from current implementation; do not rewrite requirements to conceal conflicts.
+- Choose implementation order, tools, decomposition and parallelism as appropriate. Reuse suitable existing owners, components and mature capabilities. Avoid unnecessary abstraction and complete the required change.
+- UI may be implemented and iterated directly from conversation, references and code. Reuse confirmed direction and shared components, inspect real results and fix concrete problems. An independent design system or formal handoff is not a prerequisite; existing user design decisions still apply.
+- Choose checks based on requirements, risk and project rules. Reuse existing tests, add meaningful regressions when needed and observe actual outputs. Derive expectations from requirements rather than copying implementation. Repair failures and rerun affected checks after relevant input changes; do not repeatedly broaden checks without a new change, failure or specific concern.
+- Update the owning Context only when durable project facts change. Keep project-specific goals, boundaries, confirmed decisions, reasons and useful entrypoints; reference exact values rather than duplicating code. Optional cross-session handoff information stays task-local, outside durable Context.
+- Report implementation, actual checks and material unresolved items honestly. Explain unverified scope and necessary human action. Historical results, tool success and subagent summaries do not establish current product correctness.
+
+This contract applies to authorized implementation, including code, configuration, tests, documents and resources. Reading, discussion and audit do not themselves authorize edits. User scope, host safety requirements and more specific valid project constraints take precedence. No role workflow, mandatory intermediate artifact, model checkpoint or machine acceptance Gate is required.
+<!-- ty-context:managed:end -->

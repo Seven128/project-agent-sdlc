@@ -6,7 +6,7 @@ import {
 } from "./catalog-paths.js";
 
 export type DefaultContextSelectionReason =
-  "core" | "default_area" | "default_role" | "default_child";
+  "core" | "default_file" | "default_area" | "default_role" | "default_child";
 
 // This is the advisory startup set only. It does not restrict later reads or
 // turn default Area/read-policy selection into a Context or edit permission.
@@ -21,13 +21,10 @@ export function selectDefaultContextPaths(
     selected.set(normalized, reasons);
   };
 
-  for (const core of [
-    "project_context/context.toml",
-    "project_context/global.md",
-    "project_context/architecture.md",
-  ]) {
-    add(core, "core");
-  }
+  add("project_context/global.md", "core");
+  // Direct selections do not seed child traversal. In particular, migration can
+  // preserve an implicit core file without activating its previously inert edges.
+  for (const file of manifest.default_files ?? []) add(file, "default_file");
 
   for (const area of manifest.areas) {
     if (area.default) add(area.context, "default_area");

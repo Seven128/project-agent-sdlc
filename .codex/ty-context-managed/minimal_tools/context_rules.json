@@ -1,5 +1,5 @@
 {
-  "context_schema_version": 4,
+  "context_schema_version": 5,
   "roles": [
     "global",
     "architecture",
@@ -31,6 +31,7 @@
     "never-default"
   ],
   "top_level_fields": [
+    "default_files",
     "areas",
     "context"
   ],
