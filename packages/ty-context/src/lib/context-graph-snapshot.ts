@@ -29,6 +29,7 @@ export interface ContextGraphSnapshot {
 export interface CapturedContextGraphSnapshot {
   snapshot: ContextGraphSnapshot;
   physical_files: ReadonlyMap<string, string>;
+  routing_files: string[];
 }
 
 export interface CampaignContextBaseline {
@@ -68,39 +69,31 @@ export async function captureContextGraphSnapshotWithPhysicalFiles(
   const allFiles = fileRecords.map((file) => file.path);
   const available = new Map(fileRecords.map((file) => [file.path, file]));
   const selected = new Set<string>();
+  const routingSelected = new Set<string>();
   const explicitlySelected = new Set<string>();
 
-  if (mode === "full") {
-    allFiles.forEach((file) => selected.add(file));
-    for (const contextRef of contextRefs) {
-      const normalized = normalizeRepoPath(contextRef);
-      if (!available.has(normalized)) {
-        throw new Error(`context_ref_invalid:${contextRef}`);
-      }
-      explicitlySelected.add(normalized);
+  for (const required of [
+    CONTEXT_MANIFEST_PATH,
+    "project_context/global.md",
+    "project_context/architecture.md",
+  ]) {
+    if (!available.has(required)) {
+      throw new Error(`context_snapshot_required_file_missing:${required}`);
     }
-  } else {
-    for (const required of [
-      CONTEXT_MANIFEST_PATH,
-      "project_context/global.md",
-      "project_context/architecture.md",
-    ]) {
-      if (!available.has(required)) {
-        throw new Error(`context_snapshot_required_file_missing:${required}`);
-      }
-      selected.add(required);
-      explicitlySelected.add(required);
-    }
-    for (const contextRef of contextRefs) {
-      const normalized = normalizeRepoPath(contextRef);
-      if (!available.has(normalized)) {
-        throw new Error(`context_ref_invalid:${contextRef}`);
-      }
-      selected.add(normalized);
-      explicitlySelected.add(normalized);
-    }
-    addTransitiveChildren(manifest, selected, new Set(available.keys()));
+    routingSelected.add(required);
+    explicitlySelected.add(required);
   }
+  for (const contextRef of contextRefs) {
+    const normalized = normalizeRepoPath(contextRef);
+    if (!available.has(normalized)) {
+      throw new Error(`context_ref_invalid:${contextRef}`);
+    }
+    routingSelected.add(normalized);
+    explicitlySelected.add(normalized);
+  }
+  addTransitiveChildren(manifest, routingSelected, new Set(available.keys()));
+  if (mode === "full") allFiles.forEach((file) => selected.add(file));
+  else routingSelected.forEach((file) => selected.add(file));
 
   const files = [...selected].sort(compareUtf8Paths);
   const authorityTopologySha256 = contextAuthorityTopologyHash(manifest, files);
@@ -135,6 +128,7 @@ export async function captureContextGraphSnapshotWithPhysicalFiles(
     physical_files: new Map(
       files.map((file) => [file, available.get(file)!.absolute_path]),
     ),
+    routing_files: [...routingSelected].sort(compareUtf8Paths),
   };
 }
 

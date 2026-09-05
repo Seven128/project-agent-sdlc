@@ -118,8 +118,21 @@ export async function inspectContextCatalogHealth(
     );
   }
   for (const declaration of markdown.invalid_declarations)
-    result.warnings.push(
+    result[
+      declaration.raw.includes("ty-context-controlling-source")
+        ? "errors"
+        : "warnings"
+    ].push(
       `${declaration.path}:${declaration.line} has invalid ty-context declaration ${JSON.stringify(declaration.raw)}: ${declaration.reason}`,
+    );
+  for (const declaration of markdown.controlling_sources)
+    if (declaration.status !== "valid")
+      result.errors.push(
+        `${declaration.source_path}:${declaration.line} has ${declaration.status.replaceAll("_", " ")} controlling Source ${JSON.stringify(declaration.target_path ?? declaration.declared_path)}${declaration.detail ? `: ${declaration.detail}` : ""}`,
+      );
+  for (const conflict of markdown.controlling_source_conflicts)
+    result.errors.push(
+      `controlling Source ${conflict.target_path} has ${conflict.kind.replaceAll("_", " ")} declarations: ${conflict.owners.map((owner) => `${owner.source_path}:${owner.line}:${owner.domain}`).join(", ")}`,
     );
   for (const conflict of markdown.declaration_conflicts)
     result.warnings.push(

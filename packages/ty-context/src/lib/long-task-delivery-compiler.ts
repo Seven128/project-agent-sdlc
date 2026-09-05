@@ -109,6 +109,8 @@ async function compileDeliveryContractLocked(
     sourceHashes,
     sourceItems,
     context,
+    validation.design_handoffs ?? [],
+    validation.semantic_fact_manifest,
   );
   const { previous, initial_task_base: initialTaskBase } =
     await prepareCompileWorkspaceGuard({

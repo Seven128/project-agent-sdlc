@@ -9,14 +9,29 @@ import type {
   ProductSemanticProjectionV2,
 } from "./long-task-delivery-types.js";
 import { normalizeContextAuthoritySnapshot } from "./long-task-context-authority.js";
+import {
+  projectDesignAuthorityMaterials,
+  type DesignAuthorityMaterialProjectionV2,
+} from "./long-task-design-authority-materials.js";
+import type { LongTaskDesignHandoffPreflight } from "./long-task-design-resource-handoff.js";
+import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 import { canonicalValueJson, sha256Hex } from "./strict-codec.js";
 
 export function computeAuthorityMaterials(
-  contract: Pick<DeliveryContractV2, "task" | "global" | "outcomes" | "stages">,
+  contract: DeliveryContractV2,
   sourceHashes: Record<string, string>,
   sourceItems: CompiledSourceItemV2[],
   contextSnapshot: ContextAuthoritySnapshotV2,
+  designHandoffs: readonly LongTaskDesignHandoffPreflight[] = [],
+  semanticFactManifest: SemanticFactManifestV1 | null = null,
 ): NextAuthorityMaterialsV2 {
+  const design = projectDesignAuthorityMaterials(
+    contract,
+    sourceHashes,
+    sourceItems,
+    designHandoffs,
+    semanticFactManifest,
+  );
   return {
     source_hashes: sortRecord(sourceHashes),
     source_items: [...sourceItems].sort((left, right) =>
@@ -25,6 +40,7 @@ export function computeAuthorityMaterials(
     context_snapshot: normalizeContextAuthoritySnapshot(contextSnapshot),
     product_semantics: projectProductSemantics(contract),
     global_semantics: projectGlobalSemantics(contract),
+    ...design,
   };
 }
 
@@ -36,15 +52,34 @@ export function compiledAuthorityMaterials(
       authority_materials?: NextAuthorityMaterialsV2;
     }
   ).authority_materials;
-  return (
-    stored ??
-    computeAuthorityMaterials(
-      compiled,
+  if (!stored) {
+    const compatibilityContract: DeliveryContractV2 = {
+      ...compiled,
+      schema_version: "long-task-delivery-v2",
+    };
+    return computeAuthorityMaterials(
+      compatibilityContract,
       compiled.source_hashes,
       compiled.source_items,
       compiled.context_snapshot,
-    )
-  );
+    );
+  }
+  const compatibility = stored as NextAuthorityMaterialsV2 &
+    Partial<DesignAuthorityMaterialProjectionV2>;
+  return {
+    ...stored,
+    design_semantics: compatibility.design_semantics ?? [],
+    design_implementation_bindings:
+      compatibility.design_implementation_bindings ?? [],
+    design_non_binding_contract_sha256:
+      compatibility.design_non_binding_contract_sha256 ?? hash(compiled),
+    design_non_binding_source_sha256:
+      compatibility.design_non_binding_source_sha256 ??
+      hash({
+        source_hashes: stored.source_hashes,
+        source_items: stored.source_items,
+      }),
+  };
 }
 
 export function authorityMaterialHashes(
@@ -55,6 +90,14 @@ export function authorityMaterialHashes(
     context_snapshot_sha256: hash(materials.context_snapshot),
     product_semantics_sha256: hash(materials.product_semantics),
     global_semantics_sha256: hash(materials.global_semantics),
+    design_semantics_sha256: hash(materials.design_semantics),
+    design_implementation_bindings_sha256: hash(
+      materials.design_implementation_bindings,
+    ),
+    design_non_binding_contract_sha256:
+      materials.design_non_binding_contract_sha256,
+    design_non_binding_source_sha256:
+      materials.design_non_binding_source_sha256,
   };
 }
 
@@ -150,12 +193,14 @@ export function projectProductSemantics(
           component_binding_refs: [...binding.component_binding_refs].sort(),
           design_targets: [...binding.design_targets]
             .sort(keyOrder)
-            .map((target) => ({
-              ...target,
-              source_paths: [...target.source_paths].sort(),
-              condition_keys: [...target.condition_keys].sort(),
-              claim_refs: [...target.claim_refs].sort(),
-            })),
+            .map((target) => {
+              const { source_paths: _sourcePaths, ...semanticTarget } = target;
+              return {
+                ...semanticTarget,
+                condition_keys: [...target.condition_keys].sort(),
+                claim_refs: [...target.claim_refs].sort(),
+              };
+            }),
           acceptance_blockers: [...binding.acceptance_blockers]
             .sort(keyOrder)
             .map((blocker) => ({

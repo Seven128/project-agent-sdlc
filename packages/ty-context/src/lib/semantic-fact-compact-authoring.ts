@@ -21,7 +21,8 @@ import { semanticCompactSharedStructureTargets } from "./semantic-fact-compact-s
 export function createSemanticFactCompactCarrier(
   manifestInput: SemanticFactManifestV1,
 ): Record<string, unknown> {
-  const manifest = normalizedMaterializedManifest(manifestInput);
+  const manifest =
+    normalizeSemanticFactManifestForCompactAuthoring(manifestInput);
   const inputRevisionsByFact = indexSemanticFactRevisionInputs(
     manifest.inputs as unknown as Record<string, unknown>[],
   );
@@ -177,7 +178,7 @@ function requiredFactRevision(
   return revision;
 }
 
-function normalizedMaterializedManifest(
+export function normalizeSemanticFactManifestForCompactAuthoring(
   input: SemanticFactManifestV1,
 ): SemanticFactManifestV1 {
   const manifest = structuredClone(input);

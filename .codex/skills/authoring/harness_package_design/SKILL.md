@@ -1,6 +1,6 @@
 ---
 name: harness_package_design
-description: Use only in this repository when changing Project Tiny Context Harness workflow rules, Minimal Context package distribution, source sync, validators, release automation, delivery benchmarks, or authoring overlay.
+description: Use only in this repository when changing Project Tiny Context Harness workflow rules, Minimal Context package distribution, source sync, validators, release automation, delivery benchmarks, authoring overlay, or the Long-Task mechanism's time, size, performance, total cost, simplification, optimization, or efficiency（包括长程任务机制过慢、耗时、体积、性能、成本、简化、优化、效率或防劣化）. Do not use merely because an ordinary consumer-project task is long, large, or slow.
 ---
 
 # Harness Package Design Authoring
@@ -8,6 +8,10 @@ description: Use only in this repository when changing Project Tiny Context Harn
 Maintain this repository as the source workspace for Project Tiny Context Harness. The product keeps `project_context/**` as the smallest durable project fact source, supplies the automatically applicable default Workflow Contract, and optionally supplies one Single-Goal Long-Task authority path. Harness maintains Context and workflow mechanisms; project code, tests, runtime evidence, CI and human acceptance prove product quality.
 
 This authoring Skill is repository-local. Never copy `.codex/skills/authoring/**` into consumer package assets. A rule that belongs in every consumer must reach its actual managed source, package asset, public guidance, Context and tests through the normal source-sync path.
+
+## Effect-first Long-Task mechanism checkpoint
+
+For every request to shorten, simplify or optimize the Long-Task mechanism, first freeze the reproducible incident and name the exact false-completion path that must stay closed. Before choosing by cost, enumerate the allowed solution set, must-allow controls, proof owner and current-final-snapshot check, select the structural comparator, and apply the Scope / Cost Drift Stop below. Preserve coverage, false-negative resistance, fail-closed Authority, semantic granularity and the admitted trust boundary first; when supported, prefer an existing compact or otherwise proof-equivalent representation over semantic deletion or a new control plane. This checkpoint governs changes to the Harness mechanism, not ordinary consumer implementation work that merely takes a long time.
 
 ## Always establish
 

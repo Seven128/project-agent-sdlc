@@ -29,7 +29,10 @@ import {
   validateDeliveryContractStructure,
 } from "./long-task-delivery-validation.js";
 import { validateRawExecutionObservationOwnership } from "./long-task-observation-ownership.js";
-import { validateLongTaskDesignResourceHandoffs } from "./long-task-design-resource-handoff.js";
+import {
+  validateLongTaskDesignResourceHandoffs,
+  type LongTaskDesignHandoffPreflight,
+} from "./long-task-design-resource-handoff.js";
 import { exactExternalDesignObligationRefs } from "./long-task-design-obligation.js";
 import { validateLongTaskSemanticFactClosure } from "./long-task-semantic-fact-closure.js";
 import {
@@ -59,6 +62,8 @@ import {
   captureWorkspaceManifest,
   repoRelative,
 } from "./long-task-workspace.js";
+import { captureLongTaskContextControllingSources } from "./long-task-context-controlling-source.js";
+import type { SemanticFactManifestV1 } from "./semantic-fact-types.js";
 
 export interface ActivationValidationResult {
   claims: CompiledClaimsV2 | null;
@@ -67,6 +72,8 @@ export interface ActivationValidationResult {
   source_items: CompiledSourceItemV2[] | null;
   context_snapshot: ContextAuthoritySnapshotV2 | null;
   project_design_authority: DesignAuthorityIdentityV1 | null;
+  design_handoffs: LongTaskDesignHandoffPreflight[] | null;
+  semantic_fact_manifest: SemanticFactManifestV1 | null;
   workspace: WorkspaceManifestV2 | null;
   global_checks: CompiledCheckV2[];
   outcomes: CompiledOutcomeV2[];
@@ -160,8 +167,13 @@ export async function validateContractForActivation(options: {
     ),
   );
   const context = contextCapture?.snapshot ?? null;
+  const controllingSources = contextCapture
+    ? await attempt(mode, diagnostics, () =>
+        captureLongTaskContextControllingSources(repository, contextCapture),
+      )
+    : null;
   const semanticFactClosure =
-    sourceItems && contextCapture
+    sourceItems && contextCapture && controllingSources
       ? await attempt(mode, diagnostics, () =>
           validateLongTaskSemanticFactClosure(
             contract,
@@ -169,6 +181,7 @@ export async function validateContractForActivation(options: {
             sourceItems,
             contextCapture,
             designHandoffs ?? undefined,
+            controllingSources,
           ),
         )
       : null;
@@ -426,6 +439,8 @@ export async function validateContractForActivation(options: {
     source_items: sourceItems,
     context_snapshot: context,
     project_design_authority: projectDesignAuthority,
+    design_handoffs: designHandoffs,
+    semantic_fact_manifest: semanticFactClosure?.manifest ?? null,
     workspace,
     global_checks: globalChecks,
     outcomes,
@@ -523,6 +538,8 @@ function emptyCompiledResult(
     source_items: sourceItems,
     context_snapshot: context,
     project_design_authority: null,
+    design_handoffs: null,
+    semantic_fact_manifest: null,
     workspace: null,
     global_checks: [],
     outcomes: [],

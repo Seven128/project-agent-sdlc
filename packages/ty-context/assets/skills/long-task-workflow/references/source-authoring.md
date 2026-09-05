@@ -46,6 +46,20 @@ For every material item, preserve one origin:
 
 High impact or several options is not itself a reason to pause when criteria support one recommendation. Keep real high-risk actions as external confirmations. Never introduce a requirement for the first time only inside acceptance criteria.
 
+### Context-declared controlling Source
+
+When an already selected Context owner explicitly delegates one authority domain to another repository-local file, record that relationship in the owning Context with exactly one marker:
+
+```md
+<!-- ty-context-controlling-source domain="product" path="docs/product-source.md" -->
+```
+
+`domain` is exactly `product`, `technical`, `design`, `acceptance` or `external`; `path` is the canonical NFC repository-relative POSIX spelling of one existing strict-UTF-8 regular file. Use the marker only for an actual authority handoff, never for navigation, background reading or convenience. Ordinary Markdown links remain non-authoritative. Duplicate declarations, competing domains for one target, aliases, wrong physical case, links/hardlinks, escapes and unreadable targets block.
+
+The marker does not make file bytes or a hash sufficient Source. Add the target to `task.source_paths`, mark its Material Source Items and carry every item through the existing semantic Fact/disposition/conservation closure. Long-Task reads markers only from `global.md`, `architecture.md`, explicit `task.context_refs` and their registered `default_children`; a full Context snapshot does not activate unrelated declarations. Do not introduce a recursive document crawler, second Source registry or implicit link promotion.
+
+For every Product-capability, business/data/state/failure/permission or workflow rule touched by a selected design or implementation change, enumerate the exact authorized semantic delta. Every other Product semantic remains a preservation obligation. Design Source may control expression and presentation, but it cannot exclude or supersede Product or Technical meaning without exact same-domain Source authority; a cross-domain conflict remains `decision_required`.
+
 ## Structure and stable keys
 
 Use stable semantic lowercase-kebab keys and Markdown anchors where practical. Preserve keys when wording changes but meaning does not; never renumber for ordering or reuse a retired key for new meaning.

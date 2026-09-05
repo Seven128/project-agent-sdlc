@@ -13,6 +13,7 @@ const SCOPE_EXPANSION_REASONS = new Set([
 ]);
 
 const MECHANICALLY_BOUNDED_REASONS = new Set([
+  "implementation_binding_refresh",
   "source_file_content_changed",
   "context_authority_changed",
   "verification_input_removed_or_replaced",
@@ -43,6 +44,7 @@ const USER_DECISION_REASONS = new Set([
   "population_weakened",
   "verifier_content_changed",
   "external_confirmation_changed",
+  "design_semantics_changed",
 ]);
 
 const AUTOMATIC_RUNNER_FIELDS = new Set([

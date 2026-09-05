@@ -103,8 +103,11 @@ test("fresh-Agent admission inputs, runners and runbook select the frozen protoc
   for (const source of [
     "examples/delivery-benchmark/mechanism/admission-set.json",
     "examples/delivery-benchmark/mechanism/admission/dra-quality-cases.json",
+    "examples/delivery-benchmark/mechanism/admission/dsa-artifact-category-cases.json",
     "examples/delivery-benchmark/mechanism/hidden/dra-semantic-recovery-admission-v1.json",
+    "examples/delivery-benchmark/mechanism/hidden/dsa-artifact-category-admission-v1.json",
     "examples/delivery-benchmark/mechanism/runner/admission-attestation.mjs",
+    "examples/delivery-benchmark/mechanism/runner/admission-score-dsa-artifact-category.mjs",
     "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs",
     "examples/delivery-benchmark/mechanism/RUNBOOK.md",
   ]) {
@@ -115,6 +118,29 @@ test("fresh-Agent admission inputs, runners and runbook select the frozen protoc
       ["tests/ty-context/fresh-agent-admission-benchmark.test.mjs"],
       source,
     );
+  }
+});
+
+test("design showcase runtime changes select closure, CLI and authoring owners", () => {
+  for (const source of [
+    "packages/ty-context/src/commands/design-authority.ts",
+    "packages/ty-context/src/lib/design-authority-closure.ts",
+    "packages/ty-context/src/lib/design-authority-showcase-codec.ts",
+    "packages/ty-context/src/lib/design-authority-showcase.ts",
+  ]) {
+    const selection = selectAffectedTests([source]);
+    assert.equal(selection.mode, "selected", source);
+    assert.equal(selection.requires_build, true, source);
+    assert.deepEqual(
+      selection.tests,
+      [
+        "tests/ty-context/design-authority-cli.test.mjs",
+        "tests/ty-context/design-authority-closure.test.mjs",
+        "tests/ty-context/design-system-authoring-skill.test.mjs",
+      ],
+      source,
+    );
+    assert.match(selection.reasons[0], /design_authority_showcase_owner/u);
   }
 });
 

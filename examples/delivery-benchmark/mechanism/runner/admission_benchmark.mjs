@@ -242,7 +242,7 @@ function printHelp() {
 Commands:
   freeze-check
   deterministic --artifact <relative-output-directory>
-  run-pair --track <dra-semantic-recovery|build-reuse-buy> --pair-id <id> --replicate <n> --artifact <relative-output-directory>
+  run-pair --track <dra-semantic-recovery|build-reuse-buy|dsa-artifact-category> --pair-id <id> --replicate <n> --artifact <relative-output-directory>
   aggregate --track <id> --deterministic <relative-report.json> --pair <relative-pair-report.json>... --artifact <relative-output-directory>
   attest --deterministic <relative-report.json> --aggregate <relative-aggregate-report.json>... --artifact <relative-output-directory>
   sanitize-evidence --deterministic <relative-report.json> --pair <relative-pair-report.json>... --aggregate <relative-aggregate-report.json>... --attestation <relative-attestation.json> --artifact <relative-output-directory>`);

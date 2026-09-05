@@ -194,7 +194,11 @@ const HOTSPOT_TESTS = new Map([
   ],
   [
     "packages/ty-context/src/commands/index.ts",
-    ["design-resource-handoff.test.mjs", "workflow-test-entrypoints.test.mjs"],
+    [
+      "design-authority-cli.test.mjs",
+      "design-resource-handoff.test.mjs",
+      "workflow-test-entrypoints.test.mjs",
+    ],
   ],
   [
     "packages/ty-context/src/index.ts",
@@ -1147,6 +1151,24 @@ export function selectAffectedTests(changedPaths, options = {}) {
     ) {
       tests.add(testPath("fresh-agent-admission-benchmark.test.mjs"));
       reasons.push(`${file}:fresh_agent_admission`);
+      continue;
+    }
+
+    if (
+      file === "packages/ty-context/src/commands/design-authority.ts" ||
+      file === "packages/ty-context/src/lib/design-authority-closure.ts" ||
+      file === "packages/ty-context/src/lib/design-authority-files.ts" ||
+      file === "packages/ty-context/src/lib/design-authority-links.ts" ||
+      file === "packages/ty-context/src/lib/design-authority-types.ts" ||
+      file.startsWith(
+        "packages/ty-context/src/lib/design-authority-showcase-",
+      ) ||
+      file === "packages/ty-context/src/lib/design-authority-showcase.ts"
+    ) {
+      tests.add(testPath("design-authority-cli.test.mjs"));
+      tests.add(testPath("design-authority-closure.test.mjs"));
+      tests.add(testPath("design-system-authoring-skill.test.mjs"));
+      reasons.push(`${file}:design_authority_showcase_owner`);
       continue;
     }
 

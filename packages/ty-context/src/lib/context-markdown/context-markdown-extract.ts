@@ -1,6 +1,7 @@
 import { fromMarkdown } from "mdast-util-from-markdown";
 import type { Nodes, Root } from "mdast";
 import type {
+  ContextControllingSourceRawDeclaration,
   ContextInvalidDeclaration,
   ContextMarkdownRawReference,
   ContextStableKeyDeclaration,
@@ -8,9 +9,12 @@ import type {
 
 const DECLARATION =
   /^<!--\s*ty-context-declare\s+([A-Z][A-Za-z0-9]*-ID):\s*([A-Z][A-Z0-9]*(?:-[A-Z0-9]+)+)\s*-->$/u;
+const CONTROLLING_SOURCE_DECLARATION =
+  /^<!-- ty-context-controlling-source domain="(product|technical|design|acceptance|external)" path="([^"]+)" -->$/u;
 
 export interface ContextMarkdownExtraction {
   references: ContextMarkdownRawReference[];
+  controlling_sources: ContextControllingSourceRawDeclaration[];
   declarations: ContextStableKeyDeclaration[];
   invalid_declarations: ContextInvalidDeclaration[];
 }
@@ -21,6 +25,7 @@ export function extractContextMarkdown(
 ): ContextMarkdownExtraction {
   const tree = fromMarkdown(content);
   const references: ContextMarkdownRawReference[] = [];
+  const controllingSources: ContextControllingSourceRawDeclaration[] = [];
   const declarations: ContextStableKeyDeclaration[] = [];
   const invalidDeclarations: ContextInvalidDeclaration[] = [];
   walk(tree, (node) => {
@@ -58,6 +63,7 @@ export function extractContextMarkdown(
     } else if (node.type === "html") {
       const raw = node.value.trim();
       const declaration = DECLARATION.exec(raw);
+      const controllingSource = CONTROLLING_SOURCE_DECLARATION.exec(raw);
       if (declaration)
         declarations.push({
           type: declaration[1],
@@ -65,6 +71,24 @@ export function extractContextMarkdown(
           path: sourcePath,
           line,
           column,
+        });
+      else if (controllingSource)
+        controllingSources.push({
+          domain:
+            controllingSource[1] as ContextControllingSourceRawDeclaration["domain"],
+          declared_path: controllingSource[2],
+          source_path: sourcePath,
+          line,
+          column,
+        });
+      else if (raw.includes("ty-context-controlling-source"))
+        invalidDeclarations.push({
+          path: sourcePath,
+          raw,
+          line,
+          column,
+          reason:
+            'controlling Source declaration must exactly match <!-- ty-context-controlling-source domain="product|technical|design|acceptance|external" path="repository/file" --> with this attribute order',
         });
       else if (raw.includes("ty-context-declare"))
         invalidDeclarations.push({
@@ -89,6 +113,7 @@ export function extractContextMarkdown(
   });
   return {
     references,
+    controlling_sources: controllingSources,
     declarations,
     invalid_declarations: invalidDeclarations,
   };

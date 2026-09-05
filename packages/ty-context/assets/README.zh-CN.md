@@ -282,17 +282,22 @@ combined design-and-implementation 可以先用普通 Outcome/Stage 生成候选
 
 只有用户明确要求以 `bootstrap`、`revise` 或 `reconcile` 模式建立、修订或吸收项目设计系统变化时，才使用 `design-system-authoring`。DRA 的 `authority_delta_candidate`、缺失 `DESIGN.md` 或普通 UI 工作都不会自动调用它。Skill 发现 Open Design 当前真实能力，provider 执行仍在 Skill 层；package-local `@google/design.md` adapter 只做确定性的 lint/parse/export/diff，不是生成器或 provider runtime。
 
+每次设计系统生成或材料性候选修订前，Skill 都会生成一份英文完整、任务局部的 System Design Reasoning Brief，并通过 provider 现有 `sourceNotes` 传入。它覆盖用户/任务/产品/环境、目的和已接受/已拒绝/待决定偏好、明确反目标、层级与四层留白、密度/焦点/强调色预算、字体及可见表面/命中区域关系、容器语法、按意图/职责/状态优先的组件分类、输入/无障碍/动效/适配、参考原则翻译，以及每项材料性选择的理由/反例/showcase 行。它只是候选输入，不是 Design Authority、Context、隐藏思维链或工作流状态。
+
 根 `DESIGN.md` 是唯一 Authority 入口、人工 revision owner，也是首版 bundle 中唯一可编辑 exact-Token owner。采用 Bundle 时，必须把精确的 `<!-- ty-context-design-authority-format: bundle-v1 -->` 机器声明写在受支持 YAML front matter 之后第一个非空 Markdown 正文行，并创建稀疏 `design_system/authority.manifest.json`；marker 与 manifest 必须成对存在。manifest 只拥有排序后的 closure membership 和 `closure_digest`，不复制 revision、方向或 Token 值。marker 保留时 manifest 缺失、重命名、空或非法，manifest 孤立存在，marker 被移动、重复或非规范拼写，以及物理路径大小写不可移植，都会使 closure fail closed。`design_system/tokens.json` 是从受支持 DESIGN front matter 确定性导出的 DTCG 生成物，不能独立编辑为第二权威。只有出现真实、可复用、长期规则时才建立 component、pattern、motion 或 platform 子 owner。真正未标记且没有 manifest 的项目继续是兼容的单文件 closure。
 
 机器身份由入口与完整 closure digest 组成，人工 revision 只用于诊断。closure 校验会拒绝不安全/重复路径、大小写冲突、symlink/hardlink 别名、非法 UTF-8/BOM、生成 Token 漂移和不完整的规范性本地链接。即使 revision 文本没变，只要子 owner 改变，旧 DRA recovery/handoff 与 Long-Task binding 也会失效。只读检查命令为：
 
 ```bash
 ty-context design-authority inspect --format json
+ty-context design-authority inspect --require-showcase
 ty-context design-authority tokens
 ty-context design-authority tokens --from-entry
 ```
 
 生成结果先是候选。必须先有明确人工选择，或用户明确委托且标准已知；看到精确项目 diff 和迁移影响后，还必须单独明确确认 adoption。adoption 更新根入口和必要的稀疏 owner，确定性重建 Tokens，发布新 closure digest，重绑受影响 DRA 资源并重跑检查。Open Design provider ID、revision、digest 与 project binding 只是同步 provenance，不是第二权威；provider 执行成功、artifact ready、selected、authority adopted 与 `get_project.designSystemId` binding verified 会分开报告。
+
+每次新的 DSA adoption 还会从 `DESIGN.md` 声明固定的 closure-external `docs/design-system-showcase/showcase.manifest.json` 投影。严格的 `design-authority-showcase-v1` sidecar 绑定当前 closure/revision、惰性 `index.html`、本地资产哈希、全部手册覆盖 disposition、Token/component/target-condition 索引和空外部网络集合。工程化设计系统手册是主产物；应用场景只在最后的 `supplemental-validation` 中出现，且不能定义第二套组件系统。普通 inspect 保持旧项目兼容，只附加 showcase 摘要；`--require-showcase` 才把它作为 artifact-readiness 条件。它始终在 Authority closure 之外，不能证明 selected-design Fact、生产一致性或审美适配。target 声明的 viewport、text scale、长标签和 reduced motion 条件走项目现有可复现 browser/E2E 入口，不设置全局固定视口表。
 
 ### 可选 Design Resource Authoring
 

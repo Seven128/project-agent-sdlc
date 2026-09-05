@@ -379,17 +379,22 @@ Static guidance tests prove routing text, positive/negative analysis rules, dist
 
 Use `design-system-authoring` only when the user explicitly asks to `bootstrap`, `revise` or `reconcile` the project design system/design style. A DRA `authority_delta_candidate`, missing `DESIGN.md` or ordinary UI work never invokes it automatically. The Skill discovers live Open Design capabilities and keeps provider execution in the Skill layer; the package-local `@google/design.md` adapter performs deterministic lint/parse/export/diff only and is not a generator or provider runtime.
 
+Before every system generation or material candidate revision, the Skill creates an English-complete, task-local System Design Reasoning Brief and passes it through the provider's existing `sourceNotes`. It covers people/tasks/product/environment, purpose and accepted/rejected/unresolved preferences, explicit anti-goals, hierarchy and four levels of whitespace, density/focus/accent budget, typography and visible-surface/hit-target relationships, containment grammar, intent/responsibility/state-first component classification, input/accessibility/motion/adaptation, reference-principle translation and one rationale/counterexample/showcase row per material choice. It is candidate input, not Design Authority, Context, hidden chain-of-thought or workflow state.
+
 Root `DESIGN.md` is the unique Authority entry, human revision owner and first-bundle editable exact-Token owner. Bundle adoption writes the exact `<!-- ty-context-design-authority-format: bundle-v1 -->` machine declaration as the first non-empty Markdown body line after supported YAML front matter and creates the sparse `design_system/authority.manifest.json`; the marker and manifest are required as a pair. The manifest owns only sorted closure membership and `closure_digest`; it does not copy revision, direction or Token values. Missing, renamed, empty or invalid manifest under the marker, an orphan manifest, a moved/duplicate/non-canonical marker, or non-portable physical path casing fails closure. `design_system/tokens.json` is deterministic DTCG output from supported DESIGN front matter, never an independently edited authority. Component, pattern, motion and platform children exist only for real reusable rules. A true unmarked project without a manifest remains a compatible one-file closure.
 
 The machine identity is the entry plus complete closure digest; the human revision is diagnostic. Closure validation rejects unsafe or duplicate paths, case collisions, symlink/hardlink aliases, invalid UTF-8/BOM, generated-Token drift and incomplete normative local links. A subordinate change stales DRA recovery/handoff and Long-Task bindings even if the revision label is unchanged. Read-only inspection is available through:
 
 ```bash
 ty-context design-authority inspect --format json
+ty-context design-authority inspect --require-showcase
 ty-context design-authority tokens
 ty-context design-authority tokens --from-entry
 ```
 
 Generation produces candidates. Explicit human selection—or explicit delegated selection with known criteria—comes first; after the exact project diff and migration impact are visible, a separate explicit adoption confirmation is required. Adoption updates the root entry and only necessary sparse owners, deterministically regenerates Tokens, publishes a new closure digest, rebinds affected DRA resources and reruns their checks. Open Design provider ID/revision/digest and project binding remain synchronization provenance, not another authority. Provider success, artifact readiness, selection, adoption and `get_project.designSystemId` binding verification are reported separately.
+
+Every new DSA adoption also declares the fixed closure-external `docs/design-system-showcase/showcase.manifest.json` projection from `DESIGN.md`. Its strict `design-authority-showcase-v1` sidecar binds the current closure/revision, inert `index.html`, local asset hashes, all handbook coverage dispositions, Token/component/target-condition indices and an empty external-network set. The engineering handbook is primary; application scenes are last under `supplemental-validation` and cannot define a second component system. Normal inspection keeps legacy projects compatible and treats showcase health as an additive summary; `--require-showcase` makes it an artifact-readiness requirement. It remains outside Authority closure and cannot prove selected-design Facts, production conformance or aesthetic suitability. Target-declared viewport, text-scale, long-label and reduced-motion conditions use the project's existing reproducible browser/E2E route rather than a global viewport list.
 
 ### Optional Design Resource Authoring
 
@@ -501,6 +506,7 @@ The platform owns physical Goal/session lifecycle. A later session runs `resume`
 ```text
 ty-context long-task init <workdir>
 ty-context long-task preflight <workdir>
+ty-context long-task compact-authoring <workdir> [--apply]
 ty-context long-task compile <workdir>
 ty-context long-task compile <workdir> --revise
 ty-context long-task diagnose-revision <workdir> [--outcome <key>] [--check <key>]

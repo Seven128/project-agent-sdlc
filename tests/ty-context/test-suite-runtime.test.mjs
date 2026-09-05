@@ -465,7 +465,7 @@ test("Long-Task isolation lanes are explicit, exhaustive, and fail unknown files
   assert.equal(LONG_TASK_PURE_TEST_FILES.length, 19);
   assert.equal(LONG_TASK_ISOLATED_TEST_FILES.length, 59);
   assert.equal(LONG_TASK_EXCLUSIVE_TEST_FILES.length, 11);
-  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 28);
+  assert.equal(LONG_TASK_TRUST_TEST_FILES.length, 29);
   assert.equal(
     LONG_TASK_TRUST_TEST_FILES.includes(
       "long-task-direct-process-observer.test.mjs",
@@ -857,7 +857,7 @@ test("[critical:critical-policy-continuity] critical sentinel policy rejects sem
   assert.match(selectedDesign.rationale, /does not prove arbitrary observers/u);
   assert.equal(
     new Set(CRITICAL_TEST_SENTINELS.map((entry) => entry.id)).size,
-    38,
+    40,
   );
   const atomicFinalization = CRITICAL_TEST_SENTINELS.find(
     (entry) => entry.id === "atomic-terminal-finalization",

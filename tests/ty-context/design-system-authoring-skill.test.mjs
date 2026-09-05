@@ -18,6 +18,8 @@ test("design-system-authoring has exact managed/generated/package copies", async
   for (const relative of [
     "SKILL.md",
     "agents/openai.yaml",
+    "references/system-design-reasoning.md",
+    "references/showcase-projection.md",
     "references/open-design-design-system-provider.md",
     "references/authority-adoption.md",
   ]) {
@@ -49,8 +51,10 @@ test("design-system-authoring is explicit-only and cannot be inferred from cold 
 });
 
 test("design-system workflow separates provider output, selection, adoption and binding", async () => {
-  const [skill, provider, adoption] = await Promise.all([
+  const [skill, reasoning, showcase, provider, adoption] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),
+    copies("references/system-design-reasoning.md").then((items) => items[0]),
+    copies("references/showcase-projection.md").then((items) => items[0]),
     copies("references/open-design-design-system-provider.md").then((items) => items[0]),
     copies("references/authority-adoption.md").then((items) => items[0]),
   ]);
@@ -67,7 +71,44 @@ test("design-system workflow separates provider output, selection, adoption and 
     /Stop for separate adoption confirmation/iu,
     /new complete closure identity[\s\S]*Rebind affected DRA resources\/handoffs/iu,
     /provider succeeded.*artifact ready.*selected.*authority adopted.*binding verified/isu,
+    /System Design Reasoning Brief[\s\S]*sourceNotes/iu,
+    /handbook first[\s\S]*supplemental application scenes last/iu,
+    /target-declared viewport[\s\S]*text-scale[\s\S]*long-label[\s\S]*reduced-motion/iu,
+    /design-authority inspect --require-showcase/iu,
   ]) assert.match(skill, expected);
+
+  assert.match(reasoning, /candidate input, not private chain-of-thought, Design Authority, Context, workflow state or an adoption record/iu);
+  assert.match(reasoning, /accepted preferences, rejected preferences and unresolved choices as three separate sets/iu);
+  assert.match(reasoning, /screen\/layout whitespace[\s\S]*inter-group rhythm[\s\S]*component-internal whitespace[\s\S]*visual-weight whitespace/iu);
+  assert.match(reasoning, /visible surface versus hit target[\s\S]*internal padding versus type line height[\s\S]*group gap versus item gap/iu);
+  assert.match(reasoning, /classified first by user intent, information responsibility and state model, then by appearance/iu);
+  assert.match(reasoning, /source principle, project-specific translation and prohibited copying/iu);
+  assert.match(reasoning, /design goal[\s\S]*scenario-linked rationale[\s\S]*Token, component, relationship or pattern realization[\s\S]*counterexample[\s\S]*showcase scenario/iu);
+  assert.match(reasoning, /primary artifact is an engineering design-system handbook[\s\S]*Application scenes are last[\s\S]*supplemental-validation/iu);
+  assert.match(reasoning, /target-declared viewport, text-scale, long-label and reduced-motion[\s\S]*existing reproducible browser\/E2E route[\s\S]*do not introduce a global fixed mobile viewport policy/iu);
+  assert.match(reasoning, /cannot establish aesthetic suitability/iu);
+
+  for (const bilingualPair of [
+    [/Scope and people/iu, /范围与人群/u],
+    [/Purpose and preference state/iu, /目的与偏好状态/u],
+    [/Hierarchy, space and visual weight/iu, /层级、留白和视觉重量/u],
+    [/Containment and component semantics/iu, /容器与组件语义/u],
+    [/Behavior and adaptation/iu, /行为与适配/u],
+    [/Reference translation/iu, /参考资料翻译/u],
+    [/Decision rows/iu, /决策行/u],
+  ]) {
+    assert.match(reasoning, bilingualPair[0]);
+    assert.match(reasoning, bilingualPair[1]);
+  }
+
+  assert.match(showcase, /human-readable handbook[\s\S]*without creating another Design Authority, Context owner, selected-design Fact source, implementation-conformance proof or aesthetic verdict/iu);
+  assert.match(showcase, /design-authority-showcase-v1[\s\S]*artifact_category[\s\S]*design_system_handbook/iu);
+  assert.match(showcase, /identity[\s\S]*color[\s\S]*typography[\s\S]*supplemental-validation/iu);
+  assert.match(showcase, /data-ty-showcase-section[\s\S]*data-ty-showcase-token-family[\s\S]*data-ty-showcase-component[\s\S]*data-ty-showcase-target/iu);
+  assert.match(showcase, /Target-condition scenes are descendants of the final supplemental section[\s\S]*never declares a Token family or component/iu);
+  assert.match(showcase, /Do not use scripts[\s\S]*CSS imports[\s\S]*undeclared\/unreachable assets/iu);
+  assert.match(showcase, /existing reproducible browser\/E2E route[\s\S]*declared viewport, text-scale, long-label, reduced-motion/iu);
+  assert.match(showcase, /valid sidecar proves integrity\/category\/coverage only[\s\S]*selection proves suitability/iu);
 
   assert.match(provider, /Open Design 0\.15\.1.*MCP server 0\.2\.0/isu);
   assert.match(provider, /protocol `2025-06-18`/u);
@@ -85,6 +126,8 @@ test("design-system workflow separates provider output, selection, adoption and 
   assert.match(provider, /get_project\.designSystemId/u);
   assert.match(provider, /same installed Open Design daemon/iu);
   assert.match(provider, /Persistent MCP registration.*require separate authorization/iu);
+  assert.match(provider, /complete task-local System Design Reasoning Brief[\s\S]*existing `sourceNotes`/iu);
+  assert.match(provider, /engineering design-system handbook as the primary artifact[\s\S]*Product-page galleries are supplemental validation only/iu);
 
   assert.match(adoption, /Single-owner writeback/iu);
   assert.match(adoption, /project_context\/\*\*/u);
@@ -118,6 +161,12 @@ test("design-system workflow separates provider output, selection, adoption and 
   );
   assert.match(adoption, /Project files are canonical/iu);
   assert.match(adoption, /Provider mismatch is synchronization drift/iu);
+  assert.match(adoption, /ty-context-design-showcase path="docs\/design-system-showcase\/showcase\.manifest\.json"/u);
+  assert.match(adoption, /design-authority-showcase-v1[\s\S]*artifact_category: design_system_handbook[\s\S]*status: adopted/iu);
+  assert.match(adoption, /outside `design_system\/\*\*` and outside the Authority closure/iu);
+  assert.match(adoption, /application scenes occur last under `supplemental-validation`[\s\S]*cannot declare a second component system/iu);
+  assert.match(adoption, /design-authority inspect --require-showcase/iu);
+  assert.match(adoption, /existing reproducible browser\/E2E route[\s\S]*declared viewport, text-scale, long-label, reduced-motion[\s\S]*do not add a global fixed viewport list/iu);
   assert.match(
     provider,
     /package-local `@google\/design\.md` adapter[\s\S]*not Open Design[\s\S]*does not generate candidates/iu,

@@ -7,6 +7,20 @@ import type {
   ExternalConfirmationV2,
   ProofSurface,
 } from "./long-task-delivery-types.js";
+import {
+  designGroundObligationRef,
+  sameDesignObligationSet,
+} from "./long-task-design-obligation-identity.js";
+
+export {
+  findCompiledDesignFactObligation,
+  resolveCompiledDesignFactObligation,
+} from "./long-task-compiled-design-obligation.js";
+export type {
+  CompiledDesignFactObligationDescriptorV1,
+  CompiledDesignFactObligationResolutionV1,
+} from "./long-task-compiled-design-obligation.js";
+export { designGroundObligationRef } from "./long-task-design-obligation-identity.js";
 
 type DesignObligationContract = {
   outcomes: ReadonlyArray<{
@@ -46,15 +60,6 @@ export interface DesignFactObligationDescriptorV1 {
   expected: DeliveryDesignFactExpectationV2["expected"];
   comparison: DeliveryDesignFactExpectationV2["comparison"];
   observation_sensitivity: "plain" | "protected";
-}
-
-export function designGroundObligationRef(
-  targetKey: string,
-  method: string,
-  conditionKey: string,
-  factRef: string,
-): string {
-  return `design.${targetKey}.${method}.${conditionKey}.${factRef}`;
 }
 
 export function designFactObligationDescriptors(
@@ -147,7 +152,7 @@ export function externalDesignObligationMatches(
     obligation.proof_ref === descriptor.source_obligation_ref &&
     obligation.method === descriptor.method &&
     obligation.proof_surface === descriptor.proof_surface &&
-    sameSet(
+    sameDesignObligationSet(
       obligation.evidence_capabilities,
       descriptor.evidence_capabilities,
     ) &&
@@ -186,7 +191,7 @@ export function findDesignFactObligation(
       descriptor.fact_ref === identity.fact_ref &&
       descriptor.method === identity.method &&
       descriptor.proof_surface === identity.proof_surface &&
-      sameSet(descriptor.evidence_capabilities, capabilities),
+      sameDesignObligationSet(descriptor.evidence_capabilities, capabilities),
   );
   return candidates.length === 1 ? candidates[0] : null;
 }
@@ -243,14 +248,5 @@ function findAssertion(
     [...check.positive_assertions, ...check.negative_assertions].find(
       (assertion) => assertion.key === assertionRef,
     ) ?? null
-  );
-}
-
-function sameSet(left: readonly string[], right: readonly string[]): boolean {
-  return (
-    left.length === right.length &&
-    new Set(left).size === left.length &&
-    new Set(right).size === right.length &&
-    left.every((value) => right.includes(value))
   );
 }

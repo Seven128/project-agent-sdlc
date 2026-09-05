@@ -100,6 +100,9 @@ export interface AuthorityRevisionDiffV2 {
   context_files_added: string[];
   context_files_removed: string[];
   context_files_changed: string[];
+  design_semantics_changed: string[];
+  design_implementation_bindings_changed: string[];
+  implementation_binding_refresh_targets: string[];
   owner_paths_expanded: string[];
   owner_context_refs_removed: string[];
   expected_change_paths_expanded: string[];

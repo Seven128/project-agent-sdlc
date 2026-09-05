@@ -241,6 +241,12 @@ export async function resumeDeliveryTask(
     pending_authority_revision: status.pending_authority_revision,
     recent_findings: status.findings,
     repair_frontier: status.repair_frontier,
+    delegation_reassessment: {
+      required_before_implementation: true,
+      restores_previous_workers: false,
+      action:
+        "rebuild current bounded packets and rerun Delegation Suitability",
+    },
     next_safe_action: nextAction(status),
   };
 }

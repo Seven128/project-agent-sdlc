@@ -80,6 +80,7 @@ export interface ActiveAuthorityLoadResultV3 {
 export type ActiveAuthorityLockOperation =
   | "compile"
   | "commit"
+  | "compact_authoring"
   | "clear"
   | "abandon"
   | "migrate"
@@ -384,6 +385,7 @@ function activeAuthorityLockOperation(
   return [
     "compile",
     "commit",
+    "compact_authoring",
     "clear",
     "abandon",
     "migrate",

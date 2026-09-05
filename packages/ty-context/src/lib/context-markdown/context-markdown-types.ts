@@ -3,6 +3,9 @@ export type ContextMarkdownReferenceKind =
 export type ContextMarkdownReferenceStatus =
   "valid" | "missing" | "outside_repository" | "invalid";
 
+export type ContextControllingSourceDomain =
+  "product" | "technical" | "design" | "acceptance" | "external";
+
 export interface ContextMarkdownRawReference {
   destination: string;
   kind: ContextMarkdownReferenceKind;
@@ -16,6 +19,31 @@ export interface ContextMarkdownReference extends ContextMarkdownRawReference {
   fragment: string | null;
   status: ContextMarkdownReferenceStatus;
   detail?: string;
+}
+
+export interface ContextControllingSourceRawDeclaration {
+  domain: ContextControllingSourceDomain;
+  declared_path: string;
+  source_path: string;
+  line: number;
+  column: number;
+}
+
+export interface ContextControllingSourceDeclaration extends ContextControllingSourceRawDeclaration {
+  target_path: string | null;
+  status: ContextMarkdownReferenceStatus;
+  detail?: string;
+}
+
+export interface ContextControllingSourceConflict {
+  kind: "duplicate" | "domain_conflict";
+  target_path: string;
+  domains: ContextControllingSourceDomain[];
+  owners: Array<{
+    source_path: string;
+    line: number;
+    domain: ContextControllingSourceDomain;
+  }>;
 }
 
 export interface ContextStableKeyDeclaration {
@@ -45,6 +73,7 @@ export interface ContextMarkdownFileAnalysis {
   max_line_code_points: number;
   long_lines: ContextLongLine[];
   references: ContextMarkdownReference[];
+  controlling_sources: ContextControllingSourceDeclaration[];
   declarations: ContextStableKeyDeclaration[];
   invalid_declarations: ContextInvalidDeclaration[];
 }
@@ -58,6 +87,8 @@ export interface ContextStableKeyConflict {
 export interface ContextMarkdownCatalogAnalysis {
   files: ContextMarkdownFileAnalysis[];
   references: ContextMarkdownReference[];
+  controlling_sources: ContextControllingSourceDeclaration[];
+  controlling_source_conflicts: ContextControllingSourceConflict[];
   declarations: ContextStableKeyDeclaration[];
   invalid_declarations: ContextInvalidDeclaration[];
   declaration_conflicts: ContextStableKeyConflict[];

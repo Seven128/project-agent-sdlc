@@ -17,6 +17,10 @@ import {
 } from "./design-authority-manifest.js";
 import { analyzeDesignAuthorityLinks } from "./design-authority-links.js";
 import {
+  inspectDesignAuthorityShowcase,
+  notEvaluatedDesignAuthorityShowcase,
+} from "./design-authority-showcase.js";
+import {
   designAuthorityRevision,
   projectDesignAuthorityTokens,
 } from "./design-authority-tokens.js";
@@ -25,6 +29,7 @@ import {
   DESIGN_AUTHORITY_IDENTITY_FORMAT_VERSION,
   DESIGN_AUTHORITY_LIMITS,
   DESIGN_AUTHORITY_MANIFEST_PATH,
+  compareDesignAuthorityDiagnostics,
   type DesignAuthorityClosureMember,
   type DesignAuthorityClosureSnapshot,
   type DesignAuthorityDiagnostic,
@@ -62,12 +67,24 @@ export async function inspectDesignAuthorityClosure(
     ]);
   try {
     const snapshot = await buildDesignAuthorityClosure(repository);
+    const status = snapshot.diagnostics.some(
+      (item) => item.severity === "error",
+    )
+      ? "invalid"
+      : "valid";
     return {
       schema_version: 1,
-      status: snapshot.diagnostics.some((item) => item.severity === "error")
-        ? "invalid"
-        : "valid",
+      status,
       ...snapshot,
+      showcase:
+        status === "valid"
+          ? await inspectDesignAuthorityShowcase({
+              repository,
+              authority: snapshot.identity,
+            })
+          : notEvaluatedDesignAuthorityShowcase(
+              "Design Authority closure is invalid",
+            ),
     };
   } catch (error) {
     return emptyInspection(
@@ -218,21 +235,8 @@ async function buildDesignAuthorityClosure(
     members,
     member_paths: members.map((member) => member.path),
     generated_tokens: generatedTokens.success ? generatedTokens.content : null,
-    diagnostics: diagnostics.sort(compareDiagnostic),
+    diagnostics: diagnostics.sort(compareDesignAuthorityDiagnostics),
   };
-}
-
-function compareDiagnostic(
-  left: DesignAuthorityDiagnostic,
-  right: DesignAuthorityDiagnostic,
-): number {
-  const severity = Buffer.from(left.severity, "utf8").compare(
-    Buffer.from(right.severity, "utf8"),
-  );
-  if (severity) return severity;
-  return Buffer.from(
-    `${left.path ?? ""}\0${left.code}\0${left.detail}`,
-  ).compare(Buffer.from(`${right.path ?? ""}\0${right.code}\0${right.detail}`));
 }
 
 function emptyInspection(
@@ -250,6 +254,11 @@ function emptyInspection(
     members: [],
     member_paths: [],
     generated_tokens: null,
+    showcase: notEvaluatedDesignAuthorityShowcase(
+      status === "missing"
+        ? "Design Authority entry is missing"
+        : "Design Authority closure is invalid",
+    ),
     diagnostics,
   };
 }

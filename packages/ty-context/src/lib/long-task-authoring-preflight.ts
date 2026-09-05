@@ -30,6 +30,10 @@ import {
   protectedWorkspacePaths,
   workspaceScopeErrors,
 } from "./long-task-workspace-scope.js";
+import {
+  compactAuthoringWarningThreshold,
+  runLongTaskCompactAuthoring,
+} from "./long-task-compact-authoring-service.js";
 
 export type {
   AuthoringPreflightDiagnosticV1,
@@ -73,6 +77,30 @@ export async function preflightDeliveryContract(
     loadAuthoringActiveAuthority(repository, workdir, activeDiagnostics),
   ]);
   diagnostics.push(...activeDiagnostics);
+  if (
+    active === null &&
+    !diagnostics.some(
+      (item) => item.level === "error" || item.level === "decision_required",
+    )
+  ) {
+    const compact = await runLongTaskCompactAuthoring(repository, workdir);
+    if (
+      compact.status === "equivalent_projection_available" &&
+      compact.apply_allowed &&
+      compact.repair_command
+    ) {
+      const warning =
+        compact.canonical_bytes.combined.reduction_ratio >=
+        compactAuthoringWarningThreshold();
+      diagnostics.push({
+        level: warning ? "warning" : "info",
+        code: "equivalent_compact_representation_available",
+        message: `${compact.reason} Apply only this proven pre-Authority representation change with: ${compact.repair_command}`,
+        refs: [compact.source_path!, compact.contract_path!],
+        repair_hint: compact.repair_command,
+      });
+    }
+  }
   if (validation.workspace)
     try {
       const changedPaths =

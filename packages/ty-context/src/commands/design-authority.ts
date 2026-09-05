@@ -22,11 +22,15 @@ export async function designAuthority(args: string[]): Promise<void> {
 }
 
 async function inspect(args: string[]): Promise<void> {
-  const format = parseFormat(args, "inspect");
+  const { format, requireShowcase } = parseInspectOptions(args);
   const result = await inspectDesignAuthorityClosure(process.cwd());
   if (format === "json") process.stdout.write(canonicalJson(result));
   else process.stdout.write(renderInspection(result));
-  if (result.status !== "valid") process.exitCode = CLI_EXIT_CODES.catalog;
+  if (
+    result.status !== "valid" ||
+    (requireShowcase && result.showcase.status !== "valid")
+  )
+    process.exitCode = CLI_EXIT_CODES.catalog;
 }
 
 async function tokens(args: string[]): Promise<void> {
@@ -62,27 +66,32 @@ async function tokens(args: string[]): Promise<void> {
   process.stdout.write(projected);
 }
 
-function parseFormat(args: string[], command: string): "text" | "json" {
+function parseInspectOptions(args: string[]): {
+  format: "text" | "json";
+  requireShowcase: boolean;
+} {
   let format: "text" | "json" = "text";
+  let requireShowcase = false;
   for (let index = 0; index < args.length; index += 1) {
     const argument = args[index];
     if (argument === "--json") format = "json";
+    else if (argument === "--require-showcase") requireShowcase = true;
     else if (argument === "--format") {
       const value = args[index + 1];
       if (value !== "text" && value !== "json")
         throw new CliCommandError(
           CLI_EXIT_CODES.arguments,
-          `design-authority ${command} --format must be text or json`,
+          "design-authority inspect --format must be text or json",
         );
       format = value;
       index += 1;
     } else
       throw new CliCommandError(
         CLI_EXIT_CODES.arguments,
-        `unknown design-authority ${command} argument: ${argument}`,
+        `unknown design-authority inspect argument: ${argument}`,
       );
   }
-  return format;
+  return { format, requireShowcase };
 }
 
 function renderInspection(result: DesignAuthorityInspection): string {
@@ -105,14 +114,29 @@ function renderInspection(result: DesignAuthorityInspection): string {
         `  - ${diagnostic.severity} ${diagnostic.code}${diagnostic.path ? ` [${diagnostic.path}]` : ""}: ${diagnostic.detail}`,
       );
   } else lines.push("Diagnostics: none");
+  lines.push(`Showcase: ${result.showcase.status}`);
+  if (result.showcase.manifest_path)
+    lines.push(`Showcase manifest: ${result.showcase.manifest_path}`);
+  if (result.showcase.indexes)
+    lines.push(
+      `Showcase indexes: ${result.showcase.indexes.token_families} token families, ${result.showcase.indexes.components} components, ${result.showcase.indexes.target_conditions} target conditions`,
+    );
+  if (result.showcase.diagnostics.length) {
+    lines.push("Showcase diagnostics:");
+    for (const diagnostic of result.showcase.diagnostics)
+      lines.push(
+        `  - ${diagnostic.severity} ${diagnostic.code}${diagnostic.path ? ` [${diagnostic.path}]` : ""}: ${diagnostic.detail}`,
+      );
+  } else lines.push("Showcase diagnostics: none");
   lines.push("Authority adoption: not performed");
   return `${lines.join("\n")}\n`;
 }
 
 function help(): string {
   return `ty-context design-authority commands:
-  design-authority inspect [--format text|json]
-                       Validate and explain the current complete closure
+  design-authority inspect [--format text|json] [--require-showcase]
+                       Validate and explain the current complete closure;
+                       optionally require its non-authoritative static showcase
   design-authority tokens [--from-entry]
                        Print the deterministic DTCG projection from DESIGN.md;
                        --from-entry permits read-only projection while a bundle

@@ -1,9 +1,13 @@
 import assert from "node:assert/strict";
-import { readFile, rm, writeFile } from "node:fs/promises";
+import { readdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { deliveryCompileFreshness } from "../../packages/ty-context/dist/lib/long-task-freshness.js";
 import { readCompiledDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import {
+  activeRecordPath,
+  runtimePath,
+} from "../../packages/ty-context/dist/lib/long-task-state.js";
 import {
   commitCandidate,
   createDeliveryFixture,
@@ -42,12 +46,32 @@ test("status projects rolling progress but always requires a Live Final Gate", a
     assert.equal(unverified.outcomes.first, "unverified");
     assert.equal(unverified.final_result, "no_final_gate");
     assert.equal(unverified.acceptance_authority, "live_final_gate_required");
+    const stateBeforeResume = await resumeStateSnapshot(fixture);
     const resumed = await runCli(fixture.root, [
       "long-task",
       "resume",
       fixture.workdir,
     ]);
     assert.equal(resumed.task.id, "fixture-task");
+    assert.deepEqual(resumed.delegation_reassessment, {
+      required_before_implementation: true,
+      restores_previous_workers: false,
+      action: "rebuild current bounded packets and rerun Delegation Suitability",
+    });
+    assert.doesNotMatch(
+      JSON.stringify(resumed.delegation_reassessment),
+      /(?:agent|worker)_(?:id|state)|spawn(?:ed)?_worker/iu,
+    );
+    const resumedAgain = await runCli(fixture.root, [
+      "long-task",
+      "resume",
+      fixture.workdir,
+    ]);
+    assert.deepEqual(
+      resumedAgain.delegation_reassessment,
+      resumed.delegation_reassessment,
+    );
+    assert.deepEqual(await resumeStateSnapshot(fixture), stateBeforeResume);
 
     await runCli(fixture.root, ["long-task", "verify", fixture.workdir]);
     let status = await runCli(fixture.root, [
@@ -109,6 +133,28 @@ test("status projects rolling progress but always requires a Live Final Gate", a
     await rm(fixture.root, { recursive: true, force: true });
   }
 });
+
+async function resumeStateSnapshot(fixture) {
+  return {
+    active: await readFile(await activeRecordPath(fixture.root), "utf8"),
+    runtime: await treeSnapshot(runtimePath(fixture.workdir)),
+  };
+}
+
+async function treeSnapshot(root) {
+  const result = {};
+  async function visit(directory) {
+    for (const entry of await readdir(directory, { withFileTypes: true })) {
+      const target = path.join(directory, entry.name);
+      if (entry.isDirectory()) await visit(target);
+      else if (entry.isFile())
+        result[path.relative(root, target).replace(/\\/gu, "/")] =
+          await readFile(target, "utf8");
+    }
+  }
+  await visit(root);
+  return result;
+}
 
 test("source, selected Context, verification inputs and verifier bundle stale audit results", async () => {
   const fixture = await createDeliveryFixture();

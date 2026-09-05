@@ -6,7 +6,7 @@ import {
 } from "./long-task-acceptance-reachability-helpers.js";
 import { controlFieldFacts } from "./long-task-control-fields.js";
 import { DESIGN_RESOURCE_COMPARATORS } from "./design-resource-fact-enums.js";
-import { findDesignFactObligation } from "./long-task-design-obligation.js";
+import { findCompiledDesignFactObligation } from "./long-task-design-obligation.js";
 import type { CompiledDeliveryContractV2 } from "./long-task-delivery-types.js";
 import { evaluateExactDigestComparison } from "./long-task-exact-comparison.js";
 import type { ExternalConfirmationExpectedV1 } from "./long-task-external-confirmation-types.js";
@@ -34,7 +34,7 @@ export function expectedForExternalObligation(
         located_value: fact.expected,
         comparison: proof.comparison,
       };
-    const design = findDesignFactObligation(compiled, row);
+    const design = findCompiledDesignFactObligation(compiled, row);
     if (design)
       return {
         authority_ref: authorityRef,
@@ -186,7 +186,7 @@ export function objectiveExternalComparison(
       mask_sha256: null,
     });
   }
-  const design = findDesignFactObligation(compiled, row);
+  const design = findCompiledDesignFactObligation(compiled, row);
   if (
     !design ||
     design.observation_sensitivity !== "plain" ||

@@ -32,6 +32,8 @@ import {
 import type { AuthorityRevisionDiffV2 } from "./long-task-authority-revision-types.js";
 import { compileProductClaimCoverage } from "./long-task-claims.js";
 import { verifierAuthorityDiff } from "./long-task-verifier-authority.js";
+import { compiledAuthorityMaterials } from "./long-task-authority-materials.js";
+import { implementationBindingRefreshTargets } from "./long-task-implementation-binding-refresh.js";
 
 export type { AuthorityRevisionDiffV2 } from "./long-task-authority-revision-types.js";
 
@@ -98,7 +100,7 @@ export function authorityRevisionDiff(
   );
   const externalConfirmationsChanged = externalConfirmationChanges.length > 0;
   const monotonic = isMonotonicAcceptanceStrengthening(previous, next);
-  const reductionReasons = [
+  const ordinaryReductionReasons = [
     ...selectedRevisionReasons([
       ["product_claim_added", productClaimsAdded],
       ["product_claim_removed", productClaimsRemoved],
@@ -162,6 +164,19 @@ export function authorityRevisionDiff(
       ["acceptance_not_monotonic", acceptanceChanged && !monotonic],
     ]),
   ];
+  const implementationRefreshTargets = implementationBindingRefreshTargets(
+    compiledAuthorityMaterials(previous),
+    nextMaterials,
+    {
+      verifier_content_changed: verifierDiff.verifier_content_changed,
+      verifier_runtime_locator_changed:
+        verifierDiff.verifier_runtime_locator_changed,
+      risk_changed: riskChanged,
+    },
+  );
+  const reductionReasons = implementationRefreshTargets.length
+    ? ["implementation_binding_refresh"]
+    : ordinaryReductionReasons;
   return {
     product_claims_added: productClaimsAdded,
     product_claims_removed: productClaimsRemoved,
@@ -187,6 +202,10 @@ export function authorityRevisionDiff(
     context_files_added: materialDiff.context_files_added,
     context_files_removed: materialDiff.context_files_removed,
     context_files_changed: materialDiff.context_files_changed,
+    design_semantics_changed: materialDiff.design_semantics_changed,
+    design_implementation_bindings_changed:
+      materialDiff.design_implementation_bindings_changed,
+    implementation_binding_refresh_targets: implementationRefreshTargets,
     owner_paths_expanded: outcomeChanges.owner_paths_expanded,
     owner_context_refs_removed: outcomeChanges.owner_context_refs_removed,
     expected_change_paths_expanded:

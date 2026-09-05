@@ -3,6 +3,7 @@ import path from "node:path";
 import { extractContextMarkdown } from "./context-markdown/context-markdown-extract.js";
 import {
   DESIGN_AUTHORITY_LIMITS,
+  compareDesignAuthorityDiagnostics,
   type DesignAuthorityDiagnostic,
 } from "./design-authority-types.js";
 
@@ -48,7 +49,7 @@ export async function analyzeDesignAuthorityLinks(input: {
         });
     }
   }
-  return diagnostics.sort(compareDiagnostic);
+  return diagnostics.sort(compareDesignAuthorityDiagnostics);
 }
 
 async function discoverExtraDesignFiles(
@@ -141,21 +142,6 @@ function resolveLocalDestination(
       .replace(/\\/gu, "/")
       .normalize("NFC"),
   };
-}
-
-function compareDiagnostic(
-  left: DesignAuthorityDiagnostic,
-  right: DesignAuthorityDiagnostic,
-): number {
-  for (const pair of [
-    [left.path ?? "", right.path ?? ""],
-    [left.code, right.code],
-    [left.detail, right.detail],
-  ] as const) {
-    const compared = Buffer.from(pair[0]).compare(Buffer.from(pair[1]));
-    if (compared) return compared;
-  }
-  return 0;
 }
 
 function inside(root: string, candidate: string): boolean {

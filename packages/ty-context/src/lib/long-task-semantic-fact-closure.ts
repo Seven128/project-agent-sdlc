@@ -29,6 +29,10 @@ import type {
   SemanticFactManifestV1,
 } from "./semantic-fact-types.js";
 import type { CapturedContextGraphSnapshot } from "./context-graph-snapshot.js";
+import {
+  validateLongTaskContextControllingSourceClosure,
+  type ValidContextControllingSourceDeclaration,
+} from "./long-task-context-controlling-source.js";
 
 export interface LongTaskSemanticFactClosureV2 {
   manifest: SemanticFactManifestV1;
@@ -44,6 +48,7 @@ export async function validateLongTaskSemanticFactClosure(
   sourceItems: CompiledSourceItemV2[],
   context: CapturedContextGraphSnapshot,
   designHandoffs?: LongTaskDesignHandoffPreflight[],
+  controllingSources: readonly ValidContextControllingSourceDeclaration[] = [],
 ): Promise<LongTaskSemanticFactClosureV2> {
   const parsed = await loadSemanticFactManifest(
     repository,
@@ -60,6 +65,12 @@ export async function validateLongTaskSemanticFactClosure(
         ),
         facts: [],
       };
+  validateLongTaskContextControllingSourceClosure(
+    contract,
+    controllingSources,
+    sourceItems,
+    designProjection.source_items,
+  );
   const index = validateSemanticFactManifestPolicy(
     manifest,
     new Set(designProjection.facts.map((fact) => fact.key)),

@@ -69,6 +69,22 @@ export interface DesignAuthorityDiagnostic {
   detail: string;
 }
 
+export function compareDesignAuthorityDiagnostics(
+  left: DesignAuthorityDiagnostic,
+  right: DesignAuthorityDiagnostic,
+): number {
+  for (const pair of [
+    [left.severity, right.severity],
+    [left.path ?? "", right.path ?? ""],
+    [left.code, right.code],
+    [left.detail, right.detail],
+  ] as const) {
+    const compared = Buffer.from(pair[0]).compare(Buffer.from(pair[1]));
+    if (compared) return compared;
+  }
+  return 0;
+}
+
 export interface DesignAuthorityClosureSnapshot {
   mode: "legacy" | "bundle";
   identity: DesignAuthorityIdentityV1;
@@ -90,6 +106,7 @@ export interface DesignAuthorityInspection {
   members: DesignAuthorityClosureMember[];
   member_paths: string[];
   generated_tokens: string | null;
+  showcase: DesignAuthorityShowcaseInspectionV1;
   diagnostics: DesignAuthorityDiagnostic[];
 }
 
@@ -102,3 +119,4 @@ export const DESIGN_AUTHORITY_LIMITS = {
 export function isDesignAuthorityDigest(value: unknown): value is string {
   return typeof value === "string" && /^sha256:[0-9a-f]{64}$/u.test(value);
 }
+import type { DesignAuthorityShowcaseInspectionV1 } from "./design-authority-showcase-types.js";

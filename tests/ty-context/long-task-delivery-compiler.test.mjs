@@ -17,17 +17,27 @@ import YAML from "yaml";
 import { preflightDesignResourceHandoff } from "../../packages/ty-context/dist/index.js";
 import { inspectDesignAuthorityClosure } from "../../packages/ty-context/dist/lib/design-authority-closure.js";
 import { projectDesignAuthorityTokens } from "../../packages/ty-context/dist/lib/design-authority-tokens.js";
+import { projectDesignAuthorityMaterials } from "../../packages/ty-context/dist/lib/long-task-design-authority-materials.js";
+import {
+  designSemanticIdentityMap,
+  projectSemanticFactManifest,
+} from "../../packages/ty-context/dist/lib/long-task-design-authority-projections.js";
 import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
 import { validateDeliveryContractStructure } from "../../packages/ty-context/dist/lib/long-task-delivery-validation.js";
 import { deliveryCompileFreshness } from "../../packages/ty-context/dist/lib/long-task-freshness.js";
-import { activateDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-state.js";
+import {
+  activateDeliveryContract,
+  readCompiledDeliveryContract,
+} from "../../packages/ty-context/dist/lib/long-task-state.js";
+import { implementationBindingRefreshTargets } from "../../packages/ty-context/dist/lib/long-task-implementation-binding-refresh.js";
 import { validateLongTaskDesignFeasibilityBindings } from "../../packages/ty-context/dist/lib/long-task-design-feasibility-binding.js";
 import {
   createLongTaskDesignHandoffConsumer,
   validateProjectDesignAuthoritySet,
 } from "../../packages/ty-context/dist/lib/long-task-design-resource-handoff.js";
 import { compileSourceInventory } from "../../packages/ty-context/dist/lib/long-task-source-inventory.js";
+import { loadSemanticFactManifest } from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 import { projectDesignOwnedSemanticFacts } from "../../packages/ty-context/dist/lib/long-task-semantic-fact-input-closure.js";
 import { npxCliPath } from "../../packages/ty-context/dist/lib/long-task-runner-files.js";
 import { canonicalValueJson } from "../../packages/ty-context/dist/lib/strict-codec.js";
@@ -70,6 +80,7 @@ import {
 const DESIGN_ROOT_SOURCE_ITEM_KEY = "design-root-constraint";
 const DESIGN_ROOT_CLAIM = "control.main.location";
 const DESIGN_ROOT_STATEMENT = "main content";
+const DESIGN_REFRESHED_HANDOFF_PATH = "design/current/handoff.md";
 const execFileAsync = promisify(execFile);
 let cachedPlaywrightPackagePromise;
 
@@ -757,6 +768,481 @@ test("Long-Task rejects conflicting project Design Authority identities across h
     );
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("[critical:implementation-binding-refresh] Long-Task mechanically adopts an exact current implementation rebinding and invalidates old proof", async () => {
+  const fixtureState = await createImplementationBindingRefreshFixture();
+  try {
+    await runCli(fixtureState.fixture.root, ["enable", "long-task"]);
+    await commitCandidate(fixtureState.fixture.root);
+    await runCli(fixtureState.fixture.root, [
+      "long-task",
+      "compile",
+      fixtureState.fixture.workdir,
+    ]);
+    await runCli(fixtureState.fixture.root, [
+      "long-task",
+      "verify",
+      fixtureState.fixture.workdir,
+    ]);
+    const previous = await readCompiledDeliveryContract(
+      fixtureState.fixture.workdir,
+    );
+    const previousPreflight = structuredClone(fixtureState.preflight);
+    const previousSemanticManifest = (
+      await loadSemanticFactManifest(
+        fixtureState.fixture.root,
+        fixtureState.fixture.contract.task.source_paths,
+      )
+    ).manifest;
+
+    await refreshImplementationBindingFixture(fixtureState);
+    assert.match(
+      await readFile(
+        path.join(fixtureState.fixture.root, DESIGN_HANDOFF_PATH),
+        "utf8",
+      ),
+      /design-resource-handoff-v1/u,
+    );
+    const currentSemanticManifest = (
+      await loadSemanticFactManifest(
+        fixtureState.fixture.root,
+        fixtureState.fixture.contract.task.source_paths,
+      )
+    ).manifest;
+    assert.deepEqual(
+      projectSemanticFactManifest(
+        currentSemanticManifest,
+        designSemanticIdentityMap([fixtureState.preflight]),
+      ),
+      projectSemanticFactManifest(
+        previousSemanticManifest,
+        designSemanticIdentityMap([previousPreflight]),
+      ),
+    );
+    let proposal = null;
+    const candidate = await compileDeliveryContract(
+      fixtureState.fixture.workdir,
+      fixtureState.fixture.root,
+      {
+        revise: true,
+        previous_authority: previous,
+        authority_revision_mode: "diagnose",
+        on_authority_revision(value) {
+          proposal = value;
+        },
+      },
+    );
+    assert.ok(proposal);
+    assert.equal(
+      candidate.authority_materials.design_non_binding_contract_sha256,
+      previous.authority_materials.design_non_binding_contract_sha256,
+      "non-binding Contract projection changed",
+    );
+    assert.equal(
+      candidate.authority_materials.design_non_binding_source_sha256,
+      previous.authority_materials.design_non_binding_source_sha256,
+      "non-binding Source projection changed",
+    );
+    assert.equal(proposal.change_class, "mechanically_bounded_repair");
+    assert.equal(proposal.user_decision_required, false);
+    assert.deepEqual(proposal.revision_diff.reduction_reasons, [
+      "implementation_binding_refresh",
+    ]);
+    assert.deepEqual(
+      proposal.revision_diff.implementation_binding_refresh_targets,
+      [DESIGN_TARGET_KEY],
+    );
+    assert.deepEqual(proposal.revision_diff.design_semantics_changed, []);
+    assert.deepEqual(
+      proposal.revision_diff.design_implementation_bindings_changed,
+      [DESIGN_TARGET_KEY],
+    );
+    assert.deepEqual(
+      candidate.authority_materials.design_semantics,
+      previous.authority_materials.design_semantics,
+    );
+    assert.equal(
+      candidate.authority_materials.design_non_binding_contract_sha256,
+      previous.authority_materials.design_non_binding_contract_sha256,
+    );
+    assert.equal(
+      candidate.authority_materials.design_non_binding_source_sha256,
+      previous.authority_materials.design_non_binding_source_sha256,
+    );
+    assert.notDeepEqual(
+      candidate.authority_materials.design_implementation_bindings,
+      previous.authority_materials.design_implementation_bindings,
+    );
+    assert.equal(
+      previous.authority_materials.design_implementation_bindings[0]
+        .handoff_path,
+      DESIGN_HANDOFF_PATH,
+    );
+    assert.equal(
+      candidate.authority_materials.design_implementation_bindings[0]
+        .handoff_path,
+      DESIGN_REFRESHED_HANDOFF_PATH,
+    );
+
+    const diagnosis = await runCli(fixtureState.fixture.root, [
+      "long-task",
+      "diagnose-revision",
+      fixtureState.fixture.workdir,
+    ]);
+    assert.equal(diagnosis.status, "automatic_revision_available");
+    assert.equal(
+      diagnosis.revision.change_class,
+      "mechanically_bounded_repair",
+    );
+    assert.equal(diagnosis.revision.user_decision_required, false);
+    assert.deepEqual(
+      diagnosis.revision.approval_summary.mechanically_bounded_reasons,
+      ["implementation_binding_refresh"],
+    );
+
+    const revised = await runCli(fixtureState.fixture.root, [
+      "long-task",
+      "compile",
+      fixtureState.fixture.workdir,
+      "--revise",
+    ]);
+    assert.equal(revised.lifecycle_event, "authority_revision_adopted");
+    assert.equal(revised.authority_revision, previous.authority_revision + 1);
+    assert.equal(revised.progress_preserved, false);
+    assert.equal(
+      revised.authority_revision_change.change_class,
+      "mechanically_bounded_repair",
+    );
+    assert.deepEqual(
+      revised.authority_revision_change.approval_summary
+        .mechanically_bounded_reasons,
+      ["implementation_binding_refresh"],
+    );
+
+    const finalGate = await runCliFailure(fixtureState.fixture.root, [
+      "long-task",
+      "final-gate",
+      fixtureState.fixture.workdir,
+    ]);
+    assert.equal(finalGate.workflow_status, "blocked_external");
+    assert.notEqual(finalGate.workflow_status, "machine_accepted");
+  } finally {
+    await rm(fixtureState.fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("implementation binding refresh stays protected when an owner root changes", async () => {
+  const fixtureState = await createImplementationBindingRefreshFixture();
+  try {
+    await runCli(fixtureState.fixture.root, ["enable", "long-task"]);
+    await commitCandidate(fixtureState.fixture.root);
+    await runCli(fixtureState.fixture.root, [
+      "long-task",
+      "compile",
+      fixtureState.fixture.workdir,
+    ]);
+    const previous = await readCompiledDeliveryContract(
+      fixtureState.fixture.workdir,
+    );
+    const feasibilityPath = path.join(
+      fixtureState.fixture.root,
+      DESIGN_FEASIBILITY_PATH,
+    );
+    const feasibility = JSON.parse(await readFile(feasibilityPath, "utf8"));
+    feasibility.substrate_observations
+      .find((observation) => observation.kind === "component_owner_roots")
+      .value.paths.push("tests");
+    const feasibilityContent = `${JSON.stringify(feasibility, null, 2)}\n`;
+    await writeFile(feasibilityPath, feasibilityContent);
+    fixtureState.handoff.technical_feasibility_inputs[0].sha256 =
+      sha256Text(feasibilityContent);
+    await writeDesignResourceHandoff(
+      fixtureState.fixture.root,
+      fixtureState.handoff,
+    );
+    const preflight = await preflightDesignResourceHandoff(
+      fixtureState.fixture.root,
+      DESIGN_HANDOFF_PATH,
+    );
+    await writeContract(
+      fixtureState.fixture.workdir,
+      fixtureState.fixture.contract,
+      {
+        designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+      },
+    );
+    let proposal = null;
+    await compileDeliveryContract(
+      fixtureState.fixture.workdir,
+      fixtureState.fixture.root,
+      {
+        revise: true,
+        previous_authority: previous,
+        authority_revision_mode: "diagnose",
+        on_authority_revision(value) {
+          proposal = value;
+        },
+      },
+    );
+    assert.ok(proposal);
+    assert.equal(proposal.change_class, "protected_semantic_or_proof_change");
+    assert.equal(proposal.user_decision_required, true);
+    assert.ok(
+      proposal.revision_diff.reduction_reasons.includes(
+        "design_semantics_changed",
+      ),
+    );
+    assert.deepEqual(
+      proposal.revision_diff.implementation_binding_refresh_targets,
+      [],
+    );
+  } finally {
+    await rm(fixtureState.fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("implementation binding projection preserves every semantic and Source boundary", async () => {
+  const fixtureState = await createImplementationBindingRefreshFixture();
+  try {
+    const sourceHashes = Object.fromEntries(
+      await Promise.all(
+        fixtureState.fixture.contract.task.source_paths.map(
+          async (sourcePath) => [
+            sourcePath,
+            sha256Text(
+              await readFile(
+                path.join(fixtureState.fixture.root, ...sourcePath.split("/")),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    const baseline = projectDesignAuthorityMaterials(
+      fixtureState.fixture.contract,
+      sourceHashes,
+      fixtureState.sourceItems,
+      [fixtureState.preflight],
+    );
+    const bindingContract = structuredClone(fixtureState.fixture.contract);
+    const bindingPreflight = structuredClone(fixtureState.preflight);
+    const target =
+      bindingContract.outcomes[0].product.surface_bindings[0].design_targets[0];
+    target.source_paths = target.source_paths.map((sourcePath) =>
+      sourcePath === DESIGN_FEASIBILITY_PATH
+        ? "design/current/implementation-feasibility.json"
+        : sourcePath,
+    );
+    bindingContract.outcomes[0].acceptance.checks[0].verification_inputs =
+      bindingContract.outcomes[0].acceptance.checks[0].verification_inputs.map(
+        (sourcePath) =>
+          sourcePath === DESIGN_FEASIBILITY_PATH
+            ? "design/current/implementation-feasibility.json"
+            : sourcePath,
+      );
+    const binding = bindingContract.outcomes[0].technical.bindings.find(
+      (candidate) => candidate.key === "design-current-owner",
+    );
+    binding.target = "src/current/ui-system.ts";
+    binding.carrier_paths = ["src/current/ui-system.ts"];
+    bindingPreflight.handoff.technical_feasibility_inputs[0].path =
+      "design/current/implementation-feasibility.json";
+    bindingPreflight.handoff.technical_feasibility_inputs[0].sha256 =
+      "1".repeat(64);
+    bindingPreflight.technical_feasibility_identities[0].path =
+      "design/current/implementation-feasibility.json";
+    bindingPreflight.technical_feasibility_identities[0].sha256 = "1".repeat(
+      64,
+    );
+    const feasibility = bindingPreflight.technical_feasibility_documents[0];
+    feasibility.source_records[0].path = "src/current/ui-system.ts";
+    feasibility.source_records[0].sha256 = "2".repeat(64);
+    feasibility.source_records[0].locator.value = "export const CurrentCard";
+    feasibility.component_family_cells[0].feasible_realizations[0].owner_candidates[0].locator =
+      "src/current/ui-system.ts";
+    const rebound = projectDesignAuthorityMaterials(
+      bindingContract,
+      sourceHashes,
+      fixtureState.sourceItems,
+      [bindingPreflight],
+    );
+    assert.deepEqual(rebound.design_semantics, baseline.design_semantics);
+    assert.equal(
+      rebound.design_non_binding_contract_sha256,
+      baseline.design_non_binding_contract_sha256,
+    );
+    assert.equal(
+      rebound.design_non_binding_source_sha256,
+      baseline.design_non_binding_source_sha256,
+    );
+    assert.notDeepEqual(
+      rebound.design_implementation_bindings,
+      baseline.design_implementation_bindings,
+    );
+    assert.deepEqual(
+      implementationBindingRefreshTargets(baseline, rebound, {
+        verifier_content_changed: false,
+        verifier_runtime_locator_changed: false,
+        risk_changed: false,
+      }),
+      [DESIGN_TARGET_KEY],
+    );
+
+    for (const [name, mutate] of [
+      [
+        "Design Fact",
+        (preflight) => {
+          preflight.handoff.facts[0].value.sha256 = "3".repeat(64);
+        },
+      ],
+      [
+        "handoff provenance",
+        (preflight) => {
+          preflight.handoff.provenance.run = "changed-generation-run";
+        },
+      ],
+      [
+        "condition",
+        (preflight) => {
+          preflight.handoff.conditions[0].key = "changed-condition";
+        },
+      ],
+      [
+        "comparison",
+        (preflight) => {
+          preflight.handoff.proof_obligations[0].comparison.parameters.sha256 =
+            "4".repeat(64);
+        },
+      ],
+      [
+        "owner root",
+        (preflight) => {
+          preflight.technical_feasibility_documents[0].substrate_observations
+            .find((observation) => observation.kind === "component_owner_roots")
+            .value.paths.push("tests");
+        },
+      ],
+      [
+        "required realization",
+        (preflight) => {
+          preflight.technical_feasibility_documents[0].component_family_cells[0].required_realization.realization_ref =
+            "reuse-project-card";
+        },
+      ],
+      [
+        "blocker",
+        (preflight) => {
+          preflight.technical_feasibility_documents[0].component_family_cells[0].blocker_refs.push(
+            "blocker.changed",
+          );
+        },
+      ],
+    ]) {
+      const changedPreflight = structuredClone(fixtureState.preflight);
+      mutate(changedPreflight);
+      const changed = projectDesignAuthorityMaterials(
+        fixtureState.fixture.contract,
+        sourceHashes,
+        fixtureState.sourceItems,
+        [changedPreflight],
+      );
+      assert.notDeepEqual(
+        changed.design_semantics,
+        baseline.design_semantics,
+        name,
+      );
+      assert.deepEqual(
+        implementationBindingRefreshTargets(baseline, changed, {
+          verifier_content_changed: false,
+          verifier_runtime_locator_changed: false,
+          risk_changed: false,
+        }),
+        [],
+        name,
+      );
+    }
+
+    for (const [name, mutate] of [
+      [
+        "Product Claim",
+        (contract) => {
+          contract.source_claims[0].statement = "Changed Product meaning.";
+        },
+      ],
+      [
+        "forbidden shortcut",
+        (contract) => {
+          contract.global.technical.forbidden_shortcuts.push({
+            key: "changed-shortcut",
+            statement: "Do not bypass the current owner.",
+            applicability_refs: ["first-root-success"],
+          });
+        },
+      ],
+      [
+        "external boundary",
+        (contract) => {
+          contract.global.acceptance.external_confirmations[0].description =
+            "Changed external observation boundary.";
+        },
+      ],
+    ]) {
+      const changedContract = structuredClone(fixtureState.fixture.contract);
+      mutate(changedContract);
+      const changed = projectDesignAuthorityMaterials(
+        changedContract,
+        sourceHashes,
+        fixtureState.sourceItems,
+        [fixtureState.preflight],
+      );
+      assert.notEqual(
+        changed.design_non_binding_contract_sha256,
+        baseline.design_non_binding_contract_sha256,
+        name,
+      );
+      assert.deepEqual(
+        implementationBindingRefreshTargets(baseline, changed, {
+          verifier_content_changed: false,
+          verifier_runtime_locator_changed: false,
+          risk_changed: false,
+        }),
+        [],
+        name,
+      );
+    }
+
+    const sharedSourceItems = structuredClone(fixtureState.sourceItems);
+    const designSourceItem = sharedSourceItems.find(
+      (item) => item.key === DESIGN_SOURCE_ITEM_KEY,
+    );
+    designSourceItem.normalized_text = "Changed shared Product meaning.";
+    designSourceItem.text_sha256 = sha256Text(designSourceItem.normalized_text);
+    const changedSharedSource = projectDesignAuthorityMaterials(
+      fixtureState.fixture.contract,
+      sourceHashes,
+      sharedSourceItems,
+      [fixtureState.preflight],
+    );
+    assert.notDeepEqual(
+      changedSharedSource.design_semantics,
+      baseline.design_semantics,
+    );
+    assert.notEqual(
+      changedSharedSource.design_non_binding_source_sha256,
+      baseline.design_non_binding_source_sha256,
+    );
+    assert.deepEqual(
+      implementationBindingRefreshTargets(baseline, changedSharedSource, {
+        verifier_content_changed: false,
+        verifier_runtime_locator_changed: false,
+        risk_changed: false,
+      }),
+      [],
+    );
+  } finally {
+    await rm(fixtureState.fixture.root, { recursive: true, force: true });
   }
 });
 
@@ -3055,6 +3541,149 @@ function replaceExactStringMap(value, mapping) {
       value[nextKey] = mapping.get(entry);
     else replaceExactStringMap(value[nextKey], mapping);
   }
+}
+
+async function createImplementationBindingRefreshFixture() {
+  const fixture = await createDeliveryFixture();
+  const handoff = await attachDesignResourceHandoff(fixture);
+  await addDesignResourceImplementationFeasibility(fixture.root, handoff);
+  await writeDesignResourceHandoff(fixture.root, handoff);
+  const outcome = fixture.contract.outcomes[0];
+  const surface = outcome.product.surface_bindings[0];
+  surface.route_binding_ref = "design-current-owner";
+  surface.component_binding_refs = ["design-current-owner"];
+  outcome.technical.bindings.push({
+    key: "design-current-owner",
+    kind: "file",
+    target: DESIGN_TECHNICAL_SOURCE_PATH,
+    carrier_paths: [DESIGN_TECHNICAL_SOURCE_PATH],
+    existence: "existing",
+  });
+  surface.design_targets[0].source_paths.push(DESIGN_FEASIBILITY_PATH);
+  outcome.acceptance.checks[0].verification_inputs.push(
+    DESIGN_FEASIBILITY_PATH,
+  );
+  configureExactTargetBlockingConfirmation(fixture.contract, {
+    key: "confirm-current-design-binding",
+  });
+  const preflight = await preflightDesignResourceHandoff(
+    fixture.root,
+    DESIGN_HANDOFF_PATH,
+  );
+  await writeContract(fixture.workdir, fixture.contract, {
+    designSemanticProjection: projectDesignOwnedSemanticFacts([preflight]),
+  });
+  const sourceItems = await compileSourceInventory(
+    fixture.root,
+    fixture.contract.task.source_paths,
+  );
+  return { fixture, handoff, preflight, sourceItems };
+}
+
+async function refreshImplementationBindingFixture(fixtureState) {
+  const currentSourcePath = "src/current/ui-system.ts";
+  const currentFeasibilityPath =
+    "design/current/implementation-feasibility.json";
+  const currentSource = [
+    "export const platform = 'desktop-web';",
+    "export const frameworkRuntime = 'fixture-framework';",
+    "export const uiSystem = 'fixture-ui-system';",
+    "export const tokenAdapter = 'fixture-token-adapter';",
+    "export const CurrentCard = 'project-card';",
+    "export const routeOwner = 'main-route';",
+    "",
+  ].join("\n");
+  const feasibility = JSON.parse(
+    await readFile(
+      path.join(fixtureState.fixture.root, DESIGN_FEASIBILITY_PATH),
+      "utf8",
+    ),
+  );
+  await mkdir(
+    path.dirname(path.join(fixtureState.fixture.root, currentSourcePath)),
+    { recursive: true },
+  );
+  await writeFile(
+    path.join(fixtureState.fixture.root, currentSourcePath),
+    currentSource,
+  );
+  const sourceRecord = feasibility.source_records[0];
+  sourceRecord.path = currentSourcePath;
+  sourceRecord.sha256 = sha256Text(currentSource);
+  sourceRecord.locator.value = "export const CurrentCard";
+  feasibility.component_family_cells[0].feasible_realizations[0].owner_candidates[0].locator =
+    currentSourcePath;
+  const feasibilityContent = `${JSON.stringify(feasibility, null, 2)}\n`;
+  await mkdir(
+    path.dirname(path.join(fixtureState.fixture.root, currentFeasibilityPath)),
+    { recursive: true },
+  );
+  await writeFile(
+    path.join(fixtureState.fixture.root, currentFeasibilityPath),
+    feasibilityContent,
+  );
+  const feasibilityInput = fixtureState.handoff.technical_feasibility_inputs[0];
+  feasibilityInput.path = currentFeasibilityPath;
+  feasibilityInput.sha256 = sha256Text(feasibilityContent);
+  const outcome = fixtureState.fixture.contract.outcomes[0];
+  const target = outcome.product.surface_bindings[0].design_targets[0];
+  target.source_paths = target.source_paths.map((sourcePath) =>
+    sourcePath === DESIGN_FEASIBILITY_PATH
+      ? currentFeasibilityPath
+      : sourcePath === DESIGN_HANDOFF_PATH
+        ? DESIGN_REFRESHED_HANDOFF_PATH
+        : sourcePath,
+  );
+  outcome.acceptance.checks[0].verification_inputs =
+    outcome.acceptance.checks[0].verification_inputs.map((sourcePath) =>
+      sourcePath === DESIGN_FEASIBILITY_PATH
+        ? currentFeasibilityPath
+        : sourcePath === DESIGN_HANDOFF_PATH
+          ? DESIGN_REFRESHED_HANDOFF_PATH
+          : sourcePath,
+    );
+  const binding = outcome.technical.bindings.find(
+    (candidate) => candidate.key === "design-current-owner",
+  );
+  binding.target = currentSourcePath;
+  binding.carrier_paths = [currentSourcePath];
+  await writeDesignResourceHandoff(
+    fixtureState.fixture.root,
+    fixtureState.handoff,
+    { handoffPath: DESIGN_REFRESHED_HANDOFF_PATH },
+  );
+  fixtureState.fixture.contract.task.source_paths =
+    fixtureState.fixture.contract.task.source_paths.map((sourcePath) =>
+      sourcePath === DESIGN_HANDOFF_PATH
+        ? DESIGN_REFRESHED_HANDOFF_PATH
+        : sourcePath,
+    );
+  fixtureState.fixture.contract.source_claims =
+    fixtureState.fixture.contract.source_claims.map((claim) => ({
+      ...claim,
+      source_ref: claim.source_ref.startsWith(`${DESIGN_HANDOFF_PATH}#`)
+        ? `${DESIGN_REFRESHED_HANDOFF_PATH}${claim.source_ref.slice(
+            DESIGN_HANDOFF_PATH.length,
+          )}`
+        : claim.source_ref,
+    }));
+  fixtureState.preflight = await preflightDesignResourceHandoff(
+    fixtureState.fixture.root,
+    DESIGN_REFRESHED_HANDOFF_PATH,
+  );
+  await writeContract(
+    fixtureState.fixture.workdir,
+    fixtureState.fixture.contract,
+    {
+      designSemanticProjection: projectDesignOwnedSemanticFacts([
+        fixtureState.preflight,
+      ]),
+    },
+  );
+  fixtureState.sourceItems = await compileSourceInventory(
+    fixtureState.fixture.root,
+    fixtureState.fixture.contract.task.source_paths,
+  );
 }
 
 async function attachDesignResourceHandoff(

@@ -11,10 +11,10 @@ const supportedTestPlatforms = new Set(SUPPORTED_TEST_PLATFORMS);
 
 export const TEST_TIER_REVIEW_BUDGETS = Object.freeze({
   long_task_trust: Object.freeze({
-    max_files: 28,
-    reviewed_on: "2026-08-26",
+    max_files: 29,
+    reviewed_on: "2026-09-05",
     rationale:
-      "One canonical file per reviewed high-impact trust-boundary invariant family. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The cross-platform direct-process observer file closes the proven PR-to-main coverage gap for immediate-root descendant containment while retaining distinct Windows Job and POSIX process-group/sampled-escape controls. The independent atomic-finalization file freezes one locked Finalization Identity/CAS transaction across candidate, Authority, external state, Receipt publication and close, including Windows process-tree settlement before terminal publication. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. The mechanism-only complete-delivery black-box file independently protects the sanitized Starward/backend/CLI closure without claiming real-incident or ROI evidence. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
+      "One canonical file per reviewed high-impact trust-boundary invariant family. The implementation-binding refresh owner independently proves exact semantic preservation, mechanical rebinding and old-proof invalidation rather than leaving that boundary only in complete release regression. The exact External Confirmation lifecycle file freezes current-candidate invalidation, per-obligation equality, runner-time record immutability and the delivery_accepted terminal without moving acceptance out of the sole Final Gate. The cross-platform direct-process observer file closes the proven PR-to-main coverage gap for immediate-root descendant containment while retaining distinct Windows Job and POSIX process-group/sampled-escape controls. The independent atomic-finalization file freezes one locked Finalization Identity/CAS transaction across candidate, Authority, external state, Receipt publication and close, including Windows process-tree settlement before terminal publication. The independent Windows Job containment file freezes suspended-create/pre-resume assignment and descendant cleanup without broadening package observation authority. The mechanism-only complete-delivery black-box file independently protects the sanitized Starward/backend/CLI closure without claiming real-incident or ROI evidence. Level 4 remains split across formal accounting, measurement integrity, sealed acquisition, external-source/State/Provider readiness, exact package reproduction and independent governance so its complete evidence closure and promotion controls stay dynamic without a giant-fixture waiver or duplicate conclusion owner.",
   }),
   long_task_focused: Object.freeze({
     max_files: 25,
@@ -123,6 +123,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "selected-design-exact-verdict-recomputation proves, through independent positive and negative controls, that selected-design method evidence conserves the exact manifest-backed atomic Fact and property-required proof set, freezes expected comparison authority, and rejects an actual/expected exact digest mismatch or forged comparison result identity even when submitted pass/verdict fields claim success. It also covers omission, substitution, stale authority, unsafe sensitive evidence, and attributable current-snapshot results at this owner boundary; it does not prove arbitrary observers, arbitrary UI formats, or live-session authenticity.",
   ),
   criticalSentinel(
+    "implementation-binding-refresh",
+    "long-task-delivery-compiler.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Positive control: an exact current implementation path/digest/locator rebinding with byte-identical design semantics and non-binding Source/Contract projections is diagnosed and adopted only as mechanically_bounded_repair, increments Authority revision, invalidates prior Progress and remains blocked_external until its current proof boundary closes. Negative controls in the same owner keep owner-root, semantic, Source, required-realization, blocker, verifier and unknown changes decision-protected. Owner/path: projectDesignAuthorityMaterials, implementationBindingRefreshTargets, Authority Revision diagnosis/adoption and the sole Final Gate. Does not prove the new implementation behavior or external UI conformance; those remain current-candidate proof obligations.",
+  ),
+  criticalSentinel(
     "observer-admission-no-bypass",
     "long-task-observer-trust-counterexamples.test.mjs",
     ["long-task", "long-task-trust"],
@@ -176,6 +182,12 @@ export const CRITICAL_TEST_SENTINELS = Object.freeze([
     "long-task-compact-semantic-carrier.test.mjs",
     ["long-task", "long-task-trust"],
     "Proves compact Source and Contract preserve separate exact Fact and obligation sets through stable keys plus current revision digests, support one Fact with multiple obligations, reject revision/capacity drift before first lock, and leave no expanded Authority shadow.",
+  ),
+  criticalSentinel(
+    "compact-authoring-command",
+    "long-task-compact-semantic-carrier.test.mjs",
+    ["long-task", "long-task-trust"],
+    "Proves the optional pre-first-lock compact command preserves normalized Source/Contract semantics, exact Fact and obligation revision identities, Assertion counts and every byte outside the sole formal block; applies both carriers through current-snapshot CAS with rollback/readback; remains idempotent; and rejects concurrent, partial-publication and post-Authority paths without weakening V1 capacity or switching representation semantics.",
   ),
   criticalSentinel(
     "semantic-assurance-closure",

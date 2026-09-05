@@ -16,6 +16,7 @@ import {
   parseStrictYaml,
   sha256Hex,
 } from "./strict-codec.js";
+import { forEachSourceLine } from "./source-line-scanner.js";
 
 const START =
   /^\s*```yaml[ \t]+(semantic-fact-manifest-v1|semantic-fact-compact-carrier-v1)[ \t]*$/u;
@@ -29,6 +30,79 @@ export interface ParsedSemanticFactManifestV1 {
   carrier: "expanded_v1" | "compact_v1";
   fact_revisions: SemanticFactRevisionIdentityV1[];
   obligation_revisions: SemanticFactRevisionIdentityV1[];
+}
+
+export interface SemanticFactManifestBlockSpanV1 {
+  kind: "semantic-fact-manifest-v1" | "semantic-fact-compact-carrier-v1";
+  line: number;
+  start_offset: number;
+  end_offset: number;
+  body_start_offset: number;
+  body_end_offset: number;
+  line_ending: "\n" | "\r\n" | "\r";
+}
+
+/**
+ * Locates the exact replaceable formal-block bytes without normalizing any
+ * surrounding Markdown. Parsing and semantic validation remain owned by
+ * parseSemanticFactManifestBlocks; this scanner exists only for bounded,
+ * byte-preserving authoring rewrites.
+ */
+export function locateSemanticFactManifestBlockSpans(
+  sourcePath: string,
+  content: string,
+): SemanticFactManifestBlockSpanV1[] {
+  const rows: SemanticFactManifestBlockSpanV1[] = [];
+  let open: {
+    kind: SemanticFactManifestBlockSpanV1["kind"];
+    line: number;
+    start_offset: number;
+    body_start_offset: number;
+    line_ending: SemanticFactManifestBlockSpanV1["line_ending"];
+  } | null = null;
+  forEachSourceLine(
+    content,
+    (line, startOffset, endOffset, nextOffset, lineNumber) => {
+      if (!open) {
+        const match = START.exec(line);
+        if (!match) return;
+        const lineEnding = content.slice(endOffset, nextOffset);
+        if (!["\n", "\r\n", "\r"].includes(lineEnding))
+          throw new Error(
+            `source_formal_block_opening_separator_required:${sourcePath}:${lineNumber}`,
+          );
+        open = {
+          kind: match[1] as SemanticFactManifestBlockSpanV1["kind"],
+          line: lineNumber,
+          start_offset: startOffset,
+          body_start_offset: nextOffset,
+          line_ending:
+            lineEnding as SemanticFactManifestBlockSpanV1["line_ending"],
+        };
+        return;
+      }
+      if (!END.test(line)) return;
+      rows.push({
+        kind: open.kind,
+        line: open.line,
+        start_offset: open.start_offset,
+        end_offset: endOffset,
+        body_start_offset: open.body_start_offset,
+        body_end_offset: startOffset,
+        line_ending: open.line_ending,
+      });
+      open = null;
+    },
+  );
+  const unclosed = open as {
+    kind: SemanticFactManifestBlockSpanV1["kind"];
+    line: number;
+  } | null;
+  if (unclosed)
+    throw new Error(
+      `source_formal_block_unclosed:${sourcePath}:${unclosed.kind}:${unclosed.line}`,
+    );
+  return rows;
 }
 
 export function parseSemanticFactManifestBlocks(

@@ -1,6 +1,7 @@
 import path from "node:path";
 import { existsSync } from "node:fs";
 import { readConfig } from "./config.js";
+import type { CatalogFile } from "./context-catalog/catalog-types.js";
 import type { ContextRole } from "./context-manifest-schema.js";
 import {
   CONTEXT_READ_POLICY_SET,
@@ -11,6 +12,8 @@ import {
   catalogWarnings,
 } from "./context-catalog/catalog-diagnostics.js";
 import { loadContextCatalog } from "./context-catalog/catalog-load.js";
+import { analyzeContextMarkdownCatalog } from "./context-markdown/context-markdown-analysis.js";
+import { extractContextMarkdown } from "./context-markdown/context-markdown-extract.js";
 import {
   compareUtf8Paths,
   isPathWithin,
@@ -168,6 +171,7 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
   let manifestReadPolicies = new Map<string, string>();
   let manifestCatalogLoaded = false;
   let catalogContextFiles: string[] | undefined;
+  let catalogMarkdownFiles: CatalogFile[] = [];
   let catalogFilesByPath = new Map<string, string>();
   let schemaVersion = "4";
 
@@ -255,6 +259,7 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
 
   if (await pathExists(manifestPath)) {
     const catalog = await loadContextCatalog(projectRoot);
+    catalogMarkdownFiles = catalog.context_files;
     manifestCatalogLoaded = true;
     catalogContextFiles = catalog.context_files
       .map((entry) => entry.absolute_path)
@@ -353,6 +358,23 @@ async function validateContext(projectRoot: string): Promise<ValidatorReport> {
     }
   }
 
+  if (catalogMarkdownFiles.length) {
+    const markdown = await analyzeContextMarkdownCatalog({
+      project_root: projectRoot,
+      files: catalogMarkdownFiles,
+      long_line_threshold: Number.MAX_SAFE_INTEGER,
+    });
+    for (const declaration of markdown.controlling_sources)
+      if (declaration.status !== "valid")
+        errors.push(
+          `${declaration.source_path}:${declaration.line} has ${declaration.status.replaceAll("_", " ")} controlling Source ${JSON.stringify(declaration.target_path ?? declaration.declared_path)}${declaration.detail ? `: ${declaration.detail}` : ""}`,
+        );
+    for (const conflict of markdown.controlling_source_conflicts)
+      errors.push(
+        `controlling Source ${conflict.target_path} has ${conflict.kind.replaceAll("_", " ")} declarations: ${conflict.owners.map((owner) => `${owner.source_path}:${owner.line}:${owner.domain}`).join(", ")}`,
+      );
+  }
+
   info.push(
     `checked project_context/global.md, project_context/architecture.md and ${validatedContextFiles.size} context graph file(s)`,
   );
@@ -372,6 +394,12 @@ function validateContextFile(
   assertNoFakeVerification(file, content, errors);
   assertMinimumRecoverability(file, content, errors);
   assertRoleRecoverability(projectRoot, file, content, role, errors);
+  for (const declaration of extractContextMarkdown(content, file)
+    .invalid_declarations)
+    if (declaration.raw.includes("ty-context-controlling-source"))
+      errors.push(
+        `${file}:${declaration.line} has invalid controlling Source declaration ${JSON.stringify(declaration.raw)}: ${declaration.reason}`,
+      );
 }
 
 export function validateContextContentForRole(

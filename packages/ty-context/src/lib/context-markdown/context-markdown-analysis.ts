@@ -7,7 +7,12 @@ import {
   normalizeContextPath,
 } from "../context-catalog/catalog-paths.js";
 import { extractContextMarkdown } from "./context-markdown-extract.js";
+import {
+  contextControllingSourceConflicts,
+  resolveContextControllingSourceDeclaration,
+} from "../context-controlling-source.js";
 import type {
+  ContextControllingSourceDeclaration,
   ContextLongLine,
   ContextMarkdownCatalogAnalysis,
   ContextMarkdownFileAnalysis,
@@ -38,9 +43,13 @@ export async function analyzeContextMarkdownCatalog(input: {
       }),
     );
   const declarations = files.flatMap((file) => file.declarations);
+  const controllingSources = files.flatMap((file) => file.controlling_sources);
   return {
     files,
     references: files.flatMap((file) => file.references),
+    controlling_sources: controllingSources,
+    controlling_source_conflicts:
+      contextControllingSourceConflicts(controllingSources),
     declarations,
     invalid_declarations: files.flatMap((file) => file.invalid_declarations),
     declaration_conflicts: declarationConflicts(declarations),
@@ -72,12 +81,21 @@ export async function analyzeContextMarkdownFile(input: {
     );
     if (resolved) references.push(resolved);
   }
+  const controllingSources: ContextControllingSourceDeclaration[] = [];
+  for (const declaration of extracted.controlling_sources)
+    controllingSources.push(
+      await resolveContextControllingSourceDeclaration(
+        input.project_root,
+        declaration,
+      ),
+    );
   return {
     path: input.file.path,
     bytes: Buffer.byteLength(content, "utf8"),
     max_line_code_points: lengths.maximum,
     long_lines: lengths.long,
     references,
+    controlling_sources: controllingSources,
     declarations: extracted.declarations,
     invalid_declarations: extracted.invalid_declarations,
   };

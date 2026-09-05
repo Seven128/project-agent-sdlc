@@ -29,5 +29,9 @@ function evaluateBuildExpectation(row, expected) {
   for (const pattern of expected.prohibited_excludes ?? [])
     if (new RegExp(pattern, "iu").test(prohibited))
       failures.push(`legal_alternative_mislabeled:${pattern}`);
+  const rationale = row.rationale_codes.join("\n");
+  for (const pattern of expected.rationale_patterns ?? [])
+    if (!new RegExp(pattern, "iu").test(rationale))
+      failures.push(`rationale_pattern_missing:${pattern}`);
   return failures;
 }

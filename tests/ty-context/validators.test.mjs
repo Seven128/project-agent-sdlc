@@ -23,6 +23,76 @@ test("Minimal Context validators accept complete project_context facts", async (
   }
 });
 
+test("validate-context accepts one exact controlling Source declaration", async () => {
+  const root = await createContextProject({
+    module: `${completeAreaContext()}\n<!-- ty-context-controlling-source domain="product" path="docs/product-source.md" -->\n`,
+    extraFiles: {
+      "docs/product-source.md": "# Product Source\n",
+    },
+  });
+  try {
+    const report = await runValidator(root, "validate-context");
+    assert.deepEqual(report.errors, []);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("validate-context fails closed for malformed, invalid, and conflicting controlling Source declarations", async () => {
+  const cases = [
+    {
+      name: "malformed attribute order",
+      marker:
+        '<!-- ty-context-controlling-source path="docs/product-source.md" domain="product" -->',
+      extraFiles: { "docs/product-source.md": "# Product Source\n" },
+      expected: /invalid controlling Source declaration/u,
+    },
+    {
+      name: "missing target",
+      marker:
+        '<!-- ty-context-controlling-source domain="product" path="docs/missing.md" -->',
+      extraFiles: {},
+      expected: /missing controlling Source/u,
+    },
+    {
+      name: "noncanonical separators",
+      marker:
+        '<!-- ty-context-controlling-source domain="product" path="docs\\product-source.md" -->',
+      extraFiles: { "docs/product-source.md": "# Product Source\n" },
+      expected: /invalid controlling Source/u,
+    },
+  ];
+
+  for (const item of cases) {
+    const root = await createContextProject({
+      module: `${completeAreaContext()}\n${item.marker}\n`,
+      extraFiles: item.extraFiles,
+    });
+    try {
+      const report = await runValidator(root, "validate-context");
+      assert.match(report.errors.join("\n"), item.expected, item.name);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  }
+
+  const root = await createContextProject({
+    module: `${completeAreaContext()}\n<!-- ty-context-controlling-source domain="product" path="docs/product-source.md" -->\n`,
+    manifest: `${completeDefaultContextManifest()}\n[[context]]\npath = "project_context/areas/conflict.md"\nrole = "area"\nread_policy = "on-demand"\ntriggers = ["conflict"]\n`,
+    extraFiles: {
+      "docs/product-source.md": "# Product Source\n",
+      "project_context/areas/conflict.md":
+        '# Conflict\n<!-- ty-context-controlling-source domain="technical" path="docs/product-source.md" -->\n',
+    },
+  });
+  try {
+    const report = await runValidator(root, "validate-context");
+    assert.match(report.errors.join("\n"), /domain conflict declarations/u);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
 test("validate-context ignores code modularity findings and waiver metadata", async () => {
   const root = await createContextGitProject({
     configExtra: `

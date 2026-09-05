@@ -279,7 +279,7 @@ test("test-owned child boundaries settle their process tree on success and bound
   }
 });
 
-test("real process ROI current control is Preflight-ready after the measured enable step", async () => {
+test("real process ROI current control stays ready with exact compact advice after the measured enable step", async () => {
   const fixture = await createWorkloadFixture({
     harnessRoot: root,
     variantId: "c",
@@ -308,7 +308,25 @@ test("real process ROI current control is Preflight-ready after the measured ena
     assert.equal(preflight.status, 0, preflight.stderr || preflight.stdout);
     const parsed = JSON.parse(preflight.stdout);
     assert.equal(parsed.status, "ready");
-    assert.deepEqual(parsed.diagnostics, []);
+    assert.equal(parsed.diagnostics.length, 1);
+    const [diagnostic] = parsed.diagnostics;
+    assert.equal(
+      diagnostic.code,
+      "equivalent_compact_representation_available",
+    );
+    assert.equal(diagnostic.level, "warning");
+    assert.deepEqual(
+      new Set(diagnostic.refs),
+      new Set(["source.md", ".long-task/delivery-contract.yaml"]),
+    );
+    assert.match(
+      diagnostic.message,
+      /equivalent compact projection reduces canonical representation bytes by \d+ \([\d.]+%\)/u,
+    );
+    assert.match(
+      diagnostic.repair_hint,
+      /^ty-context long-task compact-authoring ".+" --apply$/u,
+    );
   } finally {
     await removeFixture(fixture);
   }

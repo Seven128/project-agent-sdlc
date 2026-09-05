@@ -23,6 +23,7 @@ import {
 import {
   buildPassingRow,
   draPassingRow,
+  dsaArtifactPassingRow,
   syntheticPair,
 } from "./fresh-agent-admission-fixture.mjs";
 
@@ -45,7 +46,7 @@ const trace = {
   total_tokens: 1000,
 };
 
-test("fresh-Agent admission configuration freezes two independent tracks before execution", async () => {
+test("fresh-Agent admission configuration freezes three independent tracks before execution", async () => {
   const {
     config,
     global_execution_envelope_sha256: globalExecutionEnvelopeSha,
@@ -59,6 +60,7 @@ test("fresh-Agent admission configuration freezes two independent tracks before 
   assert.deepEqual(Object.keys(config.tracks).sort(), [
     "build-reuse-buy",
     "dra-semantic-recovery",
+    "dsa-artifact-category",
   ]);
   assert.equal(config.model, "gpt-5.6-terra");
   assert.equal(config.reasoning_effort, "medium");
@@ -67,6 +69,7 @@ test("fresh-Agent admission configuration freezes two independent tracks before 
   assert.deepEqual(Object.keys(trackConfigSha).sort(), [
     "build-reuse-buy",
     "dra-semantic-recovery",
+    "dsa-artifact-category",
   ]);
   assert.equal(config.pair_policy.minimum_pairs, 3);
   assert.equal(config.pair_policy.expanded_pairs, 5);
@@ -132,6 +135,10 @@ test("global and track-local identities invalidate only their owning admission s
       changedIdentity.track_config_sha256["build-reuse-buy"],
       identity.track_config_sha256["build-reuse-buy"],
     );
+    assert.equal(
+      changedIdentity.track_config_sha256["dsa-artifact-category"],
+      identity.track_config_sha256["dsa-artifact-category"],
+    );
   }
 
   for (const mutate of [
@@ -157,7 +164,29 @@ test("global and track-local identities invalidate only their owning admission s
       changedIdentity.track_config_sha256["build-reuse-buy"],
       identity.track_config_sha256["build-reuse-buy"],
     );
+    assert.equal(
+      changedIdentity.track_config_sha256["dsa-artifact-category"],
+      identity.track_config_sha256["dsa-artifact-category"],
+    );
   }
+
+  const dsaChanged = structuredClone(config);
+  dsaChanged.tracks[
+    "dsa-artifact-category"
+  ].variants.candidate.guidance.quality.bundle_sha256 = "f".repeat(64);
+  const dsaIdentity = admissionConfigIdentities(dsaChanged);
+  assert.equal(
+    dsaIdentity.track_config_sha256["dra-semantic-recovery"],
+    identity.track_config_sha256["dra-semantic-recovery"],
+  );
+  assert.equal(
+    dsaIdentity.track_config_sha256["build-reuse-buy"],
+    identity.track_config_sha256["build-reuse-buy"],
+  );
+  assert.notEqual(
+    dsaIdentity.track_config_sha256["dsa-artifact-category"],
+    identity.track_config_sha256["dsa-artifact-category"],
+  );
 
   const globalChanged = structuredClone(config);
   globalChanged.model = `${config.model}-different`;
@@ -274,6 +303,46 @@ test("Build Reuse Buy scoring permits valid solution sets without a unique libra
     hidden,
   );
   assert.equal(failed.must_allow_false_blocking, 1);
+});
+
+test("DSA artifact scoring separates handbook structure from aesthetic selection", async () => {
+  const hidden = await readJson(
+    "hidden/dsa-artifact-category-admission-v1.json",
+  );
+  const passing = {
+    case_results: hidden.expectations.map(dsaArtifactPassingRow),
+  };
+  const score = scoreAdmissionInvocation(
+    "dsa-artifact-category",
+    "quality",
+    passing,
+    trace,
+    hidden,
+  );
+  assert.equal(score.targeted_defects, 0);
+  assert.equal(score.must_allow_false_blocking, 0);
+  assert.equal(
+    passing.case_results.every(
+      (row) =>
+        row.human_aesthetic_judgment_required === true &&
+        row.aesthetic_suitability_concluded === false,
+    ),
+    true,
+  );
+
+  const falseAestheticVerdict = structuredClone(passing);
+  falseAestheticVerdict.case_results.find(
+    (row) => row.id === "current-adopted-handbook",
+  ).aesthetic_suitability_concluded = true;
+  const failed = scoreAdmissionInvocation(
+    "dsa-artifact-category",
+    "quality",
+    falseAestheticVerdict,
+    trace,
+    hidden,
+  );
+  assert.equal(failed.targeted_defects, 1);
+  assert.equal(failed.critical_categories["must-allow-structural-readiness"], 1);
 });
 
 test("pair aggregation enforces 3-to-5 expansion, wins and per-category thresholds", async () => {
@@ -469,7 +538,12 @@ test("sanitized admission attestation binds the exact clean main tree and result
   };
   const aggregate = (track) => ({
     path: `run/${track}/aggregate-report.json`,
-    sha256: track === "dra-semantic-recovery" ? "a".repeat(64) : "b".repeat(64),
+    sha256:
+      {
+        "dra-semantic-recovery": "a",
+        "build-reuse-buy": "b",
+        "dsa-artifact-category": "c",
+      }[track].repeat(64),
     value: {
       global_execution_envelope_sha256: "global-frozen",
       track_config_sha256: `${track}-frozen`,
@@ -517,11 +591,13 @@ test("sanitized admission attestation binds the exact clean main tree and result
       track_config_sha256: {
         "dra-semantic-recovery": "dra-semantic-recovery-frozen",
         "build-reuse-buy": "build-reuse-buy-frozen",
+        "dsa-artifact-category": "dsa-artifact-category-frozen",
       },
       candidate_git: candidate,
       tracks: {
         "dra-semantic-recovery": { passed: true },
         "build-reuse-buy": { passed: true },
+        "dsa-artifact-category": { passed: true },
       },
       ...passingDeterministicEnvironment(),
     },
@@ -529,6 +605,7 @@ test("sanitized admission attestation binds the exact clean main tree and result
   const trackConfigSha = {
     "dra-semantic-recovery": "dra-semantic-recovery-frozen",
     "build-reuse-buy": "build-reuse-buy-frozen",
+    "dsa-artifact-category": "dsa-artifact-category-frozen",
   };
   const manifest = buildAdmissionAttestation({
     globalExecutionEnvelopeSha: "global-frozen",
@@ -537,13 +614,18 @@ test("sanitized admission attestation binds the exact clean main tree and result
     aggregates: [
       aggregate("dra-semantic-recovery"),
       aggregate("build-reuse-buy"),
+      aggregate("dsa-artifact-category"),
     ],
     candidate,
-    expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+    expectedTracks: [
+      "dra-semantic-recovery",
+      "build-reuse-buy",
+      "dsa-artifact-category",
+    ],
   });
   assert.equal(manifest.sensitive_raw_content_included, false);
   assert.equal(manifest.candidate_git.tree, "2".repeat(40));
-  assert.equal(manifest.tracks.length, 2);
+  assert.equal(manifest.tracks.length, 3);
   assert.equal(
     manifest.tracks.every(
       (track) => track.evidence_applicability === "current-candidate",
@@ -566,9 +648,17 @@ test("sanitized admission attestation binds the exact clean main tree and result
     globalExecutionEnvelopeSha: "global-frozen",
     trackConfigSha,
     deterministic,
-    aggregates: [aggregate("dra-semantic-recovery"), reusedBuild],
+    aggregates: [
+      aggregate("dra-semantic-recovery"),
+      reusedBuild,
+      aggregate("dsa-artifact-category"),
+    ],
     candidate,
-    expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+    expectedTracks: [
+      "dra-semantic-recovery",
+      "build-reuse-buy",
+      "dsa-artifact-category",
+    ],
   });
   assert.equal(
     reused.tracks.find((track) => track.track === "build-reuse-buy")
@@ -584,9 +674,17 @@ test("sanitized admission attestation binds the exact clean main tree and result
         globalExecutionEnvelopeSha: "global-frozen",
         trackConfigSha,
         deterministic,
-        aggregates: [aggregate("dra-semantic-recovery"), mismatchedBuild],
+        aggregates: [
+          aggregate("dra-semantic-recovery"),
+          mismatchedBuild,
+          aggregate("dsa-artifact-category"),
+        ],
         candidate,
-        expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+        expectedTracks: [
+          "dra-semantic-recovery",
+          "build-reuse-buy",
+          "dsa-artifact-category",
+        ],
       }),
     /aggregate_track_mismatch/u,
   );
@@ -600,6 +698,7 @@ test("sanitized admission attestation binds the exact clean main tree and result
         aggregates: [
           aggregate("dra-semantic-recovery"),
           aggregate("build-reuse-buy"),
+          aggregate("dsa-artifact-category"),
         ],
         candidate: {
           branch: "main",
@@ -608,7 +707,11 @@ test("sanitized admission attestation binds the exact clean main tree and result
           main_commit: "1".repeat(40),
           working_tree_clean: false,
         },
-        expectedTracks: ["dra-semantic-recovery", "build-reuse-buy"],
+        expectedTracks: [
+          "dra-semantic-recovery",
+          "build-reuse-buy",
+          "dsa-artifact-category",
+        ],
       }),
     /exact_main_required/u,
   );
@@ -626,6 +729,7 @@ test("sanitized CI evidence materializes only exact-tree reports and rejects raw
   const trackConfigSha = {
     "dra-semantic-recovery": "b".repeat(64),
     "build-reuse-buy": "c".repeat(64),
+    "dsa-artifact-category": "d".repeat(64),
   };
   const pairRecords = Object.keys(trackConfigSha).map((track) =>
     jsonRecord(

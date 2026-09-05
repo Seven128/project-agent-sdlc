@@ -44,13 +44,13 @@ This track holds Long-Task internals fixed. It tests only whether removing the d
 
 Authoring comparisons are blocked unless both runs pass their fixed Source key/kind, Risk and proof gold and produce the same canonical Authority fingerprint. Cost fields remain unavailable until that fingerprint is equal; YAML reduction without Authority equivalence is not a win.
 
-### DRA and Build / Reuse / Buy admission
+### DRA, Build / Reuse / Buy and DSA artifact admission
 
-`admission-set.json` is a separate frozen protocol for two independent Fresh-Agent tracks. `dra-semantic-recovery` tests replayable Base/Delta meaning, Source-owned scoped authority, non-circular delegated choice, active-owner/inactive-leakage closure, Delta-to-patch conservation, complete audit catalogs, deterministic-recovery boundaries, CAS/idempotence and the zero-write simple preview. `build-reuse-buy` scores an allowed solution set and prohibited failures; it deliberately treats repository reuse, standard/installed/mature external capabilities, bounded self-implementation and intentional non-abstraction as potentially valid instead of requiring one library.
+`admission-set.json` is a separate frozen protocol for three independent Fresh-Agent tracks. `dra-semantic-recovery` tests replayable Base/Delta meaning, Source-owned scoped authority, non-circular delegated choice, active-owner/inactive-leakage closure, Delta-to-patch conservation, complete audit catalogs, deterministic-recovery boundaries, CAS/idempotence and the zero-write simple preview. `build-reuse-buy` scores an allowed solution set and prohibited failures; it deliberately treats repository reuse, standard/installed/mature external capabilities, bounded self-implementation and intentional non-abstraction as potentially valid instead of requiring one library. `dsa-artifact-category` tests handbook-first structure, supplemental-scene ownership, adoption freshness, target-declared condition coverage and inert local projection boundaries; every case requires external human or validly delegated aesthetic judgment, so it cannot turn structural conformance into a visual-quality verdict.
 
-The freeze uses one global execution-envelope digest plus one track-local frozen-config digest. Model/reasoning, Provider, Codex/Node/OS environment, pairing and shared execution mechanics invalidate both tracks; DRA or Build / Reuse / Buy cases, hidden probes, result schemas, guidance, thresholds and track-specific scoring invalidate only their owning track. Hidden probes never enter the Agent prompt. Each invocation uses an independent `codex exec --ephemeral` read-only session in a helper-owned OS temporary directory; raw traces and scores stay ignored under `.artifacts/mechanism-admission/**` and are not Context, Authority or acceptance state.
+The freeze uses one global execution-envelope digest plus one track-local frozen-config digest. Model/reasoning, Provider, Codex/Node/OS environment, pairing and shared execution mechanics invalidate all tracks; DRA, Build / Reuse / Buy or DSA cases, hidden probes, result schemas, guidance, thresholds and track-specific scoring invalidate only their owning track. Hidden probes never enter the Agent prompt. Each invocation uses an independent `codex exec --ephemeral` read-only session in a helper-owned OS temporary directory; raw traces and scores stay ignored under `.artifacts/mechanism-admission/**` and are not Context, Authority or acceptance state.
 
-Both tracks start at three eligible pairs and require `2/3` wins. A primary-metric coefficient of variation above 20%, mixed pair direction, a result within five percentage points of threshold or environment/Provider trace doubt expands the frozen requirement to five pairs and `3/5` wins. No critical category may regress; targeted critical-plus-major defects must fall by at least 25%; must-allow false blocking is zero and other false blocking cannot exceed baseline. DRA additionally requires zero simple-path side effects/tool calls and no more than 10% median token or wall overhead. A zero-defect baseline produces no invented improvement claim.
+All three tracks start at three eligible pairs and require `2/3` wins. A primary-metric coefficient of variation above 20%, mixed pair direction, a result within five percentage points of threshold or environment/Provider trace doubt expands the frozen requirement to five pairs and `3/5` wins. No critical category may regress; targeted critical-plus-major defects must fall by at least 25%; must-allow false blocking is zero and other false blocking cannot exceed baseline. DRA additionally requires zero simple-path side effects/tool calls and no more than 10% median token or wall overhead. A zero-defect baseline produces no invented improvement claim.
 
 ### Opt-in DRA visual diagnostic
 
@@ -67,7 +67,7 @@ tasks/*.json               prompts and fixed task inputs
 gold/*.json                operator-held Context/Authority expectations
 hidden/*.mjs               product probes, never copied into run repositories
 runner/**                  prepare, score, compare and aggregate tools
-admission-set.json         independently frozen DRA/Build-Reuse-Buy protocol
+admission-set.json         independently frozen DRA/Build-Reuse-Buy/DSA protocol
 admission/**               public cases and strict result schemas
 visual-diagnostic/**       opt-in fixed visual cases and non-admission protocol
 agent-result.schema.json   diagnostic Agent handoff shape
@@ -191,6 +191,7 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs freeze
 node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs deterministic --artifact frozen-v1/deterministic
 node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track dra-semantic-recovery --pair-id dra-01 --replicate 1 --artifact frozen-v1/dra/pair-01
 node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track build-reuse-buy --pair-id brb-01 --replicate 1 --artifact frozen-v1/brb/pair-01
+node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs run-pair --track dsa-artifact-category --pair-id dsa-01 --replicate 1 --artifact frozen-v1/dsa/pair-01
 ```
 
 After three pairs, run `aggregate` with the exact deterministic report and pair-report paths. If it returns `MORE_PAIRS_REQUIRED`, run replicates four and five under the unchanged identities and aggregate all five. DRA simple-path reports retain every raw pair ratio, while the admission median compares baseline and candidate medians separately at invocation position one and two before taking the median of those two overheads; this preserves the frozen AB/BA pairing without letting a 3/2 order imbalance masquerade as mechanism cost. Both variants must appear in both positions. Never edit a generated score or frozen input after candidate execution. A changed global identity invalidates both tracks; a changed track identity invalidates only that track. Do not infer a missing v3 track identity from v2 evidence.
@@ -202,6 +203,7 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs attest
   --deterministic frozen-v3/deterministic/deterministic-report.json \
   --aggregate frozen-v3/dra/aggregate/aggregate-report.json \
   --aggregate frozen-v3/brb/aggregate/aggregate-report.json \
+  --aggregate frozen-v3/dsa/aggregate/aggregate-report.json \
   --artifact frozen-v3/attestation
 ```
 
@@ -215,6 +217,7 @@ node examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs saniti
   --pair <every-included-pair-report.json> \
   --aggregate frozen-v3/dra/aggregate/aggregate-report.json \
   --aggregate frozen-v3/brb/aggregate/aggregate-report.json \
+  --aggregate frozen-v3/dsa/aggregate/aggregate-report.json \
   --attestation frozen-v3/attestation/admission-attestation.json \
   --artifact frozen-v3/sanitized
 ```

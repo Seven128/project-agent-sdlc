@@ -1,8 +1,23 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { compileObservationAuthorityPlan } from "../../packages/ty-context/dist/lib/long-task-observation-authority.js";
+import {
+  compileObservationAuthorityPlan,
+  projectExternallyOwnedDesignAssertions,
+} from "../../packages/ty-context/dist/lib/long-task-observation-authority.js";
 import { computeRawExecutionIdentity } from "../../packages/ty-context/dist/lib/long-task-check-execution-policy.js";
 import { compileProcessRuntimeClosure } from "../../packages/ty-context/dist/lib/long-task-process-runtime-closure.js";
+import {
+  findDesignFactObligation,
+  resolveCompiledDesignFactObligation,
+} from "../../packages/ty-context/dist/lib/long-task-design-obligation.js";
+import {
+  expectedForExternalObligation,
+  objectiveExternalComparison,
+} from "../../packages/ty-context/dist/lib/long-task-external-confirmation-expected.js";
+import {
+  canonicalValueJson,
+  sha256Hex,
+} from "../../packages/ty-context/dist/lib/strict-codec.js";
 
 const PACKAGE_ORACLE = {
   key: "oracle.package-json-exact",
@@ -179,6 +194,106 @@ test("selected-design content can use only the bounded static exact slice", () =
   assert.equal(rows[0].authority, "package_static_json_exact");
   assert.equal(rows[0].method, "content");
   assert.equal(rows[0].fact_ref, "fact.design.content");
+});
+
+test("compiled external Design Facts retain one general V1 obligation route at scale", () => {
+  for (const count of [1, 11, 72]) {
+    const fixture = compiledExternalDesignFixture({ count });
+    assert.equal(
+      fixture.compiled.outcomes[0].acceptance.checks[0].positive_assertions
+        .length,
+      0,
+      "externally owned authored assertions are intentionally absent after compilation",
+    );
+    for (const [index, route] of fixture.routes.entries()) {
+      const resolution = resolveCompiledDesignFactObligation(
+        fixture.compiled,
+        route,
+      );
+      assert.equal(resolution.status, "resolved");
+      assert.equal(resolution.descriptor.fact_ref, route.fact_ref);
+      assert.equal(
+        resolution.descriptor.observation_authority.authority,
+        "external_confirmation",
+      );
+      const expected = expectedForExternalObligation(
+        fixture.compiled,
+        EMPTY_SEMANTIC_MANIFEST,
+        route,
+        route.expected_authority_ref,
+      );
+      assert.equal(expected.kind, "design_fact");
+      assert.equal(expected.located_value.sha256, fixture.values[index].sha256);
+      assert.deepEqual(
+        objectiveExternalComparison(
+          fixture.compiled,
+          EMPTY_SEMANTIC_MANIFEST,
+          route,
+          fixture.values[index].value,
+        ),
+        { passed: true },
+      );
+    }
+  }
+});
+
+test("compiled symbolic Design Rules use the same unique external resolution invariant", () => {
+  const fixture = compiledExternalDesignFixture({ count: 3, symbolic: true });
+  for (const [index, route] of fixture.routes.entries()) {
+    const resolution = resolveCompiledDesignFactObligation(
+      fixture.compiled,
+      route,
+    );
+    assert.equal(resolution.status, "resolved");
+    assert.equal(resolution.descriptor.fact_ref, `design.rule.${index}`);
+    assert.deepEqual(
+      objectiveExternalComparison(
+        fixture.compiled,
+        EMPTY_SEMANTIC_MANIFEST,
+        route,
+        fixture.values[index].value,
+      ),
+      { passed: true },
+    );
+  }
+});
+
+test("compiled Design obligation resolution fails closed on drift and ambiguity", () => {
+  const fixture = compiledExternalDesignFixture({ count: 1 });
+  const [route] = fixture.routes;
+
+  const applicabilityDrift = structuredClone(route);
+  applicabilityDrift.applicability_ref = "different-applicability";
+  assert.deepEqual(
+    resolveCompiledDesignFactObligation(fixture.compiled, applicabilityDrift),
+    { status: "missing" },
+  );
+
+  const expectedDrift = structuredClone(fixture.compiled);
+  expectedDrift.outcomes[0].acceptance.checks[0].design_conformance_targets[0].verification_method_bindings[0].evidence_artifacts[0].fact_expectations[0].expected.sha256 =
+    "f".repeat(64);
+  assert.deepEqual(resolveCompiledDesignFactObligation(expectedDrift, route), {
+    status: "missing",
+  });
+
+  const duplicate = structuredClone(fixture.compiled);
+  const targets =
+    duplicate.outcomes[0].acceptance.checks[0].design_conformance_targets;
+  targets.push(structuredClone(targets[0]));
+  assert.deepEqual(resolveCompiledDesignFactObligation(duplicate, route), {
+    status: "ambiguous",
+  });
+});
+
+test("authored Design obligation lookup remains compatible before compilation", () => {
+  const fixture = authoredExternalDesignFixture();
+  const descriptor = findDesignFactObligation(
+    fixture.contract,
+    fixture.identity,
+  );
+  assert.ok(descriptor);
+  assert.equal(descriptor.source_obligation_ref, fixture.identity.proof_ref);
+  assert.equal(descriptor.fact_ref, fixture.identity.fact_ref);
 });
 
 test("custom or project named Oracle cannot close a machine Fact", () => {
@@ -444,10 +559,7 @@ test("unused non-closure input paths may overlap evidence and verification roles
 
 test("only actual argv closure members retain exact role-conflict rejection", () => {
   for (const [role, mutate] of [
-    [
-      "evidence",
-      (input) => input.check.artifact_globs.push("runtime/config"),
-    ],
+    ["evidence", (input) => input.check.artifact_globs.push("runtime/config")],
     [
       "verification",
       (input) => input.check.verification_inputs.push("runtime/config"),
@@ -658,9 +770,10 @@ test("process root ownership and Source continuity are required by the closure",
   );
 
   const missingBinding = processInput();
-  missingBinding.production_bindings = missingBinding.production_bindings.filter(
-    (binding) => binding.local_key !== "product-root",
-  );
+  missingBinding.production_bindings =
+    missingBinding.production_bindings.filter(
+      (binding) => binding.local_key !== "product-root",
+    );
   assert.throws(
     () =>
       compileProcessRuntimeClosure({
@@ -874,6 +987,239 @@ function designTarget() {
       },
     ],
     symbolic_method_bindings: [],
+  };
+}
+
+const EMPTY_SEMANTIC_MANIFEST = {
+  facts: [],
+  proof_obligations: [],
+};
+
+function compiledExternalDesignFixture({ count, symbolic = false }) {
+  const input = processInput({
+    capabilities: ["design_method", "design_conformance"],
+  });
+  const target = generatedDesignTarget(count, symbolic);
+  input.design_targets = [target];
+  const values = Array.from({ length: count }, (_, index) =>
+    inlineLocatedValue({ ordinal: index }, `expected-${index}`),
+  );
+  applyGeneratedExpectedValues(target, values, symbolic);
+  const obligationRefs = generatedObligationRefs(target, symbolic);
+  input.external_design_obligation_refs = new Set(obligationRefs);
+  const authorities = compileObservationAuthorityPlan(input);
+  assert.equal(authorities.length, count);
+  assert.ok(
+    authorities.every(
+      (authority) => authority.authority === "external_confirmation",
+    ),
+  );
+  const projection = projectExternallyOwnedDesignAssertions(
+    input.check,
+    input.design_targets,
+    authorities,
+    input.external_design_obligation_refs,
+  );
+  const compiledCheck = {
+    ...projection.check,
+    internal_id: "CHECK.OUTCOME.check",
+    outcome_key: "OUTCOME",
+    runner: input.runner,
+    evidence_adapter: "node_json_v3",
+    verification_input_hashes: {},
+    raw_execution_identity: "9".repeat(64),
+    execution_target_definition: input.execution_target,
+    known_execution_targets: [input.execution_target],
+    design_conformance_targets: [target],
+    semantic_fact_expectations: [],
+    observation_authorities: authorities,
+    process_runtime_closure: null,
+    completion_role: "semantic",
+    expected_authority_refs: {
+      result: "contract-claim:OUTCOME.result",
+    },
+    required_evidence_capabilities: {
+      result: ["design_conformance", "design_method"],
+    },
+  };
+  const routes = obligationRefs.map((sourceObligationRef, index) => ({
+    obligation_ref: `external-design-${index}`,
+    source_obligation_ref: sourceObligationRef,
+    outcome_key: "OUTCOME",
+    claim_ref: "OUTCOME.result",
+    local_claim_ref: "result",
+    applicability_ref: "product-root",
+    target_ref: "product",
+    fact_ref: symbolic ? `design.rule.${index}` : `design.fact.${index}`,
+    proof_ref: sourceObligationRef,
+    method: symbolic ? "layout_geometry" : "content",
+    proof_surface: "runtime_behavior",
+    required_evidence_capabilities: ["design_conformance", "design_method"],
+    expected_authority_ref: `design-proof:${sourceObligationRef}`,
+    required_polarity: "positive",
+    authority: "external_confirmation",
+    confirmation_ref: "confirm-design",
+    status: "external_fulfillable",
+    reason: null,
+    session_group: "design-session",
+    completion_role: "blocking",
+    acceptance_effect: "required",
+    semantic_identity: `${index.toString(16).padStart(64, "0")}`,
+    machine_obligation_ref: null,
+  }));
+  return {
+    values,
+    routes,
+    compiled: {
+      acceptance_reachability: {
+        effective_external_routes: routes,
+      },
+      outcomes: [
+        {
+          key: "OUTCOME",
+          applicability: [
+            {
+              key: "product-root",
+              target_ref: "product",
+              given_refs: [],
+              when_refs: [],
+            },
+          ],
+          acceptance: { checks: [compiledCheck] },
+        },
+      ],
+    },
+  };
+}
+
+function authoredExternalDesignFixture() {
+  const input = processInput({
+    capabilities: ["design_method", "design_conformance"],
+  });
+  const target = generatedDesignTarget(1, false);
+  const value = inlineLocatedValue({ ordinal: 0 }, "expected-0");
+  applyGeneratedExpectedValues(target, [value], false);
+  const [proofRef] = generatedObligationRefs(target, false);
+  return {
+    identity: {
+      outcome_key: "OUTCOME",
+      claim_ref: "OUTCOME.result",
+      applicability_ref: "product-root",
+      fact_ref: "design.fact.0",
+      proof_ref: proofRef,
+      method: "content",
+      proof_surface: "runtime_behavior",
+      evidence_capabilities: ["design_conformance", "design_method"],
+    },
+    contract: {
+      outcomes: [
+        {
+          key: "OUTCOME",
+          product: {
+            surface_bindings: [{ design_targets: [target] }],
+          },
+          acceptance: { checks: [input.check] },
+        },
+      ],
+    },
+  };
+}
+
+function generatedDesignTarget(count, symbolic) {
+  const target = {
+    key: symbolic ? "symbolic-design" : "ground-design",
+    surface_binding_ref: "surface",
+    surface_ref: "surface",
+    target_ref: "product",
+    conformance_check_ref: "check",
+    verification_method_bindings: [],
+    symbolic_method_bindings: [],
+  };
+  if (symbolic) {
+    target.fact_model = "symbolic_rules_v2";
+    target.symbolic_method_bindings = [
+      {
+        method: "layout_geometry",
+        assertion_ref: "result",
+        rule_expectations: Array.from({ length: count }, (_, index) => ({
+          obligation_ref: `design.symbolic-design.layout_geometry.default.design.rule.${index}`,
+          fact_rule_ref: `design.rule.${index}`,
+          observation_sensitivity: "plain",
+          expected: locatedDigest("7"),
+          proof_surface: "runtime_behavior",
+          comparison: designComparison(index),
+          oracle: structuredClone(PACKAGE_ORACLE),
+        })),
+      },
+    ];
+  } else {
+    target.verification_method_bindings = [
+      {
+        method: "content",
+        assertion_ref: "result",
+        evidence_artifacts: [
+          {
+            condition_key: "default",
+            fact_expectations: Array.from({ length: count }, (_, index) => ({
+              fact_ref: `design.fact.${index}`,
+              observation_sensitivity: "plain",
+              expected: locatedDigest("7"),
+              comparison: designComparison(index),
+              oracle: structuredClone(PACKAGE_ORACLE),
+            })),
+          },
+        ],
+      },
+    ];
+  }
+  return target;
+}
+
+function applyGeneratedExpectedValues(target, values, symbolic) {
+  const expectations = symbolic
+    ? target.symbolic_method_bindings[0].rule_expectations
+    : target.verification_method_bindings[0].evidence_artifacts[0]
+        .fact_expectations;
+  for (const [index, expectation] of expectations.entries())
+    expectation.expected = values[index];
+}
+
+function generatedObligationRefs(target, symbolic) {
+  if (symbolic)
+    return target.symbolic_method_bindings[0].rule_expectations.map(
+      (expectation) => expectation.obligation_ref,
+    );
+  const binding = target.verification_method_bindings[0];
+  const artifact = binding.evidence_artifacts[0];
+  return artifact.fact_expectations.map(
+    (expectation) =>
+      `design.${target.key}.${binding.method}.${artifact.condition_key}.${expectation.fact_ref}`,
+  );
+}
+
+function designComparison(index) {
+  return {
+    comparator: "exact_value",
+    mode: "exact",
+    parameters: inlineLocatedValue(
+      { comparator: "exact_value" },
+      `comparison-${index}`,
+    ),
+    tolerance: null,
+    mask: null,
+  };
+}
+
+function inlineLocatedValue(value, ref) {
+  return {
+    representation: "inline",
+    locator: {
+      material_ref: "neutral.design.manifest",
+      kind: "manifest_pointer",
+      value: `/${ref}`,
+    },
+    sha256: sha256Hex(canonicalValueJson(value)),
+    value,
   };
 }
 

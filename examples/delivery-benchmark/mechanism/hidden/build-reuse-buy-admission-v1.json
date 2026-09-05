@@ -103,6 +103,37 @@
       "allowed_contains": ["standard-library", "installed-dependency"],
       "selected_allowed": ["standard-library", "installed-dependency"],
       "prohibited_excludes": ["standard-library", "installed-dependency"]
+    },
+    {
+      "id": "long-task-proof-first-simplification",
+      "severity": "critical",
+      "category": "mechanism-anti-degradation",
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner"],
+      "selected_allowed": ["reuse-owner"],
+      "prohibited_patterns": ["sample|truncat|semantic deletion|weaker proof|automatic.*V2", "Authority|Final Gate"],
+      "rationale_patterns": ["compact|equivalent", "proof|semantic|coverage"]
+    },
+    {
+      "id": "long-task-resume-fresh-workers",
+      "severity": "critical",
+      "category": "resume-delegation-reassessment",
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner"],
+      "selected_allowed": ["reuse-owner"],
+      "prohibited_patterns": ["restore|reconnect|previous Worker", "persist|scheduler|Harness.*model"],
+      "rationale_patterns": ["fresh.*exact|long_task_implementation", "rebuild.*packet|Delegation Suitability"]
+    },
+    {
+      "id": "long-task-resume-policy-prohibition",
+      "severity": "major",
+      "category": "resume-must-allow-policy",
+      "must_allow": true,
+      "decision": "allow",
+      "allowed_contains": ["reuse-owner"],
+      "selected_allowed": ["reuse-owner"],
+      "prohibited_patterns": ["generic substitute|retry|scheduler|persistent"],
+      "rationale_patterns": ["policy prohibition", "parent"]
     }
   ]
 }

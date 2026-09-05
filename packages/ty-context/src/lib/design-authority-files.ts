@@ -16,6 +16,11 @@ export interface AcquiredDesignAuthorityText {
   raw: Buffer;
 }
 
+export interface AcquiredDesignAuthorityBytes {
+  path: string;
+  raw: Buffer;
+}
+
 export async function acquireDesignAuthorityManifest(
   repository: string,
 ): Promise<AcquiredDesignAuthorityText | null> {
@@ -65,7 +70,24 @@ export async function acquireDesignAuthorityText(
   };
 }
 
-async function assertExactDesignAuthorityPath(
+export async function acquireDesignAuthorityBytes(
+  repository: string,
+  relative: string,
+  label: string,
+): Promise<AcquiredDesignAuthorityBytes> {
+  const absolute = await assertProtectedRepositoryFile(
+    repository,
+    path.resolve(repository, ...relative.split("/")),
+    label,
+  );
+  await assertExactDesignAuthorityPath(repository, relative, label);
+  const raw = await readFile(absolute);
+  if (raw.length > DESIGN_AUTHORITY_LIMITS.max_file_bytes)
+    invalid(`file_limit_exceeded:${relative}:${raw.length}`);
+  return { path: relative, raw };
+}
+
+export async function assertExactDesignAuthorityPath(
   repository: string,
   relative: string,
   label: string,

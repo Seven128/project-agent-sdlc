@@ -2,7 +2,7 @@
   "schema_version": "tiny-context-fresh-agent-admission-v3",
   "frozen_at": "2026-08-08T00:00:00+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
-  "purpose": "Independently test DRA semantic recovery/writeback guidance and Build / Reuse / Buy judgment without merging category failures or using one pair as ROI evidence.",
+  "purpose": "Independently test DRA semantic recovery/writeback guidance, Build / Reuse / Buy judgment, and DSA artifact-category/lifecycle boundaries without merging category failures, treating structural checks as aesthetic judgment, or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
   "reasoning_effort": "medium",
   "provider": "openai",
@@ -218,7 +218,7 @@
       }
     },
     "build-reuse-buy": {
-      "fixture_identity": "f2f2013487f484ef61676feecc6a6589e4c0fadf04eb1d895f590e022b9eaa91",
+      "fixture_identity": "93c9347dac7ed98c40fd50fd76c7f3dbe44e38d47cbb2a985772a6509df62477",
       "pair_policy": {
         "minimum_pairs": 3,
         "minimum_wins": 2,
@@ -268,15 +268,15 @@
         "quality": {
           "task": {
             "path": "admission/build-reuse-buy-cases.json",
-            "sha256": "a4f9405cb908a624482f0188222192a6c8a283fb131c7f1d77036c575bc1aa8b"
+            "sha256": "183422f9377805734ce2d29203aabe465b59d334dee88ee28860d69bc8cc6fd9"
           },
           "hidden": {
             "path": "hidden/build-reuse-buy-admission-v1.json",
-            "sha256": "b88648ffb8deba931d3d5ad87d875cf85b76d7f20c1b80af55bb3986b2ca8050"
+            "sha256": "60111c8bc52c89136e70065a931d220976eee56778e6bafb55a2f4f22ef3894d"
           },
           "schema": {
             "path": "admission/build-reuse-buy-result.schema.json",
-            "sha256": "1ced6a19fde6c09daca4bfabb17d2c9c3067038115ebb9c296a25bafb313d1a7"
+            "sha256": "920f0472db49cda02f70fc745e57cb2ac10350581fcddabbe463276e60af5ec4"
           }
         }
       },
@@ -315,7 +315,7 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "1037f213c1af356d2057d4759046ac896ffbc99bdad3ea55b7867d1c719ffa9d",
+              "bundle_sha256": "13abc04d1e9373b474d671d7a71e5acca6a017e2fd78a483f98b1f73e853c334",
               "sources": [
                 {
                   "kind": "worktree",
@@ -332,6 +332,167 @@
                   "label": "engineer_candidate",
                   "path": ".codex/ty-context-managed/skills/context_development_engineer/SKILL.md",
                   "content_sha256": "a4c52f9244f6c5df22c968e9712abe35b3c121013b9e9f647ee8aa91c327e9d0"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "harness_effect_first_candidate",
+                  "path": ".codex/skills/authoring/harness_package_design/SKILL.md",
+                  "content_sha256": "17bd17a1bf316cde2a2b4ffae249e381d976c718e023b888968e88c77d91ace6",
+                  "extract": {
+                    "start_heading": "## Effect-first Long-Task mechanism checkpoint",
+                    "end_heading": "## Always establish"
+                  }
+                },
+                {
+                  "kind": "worktree",
+                  "label": "long_task_resume_candidate",
+                  "path": ".codex/ty-context-managed/skills/long-task-workflow/references/authority-lifecycle.md",
+                  "content_sha256": "80fd658812c30e66ea6c8accb3a883de4b2b2adaa31cec779a41b1676a144d14",
+                  "extract": {
+                    "start_heading": "## Targeted Verification And Recovery",
+                    "end_heading": "## Final Gate And Terminal Paths"
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "dsa-artifact-category": {
+      "fixture_identity": "511c7285e00cdf38acd8b1b50f10e4e536a48af2504de3536a5f981eabb776da",
+      "pair_policy": {
+        "minimum_pairs": 3,
+        "minimum_wins": 2,
+        "expanded_pairs": 5,
+        "expanded_wins": 3,
+        "cv_threshold": 0.2,
+        "near_threshold_margin": 0.05,
+        "quality_threshold": 0.25,
+        "simple_cost_threshold": 0.1,
+        "expand_on": [
+          "primary-metric coefficient of variation above 20%",
+          "pairwise targeted-defect direction inconsistency",
+          "a primary result within five percentage points of threshold",
+          "environment or Provider trace doubt"
+        ]
+      },
+      "allowed_solution_sets": [
+        "handbook-primary candidate with supplemental application scenes last",
+        "current adopted closure-external handbook projection",
+        "structurally ready candidate awaiting human or validly delegated aesthetic selection",
+        "blocked artifact with attributable structural repair",
+        "unverified target-declared condition reported without a false conformance claim"
+      ],
+      "prohibited_failure_modes": [
+        "application gallery or product prototype used as the primary design-system artifact",
+        "isolated Token inventory without component and cross-Token relationship contracts",
+        "candidate, rejected or unresolved meaning mislabeled adopted",
+        "stale Design Authority digest or revision accepted",
+        "global viewport template substituted for target-declared conditions",
+        "supplemental scenes defining a second primitive or component system",
+        "remote runtime dependency or undeclared local asset in the inert projection",
+        "structural checks, hashes or rendering treated as an aesthetic verdict"
+      ],
+      "metrics": [
+        "critical and major defects by structural category",
+        "must-allow and other false blocking",
+        "pairwise wins",
+        "artifact-category, adoption-freshness and target-condition boundary recall",
+        "absence of machine aesthetic conclusions"
+      ],
+      "thresholds": {
+        "critical_category_regression": 0,
+        "targeted_defect_reduction": 0.25,
+        "must_allow_false_blocking": 0,
+        "other_false_blocking": "not higher than baseline"
+      },
+      "modes": {
+        "quality": {
+          "task": {
+            "path": "admission/dsa-artifact-category-cases.json",
+            "sha256": "8130f7998db1f041df144c114c47c5eb38c727798c37e9259d5492d3ca1638ae"
+          },
+          "hidden": {
+            "path": "hidden/dsa-artifact-category-admission-v1.json",
+            "sha256": "3b3e560db7cac832d3c09c39e7e668ab8845cc5709137a156437bcd189b31d7c"
+          },
+          "schema": {
+            "path": "admission/dsa-artifact-category-result.schema.json",
+            "sha256": "95d47d5fd7e4e4067493a47af0c4c2191f2f55a536095150de537e58b4501b17"
+          }
+        }
+      },
+      "variants": {
+        "baseline": {
+          "role": "baseline",
+          "guidance": {
+            "quality": {
+              "bundle_sha256": "d571bcaf762aa48c7ed183c8e0773c107f7670d7c2be8330f16de2fdb94dc7f8",
+              "sources": [
+                {
+                  "kind": "git",
+                  "label": "dsa_skill_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/SKILL.md",
+                  "git_blob_oid": "78751598e1e4d88b0ea80248910d44287a644fbd",
+                  "content_sha256": "f5744bc6e3b809f3a0b86b0e2126b73bc1d11b63635e7da5b3d44cc983a1d265"
+                },
+                {
+                  "kind": "git",
+                  "label": "dsa_provider_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/references/open-design-design-system-provider.md",
+                  "git_blob_oid": "1f32f375cfec837a13ca6c7fbe8cf39b4e201170",
+                  "content_sha256": "7a787174f5e3abcfced8c42dec2a0062cd93a19da872d2ef531ba6dafd3daef1"
+                },
+                {
+                  "kind": "git",
+                  "label": "dsa_adoption_baseline",
+                  "commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/references/authority-adoption.md",
+                  "git_blob_oid": "ae20398c47ffe303815485226473936b5b8b0010",
+                  "content_sha256": "a1081e4bb4a3eb13d0acb6005ef40dbb4c28544995e4dcb004771559681bd37e"
+                }
+              ]
+            }
+          }
+        },
+        "candidate": {
+          "role": "candidate",
+          "guidance": {
+            "quality": {
+              "bundle_sha256": "b53a4020de8e3fe2daae11015788d65f3efdfe256c065edbd868f647eb8b12dc",
+              "sources": [
+                {
+                  "kind": "worktree",
+                  "label": "dsa_skill_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/SKILL.md",
+                  "content_sha256": "02669a449267e115d4d99f25d5f2632f0c34a66ba37f5823e4795191876a8db9"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "dsa_reasoning_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/references/system-design-reasoning.md",
+                  "content_sha256": "e32284c0564afa70e47adc06966cb9eb6c152a563fb86b63bdf5b0eda06e81d2"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "dsa_provider_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/references/open-design-design-system-provider.md",
+                  "content_sha256": "03b06e592a2f412a06e526317c8140fce99a255f99707dc52d78a0a9a5bc1280"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "dsa_showcase_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/references/showcase-projection.md",
+                  "content_sha256": "93d58db1088e9926397c8c6327509dec3ecced212a52164f1597aa9bca2e2cd8"
+                },
+                {
+                  "kind": "worktree",
+                  "label": "dsa_adoption_candidate",
+                  "path": ".codex/ty-context-managed/skills/design-system-authoring/references/authority-adoption.md",
+                  "content_sha256": "4bdd35e2775ddc0289de93a811febb53b25716e55dc9e44c590725afb22d170f"
                 }
               ]
             }
@@ -389,6 +550,21 @@
         ],
         "timeout_ms": 120000
       }
+    ],
+    "dsa-artifact-category": [
+      {
+        "id": "dsa-artifact-category-guidance",
+        "command": "node",
+        "args": [
+          "--test",
+          "--test-concurrency=1",
+          "tests/ty-context/design-authority-closure.test.mjs",
+          "tests/ty-context/design-authority-cli.test.mjs",
+          "tests/ty-context/design-system-authoring-skill.test.mjs",
+          "tests/ty-context/fresh-agent-admission-benchmark.test.mjs"
+        ],
+        "timeout_ms": 180000
+      }
     ]
   },
   "frozen_files": [
@@ -405,7 +581,12 @@
     {
       "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-cases.json",
-      "sha256": "a4f9405cb908a624482f0188222192a6c8a283fb131c7f1d77036c575bc1aa8b"
+      "sha256": "183422f9377805734ce2d29203aabe465b59d334dee88ee28860d69bc8cc6fd9"
+    },
+    {
+      "scope": "track:dsa-artifact-category",
+      "path": "examples/delivery-benchmark/mechanism/admission/dsa-artifact-category-cases.json",
+      "sha256": "8130f7998db1f041df144c114c47c5eb38c727798c37e9259d5492d3ca1638ae"
     },
     {
       "scope": "track:dra-semantic-recovery",
@@ -420,7 +601,12 @@
     {
       "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/admission/build-reuse-buy-result.schema.json",
-      "sha256": "1ced6a19fde6c09daca4bfabb17d2c9c3067038115ebb9c296a25bafb313d1a7"
+      "sha256": "920f0472db49cda02f70fc745e57cb2ac10350581fcddabbe463276e60af5ec4"
+    },
+    {
+      "scope": "track:dsa-artifact-category",
+      "path": "examples/delivery-benchmark/mechanism/admission/dsa-artifact-category-result.schema.json",
+      "sha256": "95d47d5fd7e4e4067493a47af0c4c2191f2f55a536095150de537e58b4501b17"
     },
     {
       "scope": "track:dra-semantic-recovery",
@@ -430,7 +616,12 @@
     {
       "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/hidden/build-reuse-buy-admission-v1.json",
-      "sha256": "b88648ffb8deba931d3d5ad87d875cf85b76d7f20c1b80af55bb3986b2ca8050"
+      "sha256": "60111c8bc52c89136e70065a931d220976eee56778e6bafb55a2f4f22ef3894d"
+    },
+    {
+      "scope": "track:dsa-artifact-category",
+      "path": "examples/delivery-benchmark/mechanism/hidden/dsa-artifact-category-admission-v1.json",
+      "sha256": "3b3e560db7cac832d3c09c39e7e668ab8845cc5709137a156437bcd189b31d7c"
     },
     {
       "scope": "global",
@@ -440,7 +631,7 @@
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-score.mjs",
-      "sha256": "5cadd30df4b714e97acd455a147ef7ff88e091b0126029940b3f8eb5a7d22b31"
+      "sha256": "47eac3831ce85ab5ec1ed00b8f2932419cd45e9bdc86af407cd8ab6ef02caad9"
     },
     {
       "scope": "global",
@@ -455,7 +646,12 @@
     {
       "scope": "track:build-reuse-buy",
       "path": "examples/delivery-benchmark/mechanism/runner/admission-score-build-reuse-buy.mjs",
-      "sha256": "06d37acfc7d79f3a23e5ee7fb674d046cdd9b62fbe3c45b6fc190905d0d9a310"
+      "sha256": "7968e14a7994382f5d6ad0a1f8a1daedede7817e4ffb43bc67c0635e23e4fcaf"
+    },
+    {
+      "scope": "track:dsa-artifact-category",
+      "path": "examples/delivery-benchmark/mechanism/runner/admission-score-dsa-artifact-category.mjs",
+      "sha256": "f9b9598bdc7ae827b977afe8bbacb4ac9abe17b93ddce9abc1c6150c5f617b52"
     },
     {
       "scope": "global",
@@ -510,17 +706,17 @@
     {
       "scope": "global",
       "path": "examples/delivery-benchmark/mechanism/runner/admission_benchmark.mjs",
-      "sha256": "933d7cd4ad7f36817c3dc1d88f8af298272b44c164731050d12529d84517a539"
+      "sha256": "c5cc4633ddfd7ad7b48e594f8d34954f6afca9450501a0d80d4fb2a2b859b159"
     },
     {
       "scope": "global",
       "path": "tests/ty-context/fresh-agent-admission-benchmark.test.mjs",
-      "sha256": "da0f9c7e8b604b83d400ced82c397ea06dcc335bf089bfa222ae5e9e9091d48b"
+      "sha256": "289baf510cd548eacc7264d7614498e5ae7867cbedd749da24721fd35dd8910a"
     },
     {
       "scope": "global",
       "path": "tests/ty-context/fresh-agent-admission-fixture.mjs",
-      "sha256": "56543c144dd6d5c02d1003a001aceed399df772cb42c7b5edf2e3ccdecdea53d"
+      "sha256": "bded8934f1605c4a32984c817f9350acff928ff8503795ba39ec9cc5b3bcaf03"
     }
   ]
 }

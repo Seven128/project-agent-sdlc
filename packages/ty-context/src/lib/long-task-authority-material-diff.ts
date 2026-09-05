@@ -21,6 +21,8 @@ export interface AuthorityMaterialRevisionDiffV2 {
   context_files_added: string[];
   context_files_removed: string[];
   context_files_changed: string[];
+  design_semantics_changed: string[];
+  design_implementation_bindings_changed: string[];
   reduction_reasons: string[];
 }
 
@@ -71,6 +73,16 @@ export function authorityMaterialRevisionDiff(
     previousMaterials.context_snapshot,
     nextMaterials.context_snapshot,
   );
+  const designSemanticsChanged = changedKeyedProjectionRows(
+    previousMaterials.design_semantics,
+    nextMaterials.design_semantics,
+    "target_key",
+  );
+  const designImplementationBindingsChanged = changedKeyedProjectionRows(
+    previousMaterials.design_implementation_bindings,
+    nextMaterials.design_implementation_bindings,
+    "target_key",
+  );
   return {
     product_semantics_changed: productSemanticsChanged,
     global_semantics_changed: globalSemanticsChanged,
@@ -82,6 +94,8 @@ export function authorityMaterialRevisionDiff(
     context_files_added: contextFilesAdded,
     context_files_removed: contextFilesRemoved,
     context_files_changed: contextFilesChanged,
+    design_semantics_changed: designSemanticsChanged,
+    design_implementation_bindings_changed: designImplementationBindingsChanged,
     reduction_reasons: [
       ...(productSemanticsChanged.length ? ["product_semantics_changed"] : []),
       ...(globalSemanticsChanged.length ? ["global_semantics_changed"] : []),
@@ -91,8 +105,26 @@ export function authorityMaterialRevisionDiff(
         ? ["source_file_content_changed"]
         : []),
       ...(controllingContextChanged ? ["context_authority_changed"] : []),
+      ...(designSemanticsChanged.length ? ["design_semantics_changed"] : []),
     ],
   };
+}
+
+function changedKeyedProjectionRows<
+  T extends Record<K, string>,
+  K extends keyof T,
+>(previous: T[], next: T[], key: K): string[] {
+  const before = new Map(previous.map((row) => [row[key], row]));
+  const after = new Map(next.map((row) => [row[key], row]));
+  return [...new Set([...before.keys(), ...after.keys()])]
+    .filter(
+      (identity) =>
+        !before.has(identity) ||
+        !after.has(identity) ||
+        canonicalValueJson(before.get(identity)) !==
+          canonicalValueJson(after.get(identity)),
+    )
+    .sort((left, right) => left.localeCompare(right));
 }
 
 export function sourceClaimAdditions(

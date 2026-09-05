@@ -1222,6 +1222,44 @@ test("Harness Authoring Skill routes Long-Task changes through mechanism admissi
   );
 });
 
+test("Harness Authoring Skill activates for mechanism optimization without capturing ordinary long work", async () => {
+  const main = await read(
+    ".codex/skills/authoring/harness_package_design/SKILL.md",
+  );
+  const description = main.match(/^description:\s*(.+)$/mu)?.[1] ?? "";
+  for (const trigger of [
+    "time",
+    "size",
+    "performance",
+    "total cost",
+    "simplification",
+    "optimization",
+    "efficiency",
+    "过慢",
+    "耗时",
+    "体积",
+    "性能",
+    "成本",
+    "简化",
+    "优化",
+    "效率",
+    "防劣化",
+  ])
+    assert.match(description, new RegExp(trigger, "iu"));
+  assert.match(
+    description,
+    /Do not use merely because an ordinary consumer-project task is long, large, or slow/iu,
+  );
+  assert.match(
+    main,
+    /^## Effect-first Long-Task mechanism checkpoint$[\s\S]*freeze the reproducible incident[\s\S]*exact false-completion path[\s\S]*allowed solution set[\s\S]*must-allow controls[\s\S]*proof owner[\s\S]*structural comparator[\s\S]*Scope \/ Cost Drift Stop/mu,
+  );
+  assert.match(
+    main,
+    /coverage[\s\S]*false-negative resistance[\s\S]*fail-closed Authority[\s\S]*semantic granularity[\s\S]*compact or otherwise proof-equivalent representation/iu,
+  );
+});
+
 async function readSourceTree() {
   const root = path.join(repo, "packages/ty-context/src");
   const entries = await readdir(root, { recursive: true });

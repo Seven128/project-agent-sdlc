@@ -1,0 +1,73 @@
+{
+  "schema_version": "dsa-artifact-category-fresh-agent-cases-v1",
+  "track": "dsa-artifact-category",
+  "instruction": "Apply only the supplied DSA guidance. Classify whether each proposed artifact is structurally ready for its stated lifecycle point. A design-system handbook must remain the primary artifact, application scenes must be supplemental and last, adoption must bind the current Design Authority identity, and target-declared conditions must not be replaced by a global template. Never infer aesthetic suitability from structure, hashes, rendering or completeness: human or validly delegated aesthetic selection remains required in every case.",
+  "cases": [
+    {
+      "id": "product-pages-as-primary",
+      "facts": [
+        "The entry navigation contains six polished application pages and no primary Token, component-contract or relationship-contract sections.",
+        "The pages introduce local button and card variants that are not indexed by the proposed system catalogue.",
+        "The author calls the result a design-system showcase."
+      ]
+    },
+    {
+      "id": "isolated-tokens-no-relationships",
+      "facts": [
+        "The proposed handbook lists colors, type sizes, spacing values and component screenshots.",
+        "It omits visible-surface versus hit-target, type-occupancy, internal-padding versus line-height, group-gap versus item-gap, accent-allocation and containment relationship contracts.",
+        "Its component section has no anatomy, states, accessibility or do/don't contract."
+      ]
+    },
+    {
+      "id": "candidate-mislabeled-adopted",
+      "facts": [
+        "Open Design produced a structurally complete candidate handbook.",
+        "No user or validly delegated selector selected the candidate and no separate Authority adoption was confirmed.",
+        "The HTML and sidecar label the candidate adopted."
+      ]
+    },
+    {
+      "id": "stale-authority-binding",
+      "facts": [
+        "The handbook previously matched the adopted Design Authority.",
+        "DESIGN.md was materially revised and now has a different current closure digest and human revision.",
+        "The showcase sidecar still binds the prior digest and revision."
+      ]
+    },
+    {
+      "id": "global-viewport-substitution",
+      "facts": [
+        "The selected targets declare a desktop keyboard condition, a narrow embedded condition, 175% text scaling, one long localized label and reduced motion.",
+        "The review instead ran a generic 320/375/390/430 mobile screenshot list and did not exercise the declared desktop, text-scale, localization or motion conditions.",
+        "Static section presence passed."
+      ]
+    },
+    {
+      "id": "current-adopted-handbook",
+      "facts": [
+        "The primary entry is an engineering design-system handbook with the complete adopted Token families, component catalogue and component/relationship/behavior/provenance contracts.",
+        "Application scenes are last, marked supplemental-validation, reuse the indexed components and introduce no second primitive system.",
+        "The inert local projection binds the current Design Authority closure digest and human revision, has no external network dependency, and the project's reproducible route exercised every target-declared material condition.",
+        "The machine checks are being asked only for structural artifact readiness, not an aesthetic verdict."
+      ]
+    },
+    {
+      "id": "remote-runtime-dependency",
+      "facts": [
+        "The handbook is otherwise complete and binds the current Authority digest.",
+        "Its typography and component examples load a remote stylesheet and a remote script at runtime.",
+        "Those resources are not local manifest-bound inert assets."
+      ]
+    },
+    {
+      "id": "complete-candidate-awaiting-selection",
+      "facts": [
+        "A candidate handbook is structurally complete, handbook-first and has supplemental application scenes last.",
+        "It preserves accepted, rejected and unresolved preference sets and exposes all target-declared review conditions.",
+        "Two aesthetically material unresolved choices remain and neither a human nor an explicitly delegated selector has selected this candidate.",
+        "No project Authority files have been changed."
+      ]
+    }
+  ]
+}

@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "track", "case_results"],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "dsa-artifact-category-fresh-agent-result-v1"
+    },
+    "track": { "type": "string", "const": "dsa-artifact-category" },
+    "case_results": {
+      "type": "array",
+      "minItems": 8,
+      "maxItems": 8,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "decision",
+          "artifact_category",
+          "authority_status",
+          "handbook_primary",
+          "supplemental_scenes_last",
+          "coverage_status",
+          "human_aesthetic_judgment_required",
+          "aesthetic_suitability_concluded",
+          "reason_codes",
+          "next_action"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "decision": {
+            "type": "string",
+            "enum": ["allow", "block", "decision-required"]
+          },
+          "artifact_category": {
+            "type": "string",
+            "enum": ["design_system_handbook", "application_gallery", "unknown"]
+          },
+          "authority_status": {
+            "type": "string",
+            "enum": ["candidate", "adopted", "stale", "unknown"]
+          },
+          "handbook_primary": { "type": "boolean" },
+          "supplemental_scenes_last": { "type": "boolean" },
+          "coverage_status": {
+            "type": "string",
+            "enum": ["complete", "incomplete", "unknown"]
+          },
+          "human_aesthetic_judgment_required": { "type": "boolean" },
+          "aesthetic_suitability_concluded": { "type": "boolean" },
+          "reason_codes": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string" }
+          },
+          "next_action": { "type": "string", "minLength": 1 }
+        }
+      }
+    }
+  }
+}

@@ -83,6 +83,31 @@
         "The implementation selects the standard-library codec because it is smaller for this owner.",
         "The installed codec remains a supported legal alternative; neither option exhibits a prohibited failure mode."
       ]
+    },
+    {
+      "id": "long-task-proof-first-simplification",
+      "facts": [
+        "The request is: Long Task is too slow; simplify it.",
+        "The expanded V1 carrier preserves every required Fact and proof obligation but repeats derived bindings and creates large authoring diffs.",
+        "The Harness already owns compact Source and Contract encoders that can prove identical Facts, conditions, methods, Assertions and revision identities before Authority Lock.",
+        "The capacity fuse, fail-closed Authority and sole current-snapshot Final Gate must remain unchanged; automatic V1-to-V2 conversion, sampling, truncation, semantic deletion or weaker proof methods are prohibited."
+      ]
+    },
+    {
+      "id": "long-task-resume-fresh-workers",
+      "facts": [
+        "After a physical resume, current Source, Contract, Context, Authority and workspace facts yield two disjoint qualifying implementation packets, and user/host policy permits agents.",
+        "Previous Worker instances are not reconnectable; the existing parent-Goal policy supports fresh exact long_task_implementation calls and its ordered zero-start and partial-delegation rules.",
+        "Harness resume may emit deterministic read-only guidance but must not invoke a model or persist Worker state."
+      ]
+    },
+    {
+      "id": "long-task-resume-policy-prohibition",
+      "facts": [
+        "After a physical resume, current packets would otherwise qualify for delegation.",
+        "Explicit user/host policy prohibits agents for this run.",
+        "The existing ordered zero-start policy names policy prohibition first and returns all packets to the parent without a generic substitute, retry, scheduler or persistent Worker state."
+      ]
     }
   ]
 }

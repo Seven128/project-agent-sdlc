@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFile, rm } from "node:fs/promises";
+import { readFile, readdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
@@ -10,13 +10,21 @@ import {
   compactAuthoringTable,
 } from "../../packages/ty-context/dist/lib/compact-authoring-support.js";
 import { parseDeliveryContractText } from "../../packages/ty-context/dist/lib/long-task-delivery-parser.js";
+import { compileDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-delivery-compiler.js";
+import { preflightDeliveryContract } from "../../packages/ty-context/dist/lib/long-task-authoring-preflight.js";
+import { runLongTaskCompactAuthoring } from "../../packages/ty-context/dist/lib/long-task-compact-authoring-service.js";
+import { commitActiveAuthority } from "../../packages/ty-context/dist/lib/long-task-state.js";
 import { createSemanticFactCompactCarrier } from "../../packages/ty-context/dist/lib/semantic-fact-compact-authoring.js";
 import { parseSemanticFactCompactCarrierShape } from "../../packages/ty-context/dist/lib/semantic-fact-compact-carrier.js";
 import { semanticCompactSharedStructureTargets } from "../../packages/ty-context/dist/lib/semantic-fact-compact-support.js";
 import { validateSemanticFactManifestPolicy } from "../../packages/ty-context/dist/lib/semantic-fact-policy.js";
-import { parseSemanticFactManifestBlocks } from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
+import {
+  locateSemanticFactManifestBlockSpans,
+  parseSemanticFactManifestBlocks,
+} from "../../packages/ty-context/dist/lib/semantic-fact-source-parser.js";
 import {
   canonicalValueJson,
+  parseStrictYaml,
   sha256Hex,
 } from "../../packages/ty-context/dist/lib/strict-codec.js";
 import {
@@ -395,3 +403,243 @@ test("deterministic compact fixture compiles 64 Facts into 128 distinct obligati
 test("Contract revision mismatch is rejected before first Authority Lock", async () => {
   await assertContractRevisionMismatchRejected();
 });
+
+test("[critical:compact-authoring-command] check/apply is equivalent, byte-preserving outside the block, and idempotent", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const sourceFile = path.join(fixture.root, "source.md");
+    const contractFile = path.join(
+      fixture.workdir,
+      "delivery-contract.yaml",
+    );
+    const initialSource = `${(
+      await readFile(sourceFile, "utf8")
+    ).replace(/\r?\n/gu, "\r\n")}<!-- retained-after-formal-block -->\r\n`;
+    await writeFile(sourceFile, initialSource, "utf8");
+    const [initialSpan] = locateSemanticFactManifestBlockSpans(
+      "source.md",
+      initialSource,
+    );
+    const retained = outsideFormalBlock(initialSource, initialSpan);
+
+    const preview = await runLongTaskCompactAuthoring(
+      fixture.root,
+      fixture.workdir,
+    );
+    assert.equal(preview.status, "equivalent_projection_available");
+    assert.equal(preview.apply_allowed, true);
+    assert.ok(preview.canonical_bytes.combined.reduction_ratio >= 0.1);
+    assert.ok(Object.values(preview.equivalence).every(Boolean));
+    assert.deepEqual(
+      [
+        preview.counts.facts_before,
+        preview.counts.obligations_before,
+        preview.counts.assertions_before,
+      ],
+      [
+        preview.counts.facts_after,
+        preview.counts.obligations_after,
+        preview.counts.assertions_after,
+      ],
+    );
+    assert.match(preview.repair_command, /compact-authoring .* --apply$/u);
+
+    const applied = await runLongTaskCompactAuthoring(
+      fixture.root,
+      fixture.workdir,
+      { apply: true },
+    );
+    assert.equal(applied.status, "already_compact");
+    assert.equal(applied.applied, true);
+    const sourceAfter = await readFile(sourceFile, "utf8");
+    const [afterSpan] = locateSemanticFactManifestBlockSpans(
+      "source.md",
+      sourceAfter,
+    );
+    assert.equal(afterSpan.kind, "semantic-fact-compact-carrier-v1");
+    assert.equal(afterSpan.line_ending, "\r\n");
+    assert.equal(outsideFormalBlock(sourceAfter, afterSpan), retained);
+    assert.equal(
+      parseSemanticFactManifestBlocks("source.md", sourceAfter)[0].carrier,
+      "compact_v1",
+    );
+    const contractAfter = await readFile(contractFile, "utf8");
+    assert.equal(
+      Object.hasOwn(parseStrictYaml(contractAfter), "compact_semantic_carrier"),
+      true,
+    );
+
+    const idempotent = await runLongTaskCompactAuthoring(
+      fixture.root,
+      fixture.workdir,
+      { apply: true },
+    );
+    assert.equal(idempotent.status, "already_compact");
+    assert.equal(idempotent.applied, false);
+    assert.equal(await readFile(sourceFile, "utf8"), sourceAfter);
+    assert.equal(await readFile(contractFile, "utf8"), contractAfter);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("compact authoring CAS and mid-publication failures cannot partially publish carriers", async () => {
+  const casFixture = await createDeliveryFixture();
+  try {
+    const sourceFile = path.join(casFixture.root, "source.md");
+    const contractFile = path.join(
+      casFixture.workdir,
+      "delivery-contract.yaml",
+    );
+    const sourceBefore = await readFile(sourceFile, "utf8");
+    const contractBefore = await readFile(contractFile, "utf8");
+    const concurrentSource = `${sourceBefore}\n<!-- concurrent-owner-change -->\n`;
+    const result = await runLongTaskCompactAuthoring(
+      casFixture.root,
+      casFixture.workdir,
+      {
+        apply: true,
+        async before_second_cas() {
+          await writeFile(sourceFile, concurrentSource, "utf8");
+        },
+      },
+    );
+    assert.equal(result.status, "blocked");
+    assert.equal(result.diagnostic_code, "compact_authoring_cas_conflict");
+    assert.equal(await readFile(sourceFile, "utf8"), concurrentSource);
+    assert.equal(await readFile(contractFile, "utf8"), contractBefore);
+    await assertNoCompactTransactionRemainders(
+      casFixture.root,
+      casFixture.workdir,
+    );
+  } finally {
+    await rm(casFixture.root, { recursive: true, force: true });
+  }
+
+  const rollbackFixture = await createDeliveryFixture();
+  try {
+    const sourceFile = path.join(rollbackFixture.root, "source.md");
+    const contractFile = path.join(
+      rollbackFixture.workdir,
+      "delivery-contract.yaml",
+    );
+    const sourceBefore = await readFile(sourceFile);
+    const contractBefore = await readFile(contractFile);
+    const result = await runLongTaskCompactAuthoring(
+      rollbackFixture.root,
+      rollbackFixture.workdir,
+      {
+        apply: true,
+        async before_publish(index) {
+          if (index === 1) throw new Error("synthetic_second_publish_failure");
+        },
+      },
+    );
+    assert.equal(result.status, "blocked");
+    assert.equal(result.diagnostic_code, "synthetic_second_publish_failure");
+    assert.deepEqual(await readFile(sourceFile), sourceBefore);
+    assert.deepEqual(await readFile(contractFile), contractBefore);
+    await assertNoCompactTransactionRemainders(
+      rollbackFixture.root,
+      rollbackFixture.workdir,
+    );
+  } finally {
+    await rm(rollbackFixture.root, { recursive: true, force: true });
+  }
+});
+
+test("compact post-commit cleanup failure preserves both committed carriers and reports retained backup", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const sourceFile = path.join(fixture.root, "source.md");
+    const contractFile = path.join(fixture.workdir, "delivery-contract.yaml");
+    const contractBefore = await readFile(contractFile);
+    const result = await runLongTaskCompactAuthoring(fixture.root, fixture.workdir, {
+      apply: true,
+      async before_backup_cleanup(index) {
+        if (index === 1) throw new Error("synthetic_second_cleanup_failure");
+      },
+    });
+    const sourceAfter = await readFile(sourceFile, "utf8");
+    const contractAfter = await readFile(contractFile, "utf8");
+    assert.equal(result.status, "blocked");
+    assert.equal(result.applied, true);
+    assert.equal(result.diagnostic_code, "compact_authoring_cleanup_failed");
+    assert.match(result.reason, /synthetic_second_cleanup_failure/u);
+    assert.equal(parseSemanticFactManifestBlocks("source.md", sourceAfter)[0].carrier, "compact_v1");
+    assert.equal(Object.hasOwn(parseStrictYaml(contractAfter), "compact_semantic_carrier"), true);
+    const leftovers = (await readdir(fixture.workdir)).filter((name) => name.includes(".ty-context-compact-") && name.endsWith(".bak"));
+    assert.equal(leftovers.length, 1);
+    assert.deepEqual(await readFile(path.join(fixture.workdir, leftovers[0])), contractBefore);
+    assert.ok(result.reason.includes(leftovers[0]));
+    const retry = await runLongTaskCompactAuthoring(fixture.root, fixture.workdir, { apply: true });
+    assert.equal(retry.status, "already_compact");
+    assert.equal(retry.applied, false);
+    assert.equal(await readFile(sourceFile, "utf8"), sourceAfter);
+    assert.equal(await readFile(contractFile, "utf8"), contractAfter);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("compact advice is non-blocking in Preflight and application is impossible after Authority Lock", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    const preflight = await preflightDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+    );
+    assert.equal(preflight.status, "ready");
+    const diagnostic = preflight.diagnostics.find(
+      (item) => item.code === "equivalent_compact_representation_available",
+    );
+    assert.equal(diagnostic.level, "warning");
+    assert.match(diagnostic.repair_hint, /compact-authoring .* --apply$/u);
+
+    const compiled = await compileDeliveryContract(
+      fixture.workdir,
+      fixture.root,
+      { require_completion_gate: false },
+    );
+    await commitActiveAuthority({
+      candidate: compiled,
+      expected_previous_identity: null,
+    });
+    const sourceFile = path.join(fixture.root, "source.md");
+    const contractFile = path.join(
+      fixture.workdir,
+      "delivery-contract.yaml",
+    );
+    const sourceBefore = await readFile(sourceFile);
+    const contractBefore = await readFile(contractFile);
+    const result = await runLongTaskCompactAuthoring(
+      fixture.root,
+      fixture.workdir,
+      { apply: true },
+    );
+    assert.equal(result.status, "blocked");
+    assert.equal(result.authority_lock_present, true);
+    assert.equal(
+      result.diagnostic_code,
+      "compact_authoring_authority_lock_present",
+    );
+    assert.deepEqual(await readFile(sourceFile), sourceBefore);
+    assert.deepEqual(await readFile(contractFile), contractBefore);
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+function outsideFormalBlock(content, span) {
+  return `${content.slice(0, span.start_offset)}${content.slice(span.end_offset)}`;
+}
+
+async function assertNoCompactTransactionRemainders(...directories) {
+  for (const directory of directories)
+    assert.deepEqual(
+      (await readdir(directory)).filter((entry) =>
+        entry.includes(".ty-context-compact-"),
+      ),
+      [],
+    );
+}

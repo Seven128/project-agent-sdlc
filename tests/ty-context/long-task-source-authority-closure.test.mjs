@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { rm, writeFile } from "node:fs/promises";
+import { readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import YAML from "yaml";
@@ -134,6 +134,125 @@ test("every declared Source file contains at least one Material Source Item", as
       }),
       /source_file_material_item_required:background\.md/u,
     );
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("selected Context can declare a typed controlling Source already closed by the Contract", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await writeFile(
+      path.join(fixture.root, "project_context", "areas", "main.md"),
+      '# Main\n<!-- ty-context-controlling-source domain="product" path="source.md" -->\n',
+      "utf8",
+    );
+    await writeContract(fixture.workdir, fixture.contract);
+    await compileDeliveryContract(fixture.workdir, fixture.root, {
+      require_completion_gate: false,
+    });
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("controlling Source declarations must resolve through declared material Source and the named domain", async () => {
+  const cases = [
+    {
+      name: "undeclared Source path",
+      marker:
+        '<!-- ty-context-controlling-source domain="product" path="undeclared-source.md" -->',
+      prepare: async (fixture) => {
+        await writeFile(
+          path.join(fixture.root, "undeclared-source.md"),
+          await readFile(path.join(fixture.root, "source.md"), "utf8"),
+          "utf8",
+        );
+      },
+      expected: /context_controlling_source_path_not_declared/u,
+    },
+    {
+      name: "unrepresented semantic domain",
+      marker:
+        '<!-- ty-context-controlling-source domain="external" path="source.md" -->',
+      prepare: async () => {},
+      expected: /context_controlling_source_domain_unrepresented/u,
+    },
+  ];
+
+  for (const item of cases) {
+    const fixture = await createDeliveryFixture();
+    try {
+      await item.prepare(fixture);
+      await writeFile(
+        path.join(fixture.root, "project_context", "areas", "main.md"),
+        `# Main\n${item.marker}\n`,
+        "utf8",
+      );
+      await assert.rejects(
+        compileDeliveryContract(fixture.workdir, fixture.root, {
+          require_completion_gate: false,
+        }),
+        item.expected,
+        item.name,
+      );
+    } finally {
+      await rm(fixture.root, { recursive: true, force: true });
+    }
+  }
+});
+
+test("full Context snapshots do not activate unselected controlling Source declarations", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await writeFile(
+      path.join(fixture.root, "src", "archived-source.md"),
+      await readFile(path.join(fixture.root, "source.md"), "utf8"),
+      "utf8",
+    );
+    await writeFile(
+      path.join(fixture.root, "project_context", "areas", "archive.md"),
+      '# Archive\n<!-- ty-context-controlling-source domain="product" path="src/archived-source.md" -->\n',
+      "utf8",
+    );
+    const manifestPath = path.join(
+      fixture.root,
+      "project_context",
+      "context.toml",
+    );
+    await writeFile(
+      manifestPath,
+      `${await readFile(manifestPath, "utf8")}\n[[context]]\npath = "project_context/areas/archive.md"\nrole = "area"\nread_policy = "on-demand"\ntriggers = ["archive"]\n`,
+      "utf8",
+    );
+
+    await writeContract(fixture.workdir, fixture.contract);
+    await compileDeliveryContract(fixture.workdir, fixture.root, {
+      require_completion_gate: false,
+    });
+  } finally {
+    await rm(fixture.root, { recursive: true, force: true });
+  }
+});
+
+test("ordinary Context links never declare controlling Source", async () => {
+  const fixture = await createDeliveryFixture();
+  try {
+    await writeFile(
+      path.join(fixture.root, "src", "undeclared-source.md"),
+      await readFile(path.join(fixture.root, "source.md"), "utf8"),
+      "utf8",
+    );
+    await writeFile(
+      path.join(fixture.root, "project_context", "areas", "main.md"),
+      "# Main\n[Background](../../src/undeclared-source.md)\n",
+      "utf8",
+    );
+
+    await writeContract(fixture.workdir, fixture.contract);
+    await compileDeliveryContract(fixture.workdir, fixture.root, {
+      require_completion_gate: false,
+    });
   } finally {
     await rm(fixture.root, { recursive: true, force: true });
   }

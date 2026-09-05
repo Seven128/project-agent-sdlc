@@ -921,6 +921,18 @@ test("long-task Skill is the only active long-task workflow", async () => {
     active,
     /Delegation Suitability/iu,
   );
+  assert.match(
+    active,
+    /After each physical resume[\s\S]*delegation_reassessment[\s\S]*before editing[\s\S]*rebuild packets[\s\S]*rerun Delegation Suitability[\s\S]*restore no Worker/iu,
+  );
+  assert.match(
+    authorityLifecycle,
+    /never reconnects or restores previous Worker[\s\S]*fresh exact `long_task_implementation` host calls[\s\S]*ordered zero-start[\s\S]*partial-delegation/iu,
+  );
+  assert.match(
+    active,
+    /Harness invokes no model or state/iu,
+  );
   assert.match(active, /reports are not Progress, Evidence or proof/iu);
   assert.match(active, /converge into the selected verification workspace/iu);
   assert.ok(

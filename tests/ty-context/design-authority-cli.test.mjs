@@ -7,6 +7,11 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import { runDoctor } from "../../packages/ty-context/dist/lib/doctor.js";
 import { runInit } from "../../packages/ty-context/dist/lib/init.js";
+import {
+  SHOWCASE_HTML_PATH,
+  createBundle,
+  createShowcase,
+} from "./design-authority-closure-fixture.mjs";
 
 const cli = fileURLToPath(
   new URL("../../packages/ty-context/dist/cli.js", import.meta.url),
@@ -192,6 +197,54 @@ test("design-authority help states the non-adoption boundary", () => {
   assert.equal(result.status, 0, result.stderr);
   assert.match(result.stdout, /read-only/u);
   assert.match(result.stdout, /never[\s\S]*adopt/u);
+  assert.match(result.stdout, /--require-showcase/u);
+});
+
+test("--require-showcase fails closed without changing default closure validity", async () => {
+  const repository = await mkdtemp(path.join(os.tmpdir(), "ty-design-cli-"));
+  try {
+    await createBundle(repository);
+    const compatible = run(repository, ["design-authority", "inspect", "--json"]);
+    const requiredMissing = run(repository, [
+      "design-authority",
+      "inspect",
+      "--require-showcase",
+      "--json",
+    ]);
+    assert.equal(compatible.status, 0, compatible.stderr);
+    assert.equal(JSON.parse(compatible.stdout).showcase.status, "not_declared");
+    assert.equal(requiredMissing.status, 3, requiredMissing.stderr);
+
+    await createShowcase(repository);
+    const requiredValid = run(repository, [
+      "design-authority",
+      "inspect",
+      "--format",
+      "json",
+      "--require-showcase",
+    ]);
+    assert.equal(requiredValid.status, 0, requiredValid.stderr);
+    assert.equal(JSON.parse(requiredValid.stdout).showcase.status, "valid");
+
+    await writeFile(path.join(repository, SHOWCASE_HTML_PATH), "stale", "utf8");
+    const defaultStale = run(repository, [
+      "design-authority",
+      "inspect",
+      "--json",
+    ]);
+    const requiredStale = run(repository, [
+      "design-authority",
+      "inspect",
+      "--json",
+      "--require-showcase",
+    ]);
+    assert.equal(defaultStale.status, 0, defaultStale.stderr);
+    assert.equal(JSON.parse(defaultStale.stdout).status, "valid");
+    assert.equal(JSON.parse(defaultStale.stdout).showcase.status, "invalid");
+    assert.equal(requiredStale.status, 3, requiredStale.stderr);
+  } finally {
+    await rm(repository, { recursive: true, force: true });
+  }
 });
 
 function run(cwd, args) {

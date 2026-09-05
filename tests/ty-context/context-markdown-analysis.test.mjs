@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdir, rm, symlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { loadContextCatalog } from "../../packages/ty-context/dist/lib/context-catalog/catalog-load.js";
@@ -64,7 +64,12 @@ project_context/missing-prose.md
         ["inline", "project_context/areas/main/target space.md", null, "valid"],
         ["inline", "project_context/areas/main.md", null, "valid"],
         ["inline", "project_context/areas", null, "valid"],
-        ["definition", "project_context/areas/main.md", "responsibility", "valid"],
+        [
+          "definition",
+          "project_context/areas/main.md",
+          "responsibility",
+          "valid",
+        ],
         ["angle", "project_context/areas/main.md", null, "valid"],
       ],
     );
@@ -184,6 +189,194 @@ test("stable key declarations are opt-in HTML comments and conflict only across 
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("controlling Source declarations are exact, explicit, and conflict by canonical target", async () => {
+  const root = await createContextProject({
+    extraFiles: {
+      "docs/product-source.md": "# Product Source\n",
+      "project_context/areas/main/one.md": `# One
+<!-- ty-context-controlling-source domain="product" path="docs/product-source.md" -->
+[ordinary](docs/product-source.md)
+\`<!-- ty-context-controlling-source domain="technical" path="docs/ignored-inline.md" -->\`
+
+\`\`\`md
+<!-- ty-context-controlling-source domain="technical" path="docs/ignored-fenced.md" -->
+\`\`\`
+<!-- ty-context-controlling-source path="docs/malformed.md" domain="product" -->
+`,
+      "project_context/areas/main/two.md": `# Two
+<!-- ty-context-controlling-source domain="technical" path="docs/product-source.md" -->
+`,
+    },
+  });
+  try {
+    const catalog = await loadContextCatalog(root);
+    const analysis = await analyzeContextMarkdownCatalog({
+      project_root: root,
+      files: catalog.context_files,
+      long_line_threshold: 1_000,
+    });
+
+    assert.deepEqual(
+      analysis.controlling_sources.map((entry) => ({
+        domain: entry.domain,
+        declared_path: entry.declared_path,
+        target_path: entry.target_path,
+        status: entry.status,
+      })),
+      [
+        {
+          domain: "product",
+          declared_path: "docs/product-source.md",
+          target_path: "docs/product-source.md",
+          status: "valid",
+        },
+        {
+          domain: "technical",
+          declared_path: "docs/product-source.md",
+          target_path: "docs/product-source.md",
+          status: "valid",
+        },
+      ],
+    );
+    assert.equal(
+      analysis.controlling_sources.some((entry) =>
+        entry.declared_path.includes("ignored"),
+      ),
+      false,
+    );
+    assert.equal(analysis.invalid_declarations.length, 1);
+    assert.deepEqual(analysis.controlling_source_conflicts, [
+      {
+        kind: "domain_conflict",
+        target_path: "docs/product-source.md",
+        domains: ["product", "technical"],
+        owners: [
+          {
+            source_path: "project_context/areas/main/one.md",
+            line: 2,
+            domain: "product",
+          },
+          {
+            source_path: "project_context/areas/main/two.md",
+            line: 2,
+            domain: "technical",
+          },
+        ],
+      },
+    ]);
+    assert.equal(
+      analysis.references.some(
+        (entry) => entry.destination === "docs/product-source.md",
+      ),
+      true,
+    );
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("controlling Source targets reject aliases and non-text files", async (t) => {
+  await t.test("hardlink", async (t) => {
+    const root = await createContextProject({
+      extraFiles: { "docs/source.md": "# Source\n" },
+    });
+    try {
+      try {
+        await link(
+          path.join(root, "docs", "source.md"),
+          path.join(root, "docs", "source-hardlink.md"),
+        );
+      } catch (error) {
+        t.skip(`hardlink unavailable: ${error.code}`);
+        return;
+      }
+      await writeFile(
+        path.join(root, "project_context", "areas", "main.md"),
+        '# Main\n<!-- ty-context-controlling-source domain="product" path="docs/source-hardlink.md" -->\n',
+        "utf8",
+      );
+      const catalog = await loadContextCatalog(root);
+      const analysis = await analyzeContextMarkdownCatalog({
+        project_root: root,
+        files: catalog.context_files,
+        long_line_threshold: 1_000,
+      });
+      assert.equal(analysis.controlling_sources[0].status, "invalid");
+      assert.match(
+        analysis.controlling_sources[0].detail,
+        /hardlink_not_allowed/u,
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  await t.test("symlink", async (t) => {
+    const root = await createContextProject({
+      extraFiles: { "docs/source.md": "# Source\n" },
+    });
+    try {
+      try {
+        await symlink(
+          path.join(root, "docs", "source.md"),
+          path.join(root, "docs", "source-link.md"),
+          "file",
+        );
+      } catch (error) {
+        if (error?.code === "EPERM") {
+          t.skip("symlink creation is unavailable on this Windows host");
+          return;
+        }
+        throw error;
+      }
+      await writeFile(
+        path.join(root, "project_context", "areas", "main.md"),
+        '# Main\n<!-- ty-context-controlling-source domain="product" path="docs/source-link.md" -->\n',
+        "utf8",
+      );
+      const catalog = await loadContextCatalog(root);
+      const analysis = await analyzeContextMarkdownCatalog({
+        project_root: root,
+        files: catalog.context_files,
+        long_line_threshold: 1_000,
+      });
+      assert.equal(analysis.controlling_sources[0].status, "invalid");
+      assert.match(
+        analysis.controlling_sources[0].detail,
+        /symlink_not_allowed/u,
+      );
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  await t.test("invalid UTF-8", async () => {
+    const root = await createContextProject();
+    try {
+      await mkdir(path.join(root, "docs"), { recursive: true });
+      await writeFile(
+        path.join(root, "docs", "binary.md"),
+        Uint8Array.from([0xc3, 0x28]),
+      );
+      await writeFile(
+        path.join(root, "project_context", "areas", "main.md"),
+        '# Main\n<!-- ty-context-controlling-source domain="product" path="docs/binary.md" -->\n',
+        "utf8",
+      );
+      const catalog = await loadContextCatalog(root);
+      const analysis = await analyzeContextMarkdownCatalog({
+        project_root: root,
+        files: catalog.context_files,
+        long_line_threshold: 1_000,
+      });
+      assert.equal(analysis.controlling_sources[0].status, "invalid");
+      assert.match(analysis.controlling_sources[0].detail, /strict UTF-8/u);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
 });
 
 test("line diagnostics count Unicode code points deterministically", async () => {

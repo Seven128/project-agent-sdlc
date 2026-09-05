@@ -9,7 +9,10 @@ import type {
   ExecutionTargetV2,
   TargetProfileV2,
 } from "./long-task-semantic-contract-types.js";
-import type { DeliverySurfaceBindingV2 } from "./long-task-ui-surface-types.js";
+import type {
+  DeliveryDesignTargetV2,
+  DeliverySurfaceBindingV2,
+} from "./long-task-ui-surface-types.js";
 import type { CompiledSourceItemV2 } from "./long-task-source-authority-types.js";
 import type { SemanticFactGlobalBindingsV2 } from "./long-task-semantic-fact-binding-types.js";
 import type { WorkspaceManifestV2 } from "./long-task-workspace-runtime-types.js";
@@ -79,7 +82,11 @@ export interface ProductSemanticProjectionV2 {
     }>;
     control_relation_closure: DeliveryOutcomeV2["product"]["control_relation_closure"];
     control_relations: DeliveryOutcomeV2["product"]["control_relations"];
-    surface_bindings: DeliverySurfaceBindingV2[];
+    surface_bindings: Array<
+      Omit<DeliverySurfaceBindingV2, "design_targets"> & {
+        design_targets: Array<Omit<DeliveryDesignTargetV2, "source_paths">>;
+      }
+    >;
     non_completing_outcomes: Array<{ key: string; statement: string }>;
   }>;
 }
@@ -114,6 +121,31 @@ export interface NextAuthorityMaterialsV2 {
   context_snapshot: ContextAuthoritySnapshotV2;
   product_semantics: ProductSemanticProjectionV2;
   global_semantics: GlobalSemanticProjectionV2;
+  design_semantics: DesignSemanticAuthorityMaterialV2[];
+  design_implementation_bindings: DesignImplementationBindingMaterialV2[];
+  design_non_binding_contract_sha256: string;
+  design_non_binding_source_sha256: string;
+}
+
+export interface DesignSemanticAuthorityMaterialV2 {
+  target_key: string;
+  handoff_identity: string;
+  handoff_semantics_sha256: string;
+  project_design_authority_sha256: string | null;
+  feasibility_semantics_sha256: string | null;
+  source_item_semantics_sha256: string;
+}
+
+export interface DesignImplementationBindingMaterialV2 {
+  target_key: string;
+  handoff_path: string;
+  binding_paths: string[];
+  target_source_paths: string[];
+  technical_feasibility_inputs: unknown[];
+  technical_feasibility_identities: unknown[];
+  technical_source_records: unknown[];
+  route_binding: unknown;
+  component_bindings: unknown[];
 }
 
 export interface AuthorityMaterialHashesV2 {
@@ -121,6 +153,10 @@ export interface AuthorityMaterialHashesV2 {
   context_snapshot_sha256: string;
   product_semantics_sha256: string;
   global_semantics_sha256: string;
+  design_semantics_sha256: string;
+  design_implementation_bindings_sha256: string;
+  design_non_binding_contract_sha256: string;
+  design_non_binding_source_sha256: string;
 }
 
 export interface InitialTaskBaseV2 {

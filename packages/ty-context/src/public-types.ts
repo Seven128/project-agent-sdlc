@@ -91,6 +91,16 @@ export type {
   DesignAuthorityManifestV1,
 } from "./lib/design-authority-types.js";
 export type {
+  DesignAuthorityShowcaseAuthorityBinding,
+  DesignAuthorityShowcaseCoverage,
+  DesignAuthorityShowcaseCoverageKey,
+  DesignAuthorityShowcaseFile,
+  DesignAuthorityShowcaseIndexEntry,
+  DesignAuthorityShowcaseInspectionV1,
+  DesignAuthorityShowcaseManifestV1,
+  DesignAuthorityShowcaseTargetCondition,
+} from "./lib/design-authority-showcase-types.js";
+export type {
   DesignAuthorityConsistentAssessmentV1,
   DesignAuthorityCrossTaskVarianceV1,
   DesignAuthorityDeltaAssessmentKind,

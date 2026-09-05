@@ -42,7 +42,27 @@ export function buildPassingRow(expected) {
     allowed_solution_set: allowed,
     prohibited_failure_modes: [...(expected.prohibited_patterns ?? [])],
     selected_solution: expected.selected_allowed[0],
-    rationale_codes: ["fixture-supported"],
+    rationale_codes: [
+      "fixture-supported",
+      ...(expected.rationale_patterns ?? []),
+    ],
+  };
+}
+
+export function dsaArtifactPassingRow(expected) {
+  return {
+    id: expected.id,
+    decision: expected.decision,
+    artifact_category: "unknown",
+    authority_status: "unknown",
+    handbook_primary: false,
+    supplemental_scenes_last: false,
+    coverage_status: "unknown",
+    human_aesthetic_judgment_required: true,
+    aesthetic_suitability_concluded: false,
+    reason_codes: [...(expected.reason_patterns ?? [])],
+    next_action: "follow the stated lifecycle boundary",
+    ...expected.exact,
   };
 }
 

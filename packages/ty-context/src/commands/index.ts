@@ -77,7 +77,7 @@ export function help(): void {
   design-resource <subcommand>
                        Validate handoffs, Authority assessments, or explicit DRA recovery
   design-authority inspect|tokens
-                       Inspect the complete authority closure or project Tokens; read-only
+                       Inspect the complete authority closure, optional adopted showcase or project Tokens; read-only
   long-task <subcommand>
                        Manage one Canonical Delivery Contract in the current workspace
   delivery-set <subcommand>

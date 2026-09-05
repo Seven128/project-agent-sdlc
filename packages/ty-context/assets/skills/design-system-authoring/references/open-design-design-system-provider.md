@@ -12,6 +12,8 @@ Never call a copied prompt or local imitation a provider result. Persistent MCP 
 
 The package-local `@google/design.md` adapter performs deterministic lint, parse/validate, export and diff only. It is not Open Design, does not generate candidates and owns no provider authentication, polling, selection or adoption.
 
+Before every generation or material candidate revision, create the complete task-local System Design Reasoning Brief from the sibling reference. Pass it in the existing `sourceNotes` input and preserve its accepted/rejected/unresolved preference sets during iteration. If a revision method lacks `sourceNotes`, reuse only a candidate already carrying the current brief and send the exact changed decision rows through its supported feedback field, or create a new bounded candidate. Never invent a provider field or treat task-local notes as Authority.
+
 ## Current verified MCP contract
 
 Open Design 0.15.1 exposed MCP server 0.2.0 using protocol `2025-06-18`. A live read-only smoke observed 152 concrete design-system resources through `resources/list`; `resources/read` returned their Markdown bodies. The URI families are:
@@ -45,7 +47,7 @@ The body is the provider's current design-system input. Supported 0.15.1 fields 
   "category": "Custom",
   "surface": "web",
   "summary": "Product and brand intent",
-  "sourceNotes": "Bounded design brief",
+  "sourceNotes": "Complete current System Design Reasoning Brief",
   "provenance": {
     "companyBlurb": "Product context",
     "sourceUrls": [],
@@ -70,6 +72,8 @@ Read the system and inspect its assets through:
 - `GET /api/design-systems/<id>/files` and `/file?path=<path>`;
 - `GET /api/design-systems/<id>/preview` or `/showcase`;
 - `POST /api/design-systems/<id>/workspace` when an editable review project is required.
+
+The provider preview must present an engineering design-system handbook as the primary artifact: system identity/purpose, Token families and relationships, component catalogue/contracts, interaction/adaptation and provenance come before application examples. Product-page galleries are supplemental validation only. A provider preview remains a candidate artifact; the closure-external adopted showcase is created through the project adoption procedure and binds the resulting current Authority identity.
 
 Create scoped feedback with:
 
