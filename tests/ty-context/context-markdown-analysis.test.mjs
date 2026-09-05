@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { link, mkdir, rm, symlink, writeFile } from "node:fs/promises";
+import { link, mkdir, rm, symlink, unlink, writeFile } from "node:fs/promises";
 import path from "node:path";
 import test from "node:test";
 import { loadContextCatalog } from "../../packages/ty-context/dist/lib/context-catalog/catalog-load.js";
@@ -8,6 +8,45 @@ import {
   analyzeContextMarkdownFile,
 } from "../../packages/ty-context/dist/lib/context-markdown/context-markdown-analysis.js";
 import { createContextProject } from "./context-manifest-fixtures.mjs";
+import { resolveContextControllingSourceDeclaration } from "../../packages/ty-context/dist/lib/context-controlling-source.js";
+
+test("controlling Source resolution accepts an equivalent repository root without weakening target checks", async () => {
+  const root = await createContextProject({
+    extraFiles: { "docs/source.md": "# Source\n" },
+  });
+  const alias = `${root}-alias`;
+  let linked = false;
+  try {
+    // A root alias forces lexical and physical root spellings to differ on both
+    // platforms, including hosts whose temporary directory has no 8.3 alias.
+    await symlink(root, alias, process.platform === "win32" ? "junction" : "dir");
+    linked = true;
+    const resolve = (declared_path) => resolveContextControllingSourceDeclaration(alias, {
+      source_path: "project_context/global.md",
+      domain: "technical",
+      declared_path,
+      line: 1,
+      column: 1,
+    });
+    const valid = await resolve("docs/source.md");
+    assert.equal(valid.status, "valid", valid.detail);
+    assert.equal(valid.target_path, "docs/source.md");
+    assert.equal((await resolve("docs/missing.md")).status, "missing");
+    assert.equal((await resolve("docs/../docs/source.md")).status, "invalid");
+    assert.equal((await resolve("docs/Source.md")).status === "valid", false);
+    await writeFile(path.join(root, "docs", "binary.md"), Uint8Array.from([0xc3, 0x28]));
+    const binary = await resolve("docs/binary.md");
+    assert.equal(binary.status, "invalid");
+    assert.match(binary.detail, /strict UTF-8/u);
+    await symlink(path.join(root, "docs"), path.join(root, "linked-docs"), process.platform === "win32" ? "junction" : "dir");
+    const unsafe = await resolve("linked-docs/source.md");
+    assert.equal(unsafe.status, "invalid");
+    assert.match(unsafe.detail, /symlink_not_allowed/u);
+  } finally {
+    if (linked) await unlink(alias);
+    await rm(root, { recursive: true, force: true });
+  }
+});
 
 test("Markdown analysis resolves explicit local link forms and ignores prose, code, anchors, and external URLs", async () => {
   const root = await createContextProject({

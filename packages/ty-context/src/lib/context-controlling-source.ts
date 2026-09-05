@@ -31,7 +31,7 @@ export async function resolveContextControllingSourceDeclaration(
     );
     const physicalPath = normalizeContextPath(
       repositoryRelativePathSpelling(
-        projectRoot,
+        safe.repository,
         await realpath(safe.absolute),
       ),
     );
