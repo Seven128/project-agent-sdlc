@@ -93,6 +93,67 @@ test("design-resource-authoring has one exact managed/generated/package source",
   assert.match(metadata.description, /生成设计资源/u);
 });
 
+test("DRA resolves reference intent and routes artifacts through demonstrated capabilities", async () => {
+  const [skill, selection, provider] = await Promise.all([
+    copies("SKILL.md").then((items) => items[0]),
+    copies("references/resource-selection.md").then((items) => items[0]),
+    copies("references/open-design-provider.md").then((items) => items[0]),
+  ]);
+
+  assert.match(
+    skill,
+    /Match two independent axes[\s\S]*artifact's platform\/surface\/state\/interaction\/canonical-source\/formal-handoff profile[\s\S]*intent\/reference\/render\/revision\/editability support/iu,
+  );
+  assert.match(
+    skill,
+    /complete the structured reference-ingestion handshake[\s\S]*quality_commission[\s\S]*reach the actual run input/iu,
+  );
+  assert.match(
+    skill,
+    /Generate one recommended candidate by default[\s\S]*explicit comparison request or genuinely conflicting references/iu,
+  );
+  assert.match(
+    selection,
+    /Reference-intent and professional-completion closure[\s\S]*keep[\s\S]*change[\s\S]*do-not-copy[\s\S]*confidence and unknowns/iu,
+  );
+  assert.match(
+    selection,
+    /Source-required meaning[\s\S]*bounded candidate completion[\s\S]*creative candidate choice/iu,
+  );
+  assert.match(
+    selection,
+    /capability_requirements:[\s\S]*artifact:[\s\S]*authoring:[\s\S]*structured_reference_ingestion/iu,
+  );
+  assert.match(
+    selection,
+    /Derive `capability_requirements` on two independent axes[\s\S]*Skill name cannot substitute/iu,
+  );
+  assert.match(
+    provider,
+    /normalized task-local schema digest[\s\S]*Advertising `skill` plus `skills\[\]` proves request shape only/iu,
+  );
+  assert.match(
+    provider,
+    /reference-design-contract[\s\S]*ID is not durable policy/iu,
+  );
+  assert.match(
+    provider,
+    /path embedded in prompt text[\s\S]*not visual-observation evidence/iu,
+  );
+  assert.match(
+    provider,
+    /audited 0\.21\.1 MCP `start_run` schema does not expose a top-level attachment\/image-path input/iu,
+  );
+  assert.match(
+    provider,
+    /`mobile-app` template describes one phone-framed screen[\s\S]*multiple screens[\s\S]*formal implementation source/iu,
+  );
+  assert.match(
+    provider,
+    /Classify a Provider route `agent-authored`[\s\S]*artifact\/output delta[\s\S]*draft-only/iu,
+  );
+});
+
 test("DRA assesses Authority deltas without invoking or adopting DSA", async () => {
   const [skill, assessment, downstream] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),
@@ -153,7 +214,10 @@ test("formal Web/App authoring carries real-substrate feasibility without anothe
       ),
     ]);
 
-  assert.match(skill, /read \[implementation-feasibility\.md\][\s\S]*real repository substrate/iu);
+  assert.match(
+    skill,
+    /read \[implementation-feasibility\.md\][\s\S]*real repository substrate/iu,
+  );
   assert.match(
     selection,
     /every material component-family × target × condition profile[\s\S]*Source-backed candidate realization or blocker/iu,
@@ -466,12 +530,7 @@ test("style-bearing DRA closes application dimensions before provider execution"
   ];
   assert.deepEqual(
     rows.map((row) => row[1]),
-    [
-      "existing-covered",
-      "projected",
-      "not-applicable",
-      "decision-required",
-    ],
+    ["existing-covered", "projected", "not-applicable", "decision-required"],
   );
   const disposition = new Map(
     rows.map((row) => [
@@ -580,9 +639,7 @@ test("style-bearing DRA closes application dimensions before provider execution"
     /not a schema, state, Authority, Gate, readiness result or Provider lifecycle/iu,
   );
 
-  const examplesAt = selection.indexOf(
-    "### Style-application worked examples",
-  );
+  const examplesAt = selection.indexOf("### Style-application worked examples");
   assert.notEqual(examplesAt, -1);
   const examples = selection.slice(examplesAt);
   const mustBlock = examples.match(
@@ -605,9 +662,7 @@ test("style-bearing DRA closes application dimensions before provider execution"
     mustAllow[1],
     /every applicable style-application dimension[\s\S]*existing exact-target input binding[\s\S]*Every dimension is `existing-covered`[\s\S]*omit `style_application`[\s\S]*allow the Provider run/iu,
   );
-  const mixedEnvelopeMatch = mixed[1].match(
-    /```yaml\r?\n([\s\S]*?)\r?\n```/u,
-  );
+  const mixedEnvelopeMatch = mixed[1].match(/```yaml\r?\n([\s\S]*?)\r?\n```/u);
   assert.ok(mixedEnvelopeMatch);
   const mixedEnvelope = YAML.parse(mixedEnvelopeMatch[1]);
   assert.deepEqual(Object.keys(mixedEnvelope.style_application).sort(), [

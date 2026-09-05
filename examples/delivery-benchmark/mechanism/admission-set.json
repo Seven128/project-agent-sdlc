@@ -1,6 +1,6 @@
 {
   "schema_version": "tiny-context-fresh-agent-admission-v3",
-  "frozen_at": "2026-08-08T00:00:00+08:00",
+  "frozen_at": "2026-09-05T00:00:00+08:00",
   "baseline_commit": "611aafcddedd7d59a606f5cd4fcd519b58eb073d",
   "purpose": "Independently test DRA semantic recovery/writeback guidance, Build / Reuse / Buy judgment, and DSA artifact-category/lifecycle boundaries without merging category failures, treating structural checks as aesthetic judgment, or using one pair as ROI evidence.",
   "model": "gpt-5.6-terra",
@@ -180,13 +180,13 @@
           "role": "candidate",
           "guidance": {
             "quality": {
-              "bundle_sha256": "9a056a857e9b9339f2ef514e8cea99fdfa83b7d79fed37c39e13cb449d2c79d5",
+              "bundle_sha256": "dd546225b9812ee90c7e78e9c8ecefb527312d0ab53adc03302065bfe5a60d74",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "19d7d244366f690e693aaeaf9be6369b1632c7e222e6d50e95c9317b27e82b36"
+                  "content_sha256": "555523161ee6095f8a387e31a9b54af5205490537397a256a67d6366ffa770b2"
                 },
                 {
                   "kind": "worktree",
@@ -203,13 +203,13 @@
               ]
             },
             "simple": {
-              "bundle_sha256": "bb0f5a3b3a39a730228b72274a6f839e0e690397ff2f441c60ec07debc7ea1b0",
+              "bundle_sha256": "e9ef527fd5997af29e50e7a79144b8303651c9450c7ec42034111fa44f97d2a8",
               "sources": [
                 {
                   "kind": "worktree",
                   "label": "dra_skill_candidate",
                   "path": ".codex/ty-context-managed/skills/design-resource-authoring/SKILL.md",
-                  "content_sha256": "19d7d244366f690e693aaeaf9be6369b1632c7e222e6d50e95c9317b27e82b36"
+                  "content_sha256": "555523161ee6095f8a387e31a9b54af5205490537397a256a67d6366ffa770b2"
                 }
               ]
             }

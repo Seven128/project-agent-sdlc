@@ -2,7 +2,7 @@
 
 Create this concise, task-local decision brief before every new design-system generation and before every material candidate revision. It is candidate input, not private chain-of-thought, Design Authority, Context, workflow state or an adoption record. Rebuild it when scope, product purpose, target conditions, immutable constraints or accepted/rejected/unresolved preferences materially change; never reuse a stale brief merely because the provider still has an earlier candidate.
 
-Pass the complete current brief through the provider's existing `sourceNotes` field on candidate creation. If a live revision method does not expose `sourceNotes`, do not invent a field or API: revise only a candidate whose retained `sourceNotes` already contains the current brief, include the exact changed decision rows in the supported feedback field, or create a new bounded candidate with the current brief. Keep secrets and unrelated repository material out of provider input.
+Transmit the complete current brief through a scoped-commission input the selected live Provider route actually supports and retain the exact transmitted material with its attributable run evidence. When a draft route exposes `sourceNotes`, use it; if a live revision route exposes no equivalent supported input, revise only a candidate that already carries the current brief and include the exact changed decision rows through its supported feedback/commission input, or create a new bounded candidate. Never invent a field or API, and keep secrets and unrelated repository material out of Provider input.
 
 ## Required English-complete template
 

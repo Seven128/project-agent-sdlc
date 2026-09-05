@@ -1983,7 +1983,7 @@ catalogs:
     - - input.context.project-context-areas-harness-package-contracts-package-managed-surfaces-md
       - context
       - project_context/areas/harness-package/contracts/package-managed-surfaces.md
-      - 603b8fef594778c4b0da55a3eb5eb62b24eb31f794a3f8484499471b7c5b89a4
+      - ccfedda6f5bc90b9914c5ba80c7c66196007ab2d4fb6a1cefb5d418d2b0cc1d2
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -2025,14 +2025,14 @@ catalogs:
     - - input.context.project-context-areas-harness-package-implementation-index-md
       - context
       - project_context/areas/harness-package/implementation-index.md
-      - 4b2226acc81f64dda18e5c3b0d28ea4ccda18b1e03af36c9ec11507c89c15805
+      - 1a4b63afa5840b7339293701f0463f8a82d42e3ff0d8b8d9e166f1827f89b7b4
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
     - - input.context.project-context-areas-harness-package-verification-md
       - context
       - project_context/areas/harness-package/verification.md
-      - eb33256b6255193acab8f2e716a610bd4fce1f78935d627ad97483dbab18af78
+      - 7debcb5c6b1372966a375c795857aface4918b3499b605ba1eaf4cc0a740f897
       - selector_ref: selector.refs.4f8d483199af0624
       - - architecture-deliberation
       - The complete controlling Context snapshot is classified and bound to architecture, distribution and outcome preservation Facts.
@@ -8693,7 +8693,7 @@ fact_sets:
   - provenance
   - source_item_refs
   rows:
-  - - 38cc124535e2eff685e02c27460d70928c0265e04ca1b4852935d760c86e5843
+  - - 70e0070e5cbd5d8dab293cd91e8a7060638c03ad042ae95d449dfc45f6baa6e7
     - fact.symbolic-denotation-efficiency-result
     - cell.symbolic-denotation-efficiency-result
     - subject.symbolic-denotation-efficiency-result
@@ -8708,7 +8708,7 @@ fact_sets:
       - symbolic-denotation-efficiency-result
       - symbolic-denotation-efficiency-result
     - - symbolic-denotation-efficiency-result
-  - - d00f46990c1f3831ecd6fc1fb5b01488f0b6c97c46f767b31f4cd307b8e2e504
+  - - 6950bafc85bd2922225f7c00e8528fef23e031d10b5c5e58c96de36721fde96d
     - fact.original-attachment-provenance
     - cell.original-attachment-provenance
     - subject.original-attachment-provenance
@@ -8723,7 +8723,7 @@ fact_sets:
       - original-attachment-provenance
       - original-attachment-provenance
     - - original-attachment-provenance
-  - - 24ddd7a9b4f61c8d31195d0d6f1c450d3617d367039047ef7b64a831c38d5cd0
+  - - 9bfa328123fae552e18f604cd45aad0c9b73bfee45423794a502f94dfb688b87
     - fact.audited-source-supersession
     - cell.audited-source-supersession
     - subject.audited-source-supersession
@@ -8738,7 +8738,7 @@ fact_sets:
       - audited-source-supersession
       - audited-source-supersession
     - - audited-source-supersession
-  - - a49eeeb31e17a6d7d0975f2c974696a95d4f83e730e66a30f6815129e76b0420
+  - - 7c649fbc92429a36475b250b7d4f890ab1cd4e98721ee96c83aa1c5e7721a58f
     - fact.complete-material-input-index
     - cell.complete-material-input-index
     - subject.complete-material-input-index
@@ -8978,7 +8978,7 @@ fact_sets:
       - exact-target-layout-pixel-preservation
       - exact-target-layout-pixel-preservation
     - - exact-target-layout-pixel-preservation
-  - - f012e40e2cdc99effa82a220ad03da13e075bbb7d6075a85b71b2f0e085d449a
+  - - 6ef4eef79928e55e077f70a2775c940ce13ed117af4b6b80f0538ac8694cedf0
     - fact.canonical-resource-value-authority
     - cell.canonical-resource-value-authority
     - subject.canonical-resource-value-authority
@@ -10100,7 +10100,7 @@ fact_sets:
       - complexity-parameter-verification
       - complexity-parameter-verification
     - - complexity-parameter-verification
-  - - dfa528bdbcb285b6e69a961d0f4e64c3d5bf9e3c2bef154628272f55e832ade1
+  - - 44cb87e2c48a2a9bc74e7da293cb80b10a9759bc682dc12bd9f335ce21f2437e
     - fact.distribution-context-parity
     - cell.distribution-context-parity
     - subject.distribution-context-parity
@@ -10115,7 +10115,7 @@ fact_sets:
       - distribution-context-parity
       - distribution-context-parity
     - - distribution-context-parity
-  - - f6d435694db76cea98ef86b7ebd9f270769dfd88ee38ed1351c5879639d90f6a
+  - - 164736c75d4c31bb0981ae255b01275d4670e512f6fd7d8b9e5cf061b3ef63a4
     - fact.architecture-deliberation
     - cell.architecture-deliberation
     - subject.architecture-deliberation
@@ -10325,7 +10325,7 @@ fact_sets:
       - scope-and-rollout-ac
       - scope-and-rollout-ac
     - - scope-and-rollout-ac
-  - - d2532ccc6aec5ebf0ad26ec93dd94004d9490c9004f05a6dbbacb327888c029f
+  - - c2caf1af0512bbc784c4c8d5a431ae93a974787946df5c5face7bf81cb041674
     - fact.package-antidegradation-and-parity-ac
     - cell.package-antidegradation-and-parity-ac
     - subject.package-antidegradation-and-parity-ac
@@ -10355,7 +10355,7 @@ fact_sets:
       - inventory-is-not-completion
       - inventory-is-not-completion
     - - inventory-is-not-completion
-  - - 4b1cee65480506381ff22ebde7a72491d6692a6c23d93aa714d84016f6f4fcd3
+  - - ed5cd3b2de0d79b41356c9ff95d3610463f38663ee83e403846bb7cf3e3a1f23
     - fact.public-schema-change-risk
     - cell.public-schema-change-risk
     - subject.public-schema-change-risk
@@ -10422,28 +10422,28 @@ obligations:
   - overrides
   rows:
   - - proof.symbolic-denotation-efficiency-result.exact
-    - 15d323d3a595f32080836de7ebacd9e6c46885b77c379a059842b88d8b7bd2c3
+    - 7e445125b27fbbd9495e42e804e06b350e08e47d490cad9db5523ab5eed534b9
     - fact.symbolic-denotation-efficiency-result
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/0/comparison/parameters/value
       - symbolic-denotation-efficiency-result
   - - proof.original-attachment-provenance.exact
-    - aa67dee270e82b27295808d1c19d3eed892721d9605faaf7644eec2d6c20d04b
+    - 79f34bcbd95c17f09bee26e76c32f430eb50aadc1b1e4399781eaed68e92a58d
     - fact.original-attachment-provenance
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/1/comparison/parameters/value
       - original-attachment-provenance
   - - proof.audited-source-supersession.exact
-    - 4ea36ee78a3fd61cad4fc629d464de7d8f5bbd129f9bcced3a21499cdc1f2398
+    - fdf3c0a448840985f413b46ac42031427c484b8593b4ad622e0dc358fecd511d
     - fact.audited-source-supersession
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/2/comparison/parameters/value
       - audited-source-supersession
   - - proof.complete-material-input-index.exact
-    - 6be995714123d3661b643c5c7db31265df65a05fa6c1a1a67fb4c48377eb28c5
+    - 21053e2faae1f445812dfd007cef996ec2c11527f86f64d04c6ccb6a993bcd47
     - fact.complete-material-input-index
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -10555,7 +10555,7 @@ obligations:
       - /proof_obligations/18/comparison/parameters/value
       - exact-target-layout-pixel-preservation
   - - proof.canonical-resource-value-authority.exact
-    - 95b9f48d3caa4f488828590a81f82a6909a31e6d77b2fd05f39bf30fd8246d18
+    - 89a3df22a603f172cc885d6634330d07e5a00ea76940729341e68408837d1431
     - fact.canonical-resource-value-authority
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -11073,14 +11073,14 @@ obligations:
       - /proof_obligations/92/comparison/parameters/value
       - complexity-parameter-verification
   - - proof.distribution-context-parity.exact
-    - 78260d85503441bb4823b0e68650beb1013b6ed6638a8a704c1740061a498e13
+    - daed586d05ccb76b862dd7b7681db6db0aede65457983bf62e3ea1a6a5e36dfa
     - fact.distribution-context-parity
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
       - /proof_obligations/93/comparison/parameters/value
       - distribution-context-parity
   - - proof.architecture-deliberation.exact
-    - 58764b12f96b99964067bb7b16dabd2d23bdf27ca75e958535638eecc7ae3918
+    - 9b3934d63fe4d3da28c258766fb3a1fa853f7c2d61d91bc3aeb330b4db236905
     - fact.architecture-deliberation
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -11178,7 +11178,7 @@ obligations:
       - /proof_obligations/107/comparison/parameters/value
       - scope-and-rollout-ac
   - - proof.package-antidegradation-and-parity-ac.exact
-    - 43ed8d6bcccc5e313aebf091d56ee61248f2121dc34a452683ddc4f909861b6f
+    - 4ad68029d8ad2b7a0828383e00c66d53c897f160231d826586e8c5d6507c006a
     - fact.package-antidegradation-and-parity-ac
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
@@ -11192,7 +11192,7 @@ obligations:
       - /proof_obligations/109/comparison/parameters/value
       - inventory-is-not-completion
   - - proof.public-schema-change-risk.exact
-    - c1865b1bf6c9587b53a5b281b324fe4852daadb39e437405593ae85a258680e5
+    - c74057fdbfa9791247444d6ecc2cc59f4f917eb50d4e85db5f6bcfc89b18caa5
     - fact.public-schema-change-risk
     - structure_ref: structure.8ddce2ec3bc4f5e2aeed8b9c
       arguments:
