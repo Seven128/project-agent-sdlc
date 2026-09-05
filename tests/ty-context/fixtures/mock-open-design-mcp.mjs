@@ -14,23 +14,51 @@ const toolNames = [
 ];
 if (mode === "missing-tool")
   toolNames.splice(toolNames.indexOf("get_artifact"), 1);
+if (mode === "reverse-tool-order") toolNames.reverse();
 const tools = toolNames.map((name) => ({
   name,
   description: `mock ${name}`,
-  inputSchema:
-    name === "create_project"
-      ? {
-          type: "object",
-          properties: {
-            name: { type: "string" },
-            ...(mode === "missing-binding"
-              ? {}
-              : { designSystem: { type: "string" } }),
-          },
-          required: ["name"],
-        }
-      : {},
+  inputSchema: inputSchemaFor(name),
 }));
+
+function inputSchemaFor(name) {
+  if (name === "create_project")
+    return {
+      type: "object",
+      properties: {
+        name: { type: "string" },
+        ...(mode === "missing-binding"
+          ? {}
+          : { designSystem: { type: "string" } }),
+      },
+      required: ["name"],
+    };
+  if (name === "start_run") {
+    const properties = {
+      ...(mode === "missing-run-prompt" ? {} : { prompt: { type: "string" } }),
+      requestId: { type: "string" },
+      skill: { type: "string" },
+      skills: { type: "array", items: { type: "string" } },
+      agent: { type: "string" },
+      model: { type: "string" },
+      serviceTier: { type: "string" },
+      inputs: { type: "object" },
+      ...(mode === "visual-run-schema"
+        ? {
+            attachments: { type: "array", items: { type: "object" } },
+            reasoningEffort: { type: "string" },
+          }
+        : {}),
+    };
+    return {
+      type: "object",
+      properties,
+      required:
+        mode === "missing-run-prompt" ? ["requestId"] : ["prompt", "requestId"],
+    };
+  }
+  return { type: "object", properties: {} };
+}
 
 const lines = readline.createInterface({ input: process.stdin });
 lines.on("line", (line) => {

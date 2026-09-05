@@ -5,14 +5,18 @@ import test from "node:test";
 import { fileURLToPath } from "node:url";
 import YAML from "yaml";
 
-const repo = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
+const repo = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  "../..",
+);
 const read = (relative) => readFile(path.join(repo, relative), "utf8");
 const roots = [
   ".codex/ty-context-managed/skills/design-system-authoring",
   ".codex/skills/design-system-authoring",
   "packages/ty-context/assets/skills/design-system-authoring",
 ];
-const copies = (relative) => Promise.all(roots.map((root) => read(`${root}/${relative}`)));
+const copies = (relative) =>
+  Promise.all(roots.map((root) => read(`${root}/${relative}`)));
 
 test("design-system-authoring has exact managed/generated/package copies", async () => {
   for (const relative of [
@@ -37,27 +41,46 @@ test("design-system-authoring is explicit-only and cannot be inferred from cold 
   const metadata = YAML.parse(match[1]);
   assert.deepEqual(Object.keys(metadata).sort(), ["description", "name"]);
   assert.equal(metadata.name, "design-system-authoring");
-  assert.match(metadata.description, /Use only when the user explicitly asks/iu);
-  assert.match(metadata.description, /项目设计系统|项目 design system|project design system/iu);
-  assert.match(metadata.description, /never runs merely because DESIGN\.md is missing/iu);
+  assert.match(
+    metadata.description,
+    /Use only when the user explicitly asks/iu,
+  );
+  assert.match(
+    metadata.description,
+    /项目设计系统|项目 design system|project design system/iu,
+  );
+  assert.match(
+    metadata.description,
+    /never runs merely because DESIGN\.md is missing/iu,
+  );
 
   const agentMetadata = YAML.parse(agent);
   assert.equal(agentMetadata.policy.allow_implicit_invocation, false);
-  assert.match(agentMetadata.interface.default_prompt, /\$design-system-authoring/u);
-  assert.match(match[2], /Never auto-run from `init`, `sync`, the default Workflow, `design-resource-authoring`/iu);
+  assert.match(
+    agentMetadata.interface.default_prompt,
+    /\$design-system-authoring/u,
+  );
+  assert.match(
+    match[2],
+    /Never auto-run from `init`, `sync`, the default Workflow, `design-resource-authoring`/iu,
+  );
   assert.match(match[2], /combined explicit user request.*authoriz/iu);
 });
 
 test("design-system workflow separates provider output, selection, adoption and binding", async () => {
   const [skill, provider, adoption] = await Promise.all([
     copies("SKILL.md").then((items) => items[0]),
-    copies("references/open-design-design-system-provider.md").then((items) => items[0]),
+    copies("references/open-design-design-system-provider.md").then(
+      (items) => items[0],
+    ),
     copies("references/authority-adoption.md").then((items) => items[0]),
   ]);
   for (const expected of [
     /Bootstrap, revise or reconcile/iu,
     /candidate generation, human\/delegated selection, and the later explicit adoption confirmation distinct/iu,
     /Root `DESIGN\.md` is the unique Authority entry and revision owner/iu,
+    /professionally authored system candidate requires an attributable Agent-backed run and artifact delta/iu,
+    /Skill identifier[\s\S]*is capability advertisement rather than proof of composition, reference observation, output quality or effective execution/iu,
     /supported front matter remains the editable exact Token authority/iu,
     /`design_system\/tokens\.json` is deterministic generated output/iu,
     /sparse `design_system\/authority\.manifest\.json` owns closure membership\/digest only/iu,
@@ -66,25 +89,67 @@ test("design-system workflow separates provider output, selection, adoption and 
     /Require explicit user\/team selection, or explicit delegated selection/iu,
     /Stop for separate adoption confirmation/iu,
     /new complete closure identity[\s\S]*Rebind affected DRA resources\/handoffs/iu,
+    /Run intent interpretation and system authoring serially unless the Provider proves ordering and output ownership/iu,
+    /Generate one recommended candidate by default[\s\S]*materially distinct candidates/iu,
     /provider succeeded.*artifact ready.*selected.*authority adopted.*binding verified/isu,
-  ]) assert.match(skill, expected);
+  ])
+    assert.match(skill, expected);
 
-  assert.match(provider, /Open Design 0\.15\.1.*MCP server 0\.2\.0/isu);
+  assert.match(
+    provider,
+    /original compatibility audit observed Open Design 0\.15\.1.*MCP server 0\.2\.0[\s\S]*historical compatibility evidence[\s\S]*not a permanent contract/isu,
+  );
   assert.match(provider, /protocol `2025-06-18`/u);
-  assert.match(provider, /152 concrete design-system resources/iu);
   assert.match(provider, /od:\/\/design-systems\/<id>\/DESIGN\.md/u);
   assert.match(provider, /`-32601`[\s\S]*`resources\/templates\/list`/u);
-  assert.match(provider, /template enumeration as optional protocol capability/iu);
-  assert.match(provider, /`create_project` accepts optional `designSystem`/u);
-  assert.match(provider, /no create\/update design-system MCP tool/iu);
+  assert.match(provider, /`create_project\.designSystem`/u);
+  assert.match(
+    provider,
+    /no dedicated create\/update design-system MCP tool/iu,
+  );
   assert.match(provider, /feature-detect future structured methods/iu);
-  assert.match(provider, /POST \/api\/design-systems\/generation-jobs/u);
-  assert.match(provider, /POST \/api\/design-systems\/<id>\/revision-jobs/u);
-  assert.match(provider, /PATCH \/api\/design-systems\/<id>\/revisions\/<revisionId>/u);
-  assert.match(provider, /\{"status":"accepted"\}/u);
+  assert.match(
+    provider,
+    /Open Design package 0\.21\.1.*d4138ea81832c792f28cb69f2637a35e52f20f5a/isu,
+  );
+  assert.match(
+    provider,
+    /`start_run` advertises `prompt`.*`requestId`.*`skill`.*`skills`.*`agent`.*`model`[\s\S]*does not advertise top-level image attachments\/paths or reasoning-effort control/isu,
+  );
+  assert.match(
+    provider,
+    /generation-jobs\.ts[\s\S]*without launching an Agent\/model/iu,
+  );
+  assert.match(
+    provider,
+    /current Web design-system flow[\s\S]*Agent chat\/run[\s\S]*internal call sequence is not a public API contract/iu,
+  );
+  assert.match(
+    provider,
+    /`agent-authored`[\s\S]*correlated Agent run[\s\S]*artifact delta/iu,
+  );
+  assert.match(
+    provider,
+    /`draft-only`[\s\S]*terminal `succeeded` status cannot establish professional design-system generation/iu,
+  );
+  assert.match(
+    provider,
+    /Run intent interpretation and design-system authoring serially by default[\s\S]*Schema presence alone is not proof/iu,
+  );
+  assert.match(
+    provider,
+    /path embedded in prompt prose[\s\S]*does not prove Agent observation/iu,
+  );
+  assert.match(
+    provider,
+    /Generate one recommended candidate by default[\s\S]*not merely color/iu,
+  );
   assert.match(provider, /get_project\.designSystemId/u);
   assert.match(provider, /same installed Open Design daemon/iu);
-  assert.match(provider, /Persistent MCP registration.*require separate authorization/iu);
+  assert.match(
+    provider,
+    /Persistent MCP registration.*require separate authorization/iu,
+  );
 
   assert.match(adoption, /Single-owner writeback/iu);
   assert.match(adoption, /project_context\/\*\*/u);
@@ -106,7 +171,10 @@ test("design-system workflow separates provider output, selection, adoption and 
     adoption,
     /sparse manifest contains only complete closure membership\/digest/iu,
   );
-  assert.match(adoption, /provider name\/version.*design-system ID.*revision.*SHA-256/isu);
+  assert.match(
+    adoption,
+    /provider name\/version.*design-system ID.*revision.*SHA-256/isu,
+  );
   assert.match(
     adoption,
     /editable upstream owner\/locator\/update\/export route/iu,
@@ -125,23 +193,47 @@ test("design-system workflow separates provider output, selection, adoption and 
 });
 
 test("base profile, public docs and owning Context expose the same design-system boundary", async () => {
-  const [profile, spec, readmes, contextModel, packageSurface, implementation, verification] = await Promise.all([
+  const [
+    profile,
+    spec,
+    readmes,
+    contextModel,
+    packageSurface,
+    implementation,
+    verification,
+  ] = await Promise.all([
     read("packages/ty-context/src/lib/profiles.ts"),
     read("PROJECT_SPEC.md"),
-    Promise.all([read("README.md"), read("README.zh-CN.md"), read("packages/ty-context/README.md")]).then(
-      (items) => items.join("\n"),
-    ),
+    Promise.all([
+      read("README.md"),
+      read("README.zh-CN.md"),
+      read("packages/ty-context/README.md"),
+    ]).then((items) => items.join("\n")),
     read("project_context/areas/harness-package/foundation/context-model.md"),
-    read("project_context/areas/harness-package/contracts/package-managed-surfaces.md"),
+    read(
+      "project_context/areas/harness-package/contracts/package-managed-surfaces.md",
+    ),
     read("project_context/areas/harness-package/implementation-index.md"),
     read("project_context/areas/harness-package/verification.md"),
   ]);
-  assert.match(profile, /"design-system-authoring"[\s\S]*"design-resource-authoring"/u);
-  for (const content of [spec, readmes, packageSurface, implementation, verification]) {
+  assert.match(
+    profile,
+    /"design-system-authoring"[\s\S]*"design-resource-authoring"/u,
+  );
+  for (const content of [
+    spec,
+    readmes,
+    packageSurface,
+    implementation,
+    verification,
+  ]) {
     assert.match(content, /design-system-authoring/u);
     assert.match(content, /Open Design/u);
   }
-  assert.match(contextModel, /UI Authority Closure[\s\S]*stable surface\/control\/target keys/iu);
+  assert.match(
+    contextModel,
+    /UI Authority Closure[\s\S]*stable surface\/control\/target keys/iu,
+  );
   assert.match(
     contextModel,
     /adopted exact target or constraint[\s\S]*exactly one canonical adoption record/iu,

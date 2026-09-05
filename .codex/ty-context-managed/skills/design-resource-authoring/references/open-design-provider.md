@@ -27,6 +27,8 @@ Current structured tool names may include `list_agents`, `list_skills`, `list_pl
 
 Functional skills and rendering templates are different registries. Finding `frontend-design` does not prove that a `mobile-app` or `wireframe-mobile-flow` template is installed, and a remembered template ID is not live capability evidence.
 
+For the relevant discovered tools, retain one normalized task-local schema digest and inspect exact input/result fields. In particular, distinguish advertised primary/additional Skill inputs, Agent/model controls, reasoning control, visual-reference transport and effective runtime provenance. Advertising `skill` plus `skills[]` proves request shape only; it does not prove composition order, shared inputs, file ownership or semantic compatibility. A read-only discovery probe never proves that an Agent ran or used an advertised input.
+
 ## Highest-performance generation selection
 
 Open Design quality takes precedence over model-call price for every formal first generation, every major revision and every final-candidate defect repair that requires material regeneration. A major revision changes the adopted visual direction or design system, cross-surface information architecture, primary interaction model, or enough of the selected canonical source/Fact manifest to invalidate the former candidate. Pure discovery, reads, resource enumeration, metadata queries and review of an already sufficient selected resource do not trigger this policy.
@@ -58,11 +60,30 @@ Prefer, in order:
 
 Never vendor a fallback template catalogue or guess a template ID from prior runs. Do not implement a transport helper unless the live host truly lacks a safe structured path; any helper may normalize metadata and transport only.
 
+### Reference-intent and visual-input capability
+
+When current Source and the user already specify the material reference relationships and visual direction, do not add an intent-interpretation run. When screenshots, URLs, conflicting references or informal taste still require professional interpretation, select a live functional capability which can return attributable observed evidence, `keep`, `change`, `do-not-copy`, confidence/unknowns and the distinction between Source-required meaning, bounded candidate completion and creative choices which require selection. At Open Design commit `d4138ea81832c792f28cb69f2637a35e52f20f5a`, `reference-design-contract` is one such candidate mapping; its ID is not durable policy and must be rediscovered.
+
+Run intent interpretation before artifact authoring by default, keep its output in the bounded Provider project and inspect it before reuse. Combine it with another functional Skill in one run only when the live contract or a bounded attributable probe establishes ordering, shared-input semantics and output ownership for that exact pair. Do not assume composition merely because `start_run` accepts both `skill` and `skills[]`.
+
+For every visual reference which materially controls generation:
+
+1. verify a readable path/resource and immutable digest or equivalent identity;
+2. retain its role, applicable design dimensions/subjects and prohibited use;
+3. pass it through an actually advertised structured attachment/image/resource field or another established Provider ingestion route;
+4. verify the selected Agent/runtime declares the needed visual/file/network capability;
+5. require a per-reference interpretation attributable to the same run; and
+6. inspect the final render for the intended relationship and prohibited copying.
+
+A path embedded in prompt text, upload acknowledgement, URL, thumbnail or file name is not visual-observation evidence. The audited 0.21.1 MCP `start_run` schema does not expose a top-level attachment/image-path input, although another CLI/daemon/runtime route may. If no current structured route closes transport plus runtime observation, mark the reference capability unavailable or obtain an explicitly sufficient text description; never silently continue as if the image was seen.
+
 ### Resource-type capability matching
 
-Match the requested artifact archetype to demonstrated live capability rather than a Skill name. Distinguish at least landing/brand pages, dashboards/data workbenches, dense tables/filters/forms, mobile multi-screen flows, component workbenches, complex interaction, formal Web/App handoff and icon/illustration/media work. For every considered capability, establish the target resource type, platform, surface count, state/interaction support, real-render support, bounded revision support, canonical-source retrieval and formal-handoff coverage.
+Match two axes before selecting any Provider identifier: the requested artifact profile and the authoring capability profile. Distinguish at least landing/brand pages, dashboards/data workbenches, dense tables/filters/forms, mobile multi-screen flows, component workbenches, complex interaction, formal Web/App handoff and icon/illustration/media work. For every considered capability, establish the target resource type, platform/viewport, surface count, state/interaction support, visual-reference/real-content support, real-render support, bounded revision support, canonical-source retrieval, formal-handoff coverage and required native edit/export behavior.
 
 A single-frame HTML phone mockup cannot claim a native mobile-App or multi-screen formal handoff. A visually strong capability without retrievable canonical Source may support exploration but not a formal implementation handoff. Give unsupported candidates `unavailable` or `not-needed`; do not wrap a partial output in a stronger profile. This matching is task-local provider adaptation, not a registry or durable ranking.
+
+As current compatibility examples only, Open Design 0.21.1's `mobile-app` template describes one phone-framed screen, while `frontend-design` describes high-fidelity Web/frontend authoring. The former is unsuitable when the commission needs multiple screens, material state coverage, unobstructed production viewport output, required real imagery, native-platform semantics or a formal implementation source; the latter may be eligible for high-fidelity browser/mobile-viewport exploration but does not by its name prove native-App behavior or the formal output profile. Always read the installed template/Skill rules and compare their real constraints with the two-axis profile.
 
 ## Conditional Design Authority gate and binding
 
@@ -98,14 +119,20 @@ Repeat the closure immediately before each material-revision run, using the exis
 
 ## Structured commission sequence
 
-1. Record provider version, selected agent/model, reasoning effort and service tier when exposed, functional capability, rendering template, adopted design system and relevant plugin/export readiness as reported live. For an applicable generation, retain the eligibility/ranking basis and the request-versus-effective comparison required by the highest-performance policy.
+1. Record Provider version and relevant schema digest; selected Agent/model, reasoning effort and service tier only when exposed; functional capability, rendering template, adopted design system, visual-reference route and relevant plugin/export readiness as reported live. Retain the two-axis capability match. For an applicable generation, retain the eligibility/ranking basis and the request-versus-effective comparison required by the highest-performance policy.
 2. Reuse an existing task-local project only when its scope, prior inputs and required design-system binding match; otherwise create a bounded project. For style-bearing work, pass `designSystem` and verify `get_project.designSystemId` before the run.
-3. Only after the pre-run style-application closure allows execution, start a run with the product-specific commission envelope, including exactly its Source-bound `projected` `style_application` fields, archetype-specific `quality_commission`, provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe plus current implementation-substrate observations and allowed realization boundaries from [implementation-feasibility.md](implementation-feasibility.md). Fully current input-bound `existing-covered` meaning permits the style object to be omitted; `not-applicable` and `decision-required` never become empty or invented fields. The quality commission states real-copy/data needs, primary challenges, desired/avoided character, reference roles and design-side shared-family reuse without claiming production reuse. That universe is based on requested scope, product semantics, adopted design system, real technical Source and target environments; it must not be inferred only from provider output. Both application and quality fields are commission content, not a separate persistent Projection, Authority, state, routing record or Provider score.
+3. Only after the pre-run style-application and applicable reference-intent/ingestion closures allow execution, start a run with the product-specific commission envelope, including exactly its Source-bound `projected` `style_application` fields, archetype-specific `quality_commission`, two-axis capability requirements, Provider-native capability identifier and—when the intent is a formal Web/App implementation handoff—the complete prederived authoring obligation universe plus current implementation-substrate observations and allowed realization boundaries from [implementation-feasibility.md](implementation-feasibility.md). Put these values only into fields, files or prompt content the live Provider actually accepts; do not invent a structured input property. Fully current input-bound `existing-covered` meaning permits the style object to be omitted; `not-applicable` and `decision-required` never become empty or invented fields. The quality commission states real-copy/data needs, primary challenges, desired/avoided character, reference roles/prohibited uses, professional-completion dispositions and design-side shared-family reuse without claiming production reuse. That universe is based on requested scope, product semantics, adopted design system, real technical Source and target environments; it must not be inferred only from Provider output. Both application and quality fields are commission content, not a separate persistent Projection, Authority, state, routing record or Provider score.
 4. Poll with a bounded cadence. During a long run, report meaningful progress at least once per minute without flooding the user.
 5. Preserve run IDs and the latest provider diagnostic. Support cancellation when the user requests it and the provider exposes it.
 6. Resolve the actual entry explicitly, retrieve the artifact/source, inspect it according to intent and preserve its immutable identity before later iterations or handoff.
 
 Open Design may launch Codex CLI as its configured inner agent. That is provider execution, not recursive invocation of this outer Skill. Do not hardcode a remembered model when live discovery and authoritative ranking can select the current highest eligible model.
+
+## Agent-authored versus draft-only evidence
+
+Classify a Provider route `agent-authored` only when the current execution supplies a correlated request/run identity, the effective Agent/model/capability fields it actually exposes, the exact commission/reference bindings, an attributable before/after or run-owned artifact/output delta, terminal diagnostics and the promised render/audit observations. If effective runtime values are not exposed, qualify them unverified rather than copying requested values into the result.
+
+A design-system/resource registration, generation job, revision job or file-preparation operation without that evidence is `draft-only`, even when its status is `succeeded`. Draft-only work may prepare a container for a later Agent run, but cannot establish professional generation, reference interpretation, Artifact readiness or Design suitability. If a future version changes an existing endpoint to launch an Agent, admit it from live evidence rather than its name. These labels are current observations, not persisted Provider state.
 
 ## Separate three kinds of state
 
