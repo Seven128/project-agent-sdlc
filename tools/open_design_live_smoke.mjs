@@ -1,4 +1,5 @@
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 import { pathToFileURL } from "node:url";
 
 const REQUIRED_DISCOVERY_TOOLS = Object.freeze([
@@ -128,11 +129,13 @@ export async function runOpenDesignMcpDiscoverySmoke(options) {
     const tools = await listTools(client);
     const toolNames = tools.map((tool) => tool.name).sort();
     assertRequiredTools(toolNames);
+    const toolSchema = fingerprintRelevantToolSchemas(tools);
     const projectBinding = inspectProjectBindingSchema(tools);
+    const runCapabilities = inspectRunCapabilities(tools);
     const resources = await inspectDesignSystemResources(client);
     const probes = await probeDiscoveryTools(client);
     return {
-      schema_version: "open-design-discovery-smoke-v2",
+      schema_version: "open-design-discovery-smoke-v3",
       provider: {
         name: initialized?.serverInfo?.name ?? "unknown",
         version: initialized?.serverInfo?.version ?? "unknown",
@@ -140,7 +143,9 @@ export async function runOpenDesignMcpDiscoverySmoke(options) {
       },
       tool_count: toolNames.length,
       required_tools: [...REQUIRED_DISCOVERY_TOOLS],
+      tool_schema: toolSchema,
       project_binding: projectBinding,
+      run_capabilities: runCapabilities,
       design_system_resources: resources,
       probes,
       mutations_performed: false,
@@ -193,6 +198,78 @@ function assertRequiredTools(toolNames) {
     );
 }
 
+function fingerprintRelevantToolSchemas(tools) {
+  const relevant = tools
+    .filter((tool) => REQUIRED_DISCOVERY_TOOLS.includes(tool.name))
+    .map((tool) => ({
+      name: tool.name,
+      input_schema: canonicalizeJson(tool.inputSchema ?? null),
+    }))
+    .sort((left, right) =>
+      left.name < right.name ? -1 : left.name > right.name ? 1 : 0,
+    );
+  const digest = createHash("sha256")
+    .update(JSON.stringify(relevant), "utf8")
+    .digest("hex");
+  return {
+    sha256: `sha256:${digest}`,
+    tool_names: relevant.map((tool) => tool.name),
+  };
+}
+
+function canonicalizeJson(value) {
+  if (Array.isArray(value)) return value.map((item) => canonicalizeJson(item));
+  if (value && typeof value === "object")
+    return Object.fromEntries(
+      Object.keys(value)
+        .sort()
+        .map((key) => [key, canonicalizeJson(value[key])]),
+    );
+  return value;
+}
+
+function inspectRunCapabilities(tools) {
+  const startRun = tools.find((tool) => tool.name === "start_run");
+  const properties = startRun?.inputSchema?.properties ?? {};
+  const inputFields = Object.keys(properties).sort();
+  const firstPresent = (candidates) =>
+    candidates.find((candidate) => Object.hasOwn(properties, candidate)) ??
+    null;
+  const reasoningInputs = inputFields.filter((field) =>
+    ["reasoning", "reasoningEffort", "reasoning_effort"].includes(field),
+  );
+  const visualReferenceInputs = inputFields.filter((field) =>
+    ["attachments", "imagePaths", "image_paths", "images"].includes(field),
+  );
+  const promptInput = firstPresent(["prompt"]);
+  const requestIdentityInput = firstPresent(["requestId", "request_id"]);
+  const primarySkillInput = firstPresent(["skill"]);
+  const additionalSkillsInput = firstPresent(["skills"]);
+  const agentInput = firstPresent(["agent"]);
+  return {
+    input_fields: inputFields,
+    prompt_input: promptInput,
+    request_identity_input: requestIdentityInput,
+    primary_skill_input: primarySkillInput,
+    additional_skills_input: additionalSkillsInput,
+    agent_selection_input: agentInput,
+    model_selection_input: firstPresent(["model"]),
+    service_tier_input: firstPresent(["serviceTier", "service_tier"]),
+    reasoning_control_inputs: reasoningInputs,
+    visual_reference_inputs: visualReferenceInputs,
+    attributed_agent_run_schema_advertised: Boolean(
+      promptInput && requestIdentityInput && agentInput,
+    ),
+    skill_composition_schema_advertised: Boolean(
+      primarySkillInput && additionalSkillsInput,
+    ),
+    skill_composition_semantics_verified: false,
+    direct_visual_reference_transport_advertised:
+      visualReferenceInputs.length > 0,
+    effective_runtime_provenance_verified: false,
+  };
+}
+
 function inspectProjectBindingSchema(tools) {
   const createProject = tools.find((tool) => tool.name === "create_project");
   const properties = createProject?.inputSchema?.properties ?? {};
@@ -202,7 +279,9 @@ function inspectProjectBindingSchema(tools) {
     );
   const getProject = tools.find((tool) => tool.name === "get_project");
   if (!getProject)
-    throw new Error("Open Design MCP is missing get_project binding verification");
+    throw new Error(
+      "Open Design MCP is missing get_project binding verification",
+    );
   return {
     create_project_design_system_input: true,
     get_project_verification_tool: true,

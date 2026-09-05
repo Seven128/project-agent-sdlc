@@ -59,6 +59,18 @@ Preserve each supplied item's actual role:
 
 An optional pre-existing planning document is one possible input. Raw notes or an initial proposal are equally valid. Never require a special intermediary format merely to make another input usable.
 
+### Reference-intent and professional-completion closure
+
+For every reference which materially controls visual direction, distinguish what the user/Source already specifies from what still requires Provider interpretation. Retain its task-local role, applicable dimensions or subjects, prohibited use and whether it is readable through the selected execution route. A reference may inform typography hierarchy, whitespace rhythm, density, composition, surface treatment, imagery or another named dimension without authorizing literal layout, palette, branding, assets, copy or product structure.
+
+Do not add a reference-intent run when those relationships are already explicit and sufficient. When screenshots, URLs, informal taste or conflicting references require interpretation, select a live capability that can return evidence actually observed, `keep`, `change`, `do-not-copy`, material confidence and unknowns. Classify every professional addition as one of:
+
+- Source-required meaning already determined by controlling Product/Surface/Screen/Design Source;
+- bounded candidate completion which improves presentation while preserving current Source and creates no new product/surface rule; or
+- a creative candidate choice which remains unresolved until explicit or delegated selection.
+
+These are commission and candidate-review judgments, not a persisted intent schema, Design Authority, quality score or permission to fill missing durable meaning. A Provider-produced design contract or `DESIGN.md` remains isolated candidate input. Intent interpretation and artifact generation are separate by default; advertise one composed run only when the live Provider establishes execution order, shared-input semantics and output ownership for that exact Skill combination.
+
 ### Pre-generation style-application closure
 
 Before every style-bearing Provider generation or material revision—including a simple high-fidelity preview—evaluate every current-slice style-application dimension which can materially change the output. Reuse the Provider reference's existing material-revision definition; do not create another revision classification. This closure does not apply to non-fidelity work, pure IA/flow topology, low-fidelity structure, a semantics-only state study, a read which starts no new generation, or packaging, renaming or byte-only export proved equivalent to the same canonical source.
@@ -217,11 +229,31 @@ quality_commission:
     realistic_data_required: true
     placeholder_final_content_forbidden: true
   reference_roles:
-    - { ref: selected-density-reference, role: information-density }
+    - ref: selected-density-reference
+      role: inspiration
+      applies_to: [information-density, whitespace-rhythm]
+      prohibited_use: [literal-layout, brand-assets]
+  professional_completion:
+    source_required: [primary-results-hierarchy]
+    bounded_candidate_completion: [dense-data-legibility]
+    creative_selection_required: []
   component_authoring:
     shared_families_required: true
     repeated_instance_specific_styling_forbidden_by_design: true
   substrate_input_refs: [dashboard-web-feasibility]
+capability_requirements:
+  artifact:
+    platform: web
+    surface_count: one-page
+    states_interactions: [loading, populated, empty, filter-interaction]
+    canonical_source: required
+    formal_handoff: required
+  authoring:
+    high_fidelity_visual_direction: required
+    reference_intent: required
+    structured_reference_ingestion: required
+    actual_render: required
+    bounded_revision: required
 selected_capability:
   kind: runtime-discovered-kind
   id: runtime-discovered-id
@@ -229,7 +261,7 @@ expected_entry: known-or-provider-native
 review_promise: minimal-sanity | handoff-checks | selected-source-snapshot
 ```
 
-This is an explanatory shape, not a required file or schema; its concrete dashboard values illustrate Source-derived content and are not defaults. Include `style_application` only when material to a style-bearing commission and bind its actual values to current Design Authority, selected Source and the explicit slice. It is not a persisted Application Projection, Authority, state or acceptance record. For style-bearing generation, add an archetype-specific `quality_commission`: name the main design challenges, desired/avoided visual character, real-content obligations, the distinct role of each selected reference, design-side shared-family expectations and applicable feasibility Source. Omit irrelevant keys instead of emitting placeholders.
+This is an explanatory shape, not a required file or schema; its concrete dashboard values illustrate Source-derived content and are not defaults. Include `style_application` only when material to a style-bearing commission and bind its actual values to current Design Authority, selected Source and the explicit slice. It is not a persisted Application Projection, Authority, state or acceptance record. For style-bearing generation, add an archetype-specific `quality_commission`: name the main design challenges, desired/avoided visual character, real-content obligations, the distinct role of each selected reference and its prohibited use, professional-completion dispositions, design-side shared-family expectations and applicable feasibility Source. Derive `capability_requirements` on two independent axes: the artifact shape/coverage which must be produced and the authoring/ingestion/render/revision abilities needed to produce it. Only then choose a live Provider capability; a matching platform or Skill name cannot substitute for either axis. Omit irrelevant keys instead of emitting placeholders.
 
 `repeated_instance_specific_styling_forbidden_by_design` means repeated controls in the selected resource share one component-family grammar rather than being drawn as unrelated instances. It does not assert that later production code already reuses one component. `quality_commission` is Provider input, not a persisted quality score, Authority, Gate, routing record or acceptance result. A simple high-fidelity preview does not gain another tool action or persisted side effect from these fields. Never paste or paraphrase the Open Design capability's own seed/template prompt into it.
 
@@ -237,6 +269,7 @@ This is an explanatory shape, not a required file or schema; its concrete dashbo
 
 - Keep each revision inside the original scope ceiling unless the user explicitly expands it; otherwise use `decision-required` with reason `scope-expansion-required`.
 - Reuse the current Open Design project when that preserves context and provenance; preserve the prior artifact hash before overwriting a selected candidate.
+- Generate one recommended candidate by default. Add alternatives only for an explicit comparison request or materially conflicting coherent directions, and require decision-material differences such as typography, composition, density, container grammar or imagery rather than palette-only variants. A controlled variant inside one artifact is useful only when every variant is genuinely rendered and independently reviewable.
 - Do not create low-fi, high-fi, component boards or native-platform copies merely because a process diagram lists them.
 - For exploration, stop as soon as the requested decision is supported.
 - For a final-selected formal Web/App implementation handoff, apply the dedicated formal reference's exact stop conditions. Honest `decision_required`, `unavailable` or capability gaps remain blocking; they cannot be called ready or authorize fidelity work.

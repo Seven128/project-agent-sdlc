@@ -46,8 +46,7 @@ test("highest-performance guidance distributes every selection boundary without 
       /Pure discovery, reads, resource enumeration, metadata queries[\s\S]*do not trigger this policy/iu,
     ],
   ];
-  for (const [name, pattern] of cases)
-    assert.match(guidance, pattern, name);
+  for (const [name, pattern] of cases) assert.match(guidance, pattern, name);
 
   assert.match(
     guidance,
@@ -65,16 +64,50 @@ test("Open Design discovery transport verifies capabilities without provider mut
     command: process.execPath,
     args: [fixture],
   });
-  assert.equal(result.schema_version, "open-design-discovery-smoke-v2");
+  assert.equal(result.schema_version, "open-design-discovery-smoke-v3");
   assert.equal(result.provider.name, "mock-open-design");
   assert.equal(result.mutations_performed, false);
   assert.ok(result.required_tools.includes("start_run"));
   assert.ok(result.required_tools.includes("get_artifact"));
   assert.ok(result.required_tools.includes("get_project"));
+  assert.match(result.tool_schema.sha256, /^sha256:[0-9a-f]{64}$/u);
+  assert.deepEqual(
+    result.tool_schema.tool_names,
+    [...result.required_tools].sort(),
+  );
   assert.deepEqual(result.project_binding, {
     create_project_design_system_input: true,
     get_project_verification_tool: true,
   });
+  assert.equal(result.run_capabilities.prompt_input, "prompt");
+  assert.equal(result.run_capabilities.request_identity_input, "requestId");
+  assert.equal(result.run_capabilities.primary_skill_input, "skill");
+  assert.equal(result.run_capabilities.additional_skills_input, "skills");
+  assert.equal(result.run_capabilities.agent_selection_input, "agent");
+  assert.equal(result.run_capabilities.model_selection_input, "model");
+  assert.equal(result.run_capabilities.service_tier_input, "serviceTier");
+  assert.deepEqual(result.run_capabilities.reasoning_control_inputs, []);
+  assert.deepEqual(result.run_capabilities.visual_reference_inputs, []);
+  assert.equal(
+    result.run_capabilities.attributed_agent_run_schema_advertised,
+    true,
+  );
+  assert.equal(
+    result.run_capabilities.skill_composition_schema_advertised,
+    true,
+  );
+  assert.equal(
+    result.run_capabilities.skill_composition_semantics_verified,
+    false,
+  );
+  assert.equal(
+    result.run_capabilities.direct_visual_reference_transport_advertised,
+    false,
+  );
+  assert.equal(
+    result.run_capabilities.effective_runtime_provenance_verified,
+    false,
+  );
   assert.equal(result.design_system_resources.template_present, true);
   assert.equal(result.design_system_resources.template_method_supported, true);
   assert.equal(result.design_system_resources.concrete_resource_count, 1);
@@ -88,6 +121,58 @@ test("Open Design discovery transport verifies capabilities without provider mut
     assert.equal(probe.content_blocks, 1);
     assert.equal(probe.has_structured_content, true);
   }
+});
+
+test("run schema discovery reports visual/reasoning fields without claiming execution", async () => {
+  const ordinary = await runOpenDesignMcpDiscoverySmoke({
+    command: process.execPath,
+    args: [fixture],
+  });
+  const reversed = await runOpenDesignMcpDiscoverySmoke({
+    command: process.execPath,
+    args: [fixture],
+    env: { ...process.env, MOCK_OPEN_DESIGN_MODE: "reverse-tool-order" },
+  });
+  assert.equal(reversed.tool_schema.sha256, ordinary.tool_schema.sha256);
+  assert.deepEqual(
+    reversed.tool_schema.tool_names,
+    ordinary.tool_schema.tool_names,
+  );
+
+  const visual = await runOpenDesignMcpDiscoverySmoke({
+    command: process.execPath,
+    args: [fixture],
+    env: { ...process.env, MOCK_OPEN_DESIGN_MODE: "visual-run-schema" },
+  });
+  assert.deepEqual(visual.run_capabilities.reasoning_control_inputs, [
+    "reasoningEffort",
+  ]);
+  assert.deepEqual(visual.run_capabilities.visual_reference_inputs, [
+    "attachments",
+  ]);
+  assert.equal(
+    visual.run_capabilities.direct_visual_reference_transport_advertised,
+    true,
+  );
+  assert.equal(
+    visual.run_capabilities.skill_composition_semantics_verified,
+    false,
+  );
+  assert.equal(
+    visual.run_capabilities.effective_runtime_provenance_verified,
+    false,
+  );
+
+  const missingPrompt = await runOpenDesignMcpDiscoverySmoke({
+    command: process.execPath,
+    args: [fixture],
+    env: { ...process.env, MOCK_OPEN_DESIGN_MODE: "missing-run-prompt" },
+  });
+  assert.equal(missingPrompt.run_capabilities.prompt_input, null);
+  assert.equal(
+    missingPrompt.run_capabilities.attributed_agent_run_schema_advertised,
+    false,
+  );
 });
 
 test("mock provider gaps and discovery errors fail closed", async () => {
@@ -131,7 +216,19 @@ test(
     const result = await runOpenDesignMcpDiscoverySmoke({ command, args });
     assert.equal(result.mutations_performed, false);
     assert.ok(result.tool_count >= result.required_tools.length);
-    assert.equal(result.project_binding.create_project_design_system_input, true);
+    assert.equal(
+      result.project_binding.create_project_design_system_input,
+      true,
+    );
+    assert.match(result.tool_schema.sha256, /^sha256:[0-9a-f]{64}$/u);
+    assert.equal(
+      result.run_capabilities.skill_composition_semantics_verified,
+      false,
+    );
+    assert.equal(
+      result.run_capabilities.effective_runtime_provenance_verified,
+      false,
+    );
     assert.ok(
       result.design_system_resources.template_present ||
         result.design_system_resources.concrete_resource_count > 0,

@@ -19,6 +19,7 @@ Status: dated ordinary Source/history. Current DRA behavior and provider policy 
 
 ### Navigation index
 
+- [2026-09 Open Design provider re-audit](#dra-2026-09-provider-reaudit)
 - [Executive decision](#dra-executive-decision)
 - [Input inventory and treatment](#dra-input-inventory)
 - [Existing Tiny Context consumption boundary](#dra-current-boundary)
@@ -38,6 +39,19 @@ Status: dated ordinary Source/history. Current DRA behavior and provider policy 
 - [Repository/test impact](#dra-implementation-impact)
 - [Traceability](#dra-traceability)
 - [Completeness status](#dra-completeness)
+
+<a id="dra-2026-09-provider-reaudit"></a>
+## 2026-09 Open Design Provider Re-audit
+
+This addendum preserves the original 2026-07 research below while recording the later compatibility correction which controls the current managed Provider references. A 2026-09-05 source audit inspected Open Design package 0.21.1 at commit `d4138ea81832c792f28cb69f2637a35e52f20f5a` and established:
+
+- the current MCP `start_run` schema advertises primary/additional Skills plus Agent/model controls, but not top-level image attachment/path or reasoning-effort fields;
+- schema support for `skill` plus `skills[]` does not establish composition order, shared-input behavior or output ownership;
+- the current `generation-jobs` implementation creates/revises design-system drafts without launching an Agent/model in that path, so a terminal job cannot by itself prove professional system authoring;
+- the current Web design-system flow demonstrates a separate Agent-backed workspace/chat capability, but its UI implementation is not a stable API contract; and
+- `reference-design-contract`, `frontend-design` and `mobile-app` are current capability examples rather than durable routing identifiers; in particular the audited `mobile-app` template is a one-screen device-frame mockup and cannot establish multi-screen, native-App or formal-handoff support.
+
+The selected implementation remains OpenDesign-first and Provider-neutral. Current DSA/DRA guidance therefore discovers a bounded two-axis capability profile, separates `agent-authored` from `draft-only`, resolves reference intent only when material, defaults interpretation and generation to separate attributable runs, requires a structured image/reference-ingestion handshake, and preserves the existing candidate/selection/adoption/handoff authorities. The read-only MCP smoke may establish schema identity and advertised fields only; actual Agent execution, reference observation and design quality remain live-run and artifact/render evidence. No result in this addendum rewrites the dated experiment claims below or becomes completion evidence.
 
 <a id="dra-executive-decision"></a>
 ## Executive Decision
