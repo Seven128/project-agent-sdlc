@@ -8,5 +8,6 @@
 - src/lib/retirement-*.ts: bounded schema-4 to schema-5 migration, separate from daily operation.
 - src/lib/context-export.ts and source-pack-*.ts: temporary exports and redaction.
 - src/lib/package-source.ts: canonical/package parity; tools/build_package.mjs: clean build.
+- .codex/ty-context-managed/skills/design-resource: optional resource methods, Stitch MCP operation reference, dependency metadata and adoption reference; installation ownership is in contracts/package-managed-surfaces.md and development obligations in contracts/workflow-contract.md within this Context area.
 
 Paths beginning src/ are relative to packages/ty-context. Follow actual exports and tests rather than preserving a copied function inventory.

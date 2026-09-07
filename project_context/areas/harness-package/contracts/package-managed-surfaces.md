@@ -1,8 +1,12 @@
 # Installation and migration ownership
 
-Canonical startup text and Context rules live under .codex/ty-context-managed. packages/ty-context/source-mappings.yaml derives the two runtime assets and package README. Repository authoring instructions are not shipped. A clean build removes stale dist before TypeScript compilation.
+Canonical startup text, Context rules and the optional design-resource Skill live under .codex/ty-context-managed. packages/ty-context/source-mappings.yaml derives the package assets and README. Repository authoring instructions are not shipped. A clean build removes stale dist before TypeScript compilation.
 
 New init installs startup instructions, config, global.md and context.toml only. Ordinary sync manages only the AGENTS block. User prose and files are preserved. Optional custom harness root configuration is explicit; init cannot switch existing installations between roots.
+
+The packaged assets/skills/design-resource directory is an optional resource capability, not a restored role or design command. It includes the Stitch operation and adoption references plus an agents/openai.yaml MCP dependency hint. The user selected Stitch for visual generation and revision: official MCP first, authenticated official Stitch web when needed, with no silent provider substitution. This retains the selected project operation route while leaving product rules and style in Context. The package does not configure host credentials or install a transport; metadata support and live MCP schemas belong to the host/service.
+
+An existing project Skill may read the installed base entry and add target-platform, reference, export and integration methods, resolving relative references from the base directory. This documented composition keeps upstream instructions dependency-owned and local methods project-owned; it has no automatic extension loader or required wrapper format and does not automatically load the base's dependency metadata. Users may instead copy the whole directory, including references and agents metadata, to a host-supported Skill location. Such copies and project wrappers are project-owned: init, sync and upgrade neither install nor update them. Preserve the minimal default footprint and the separation between generic startup obligations and specialized resource methods.
 
 Schema-4 retirement is explicit and limited to the pinned 0.11.0 baseline. The retirement modules own early old-journal checks, exact old-asset hashes, mixed configuration edits, exact default-body equality, original backup, pending CAS publication/resume and current-worktree binding removal. Backups remain outside automatic Skill/default Context discovery. Stop old host sessions explicitly; locks establish only operation exclusion.
 

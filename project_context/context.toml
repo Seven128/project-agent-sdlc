@@ -12,19 +12,19 @@ default = true
 path = "project_context/areas/harness-package/foundation/context-model.md"
 role = "foundation"
 read_policy = "on-demand"
-triggers = ["context model"]
+triggers = ["context model", "design resource references", "controlling sources"]
 
 [[context]]
 path = "project_context/areas/harness-package/contracts/workflow-contract.md"
 role = "contract"
 read_policy = "on-demand"
-triggers = ["workflow contract"]
+triggers = ["workflow contract", "development contract", "adopted design implementation", "capability reuse"]
 
 [[context]]
 path = "project_context/areas/harness-package/contracts/package-managed-surfaces.md"
 role = "contract"
 read_policy = "on-demand"
-triggers = ["package managed surfaces"]
+triggers = ["package managed surfaces", "optional skills", "design resource distribution", "Stitch MCP"]
 
 [[context]]
 path = "project_context/areas/harness-package/contracts/temporary-content-governance.md"

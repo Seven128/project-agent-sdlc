@@ -2,7 +2,7 @@
 
 Tiny Context preserves durable project facts and installs a short development contract in `AGENTS.md`. It helps a coding agent find project-specific requirements and maintain them without prescribing an engineering workflow.
 
-This source version is **0.12.0**, configuration schema **5**, update mode **upgrade-required** for schema-4 installations. See the [migration notes](https://github.com/Seven128/project-tiny-context-harness/blob/main/packages/ty-context/migrations/README.md).
+This source version is **0.12.1**, configuration schema **5**, update mode **upgrade-required** for schema-4 installations. See the [migration notes](https://github.com/Seven128/project-tiny-context-harness/blob/main/packages/ty-context/migrations/README.md).
 
 ## Start with little
 
@@ -60,6 +60,61 @@ triggers = ["payment recovery"]
 ```
 
 `default_files` selects literal body files without activating their children. Areas and workspace folders can be sparse. Ordinary search and inspection discover additional owners; reading them does not authorize changing unrelated projects.
+
+Locate owners from the affected implementation, not only manifest trigger words. Before a substantial capability change, the development contract asks agents to inspect consumers, state/data ownership and dependency direction, and to reuse suitable project and target-platform capabilities. Shared responsibilities that need to evolve together merit a shared owner and migration of affected consumers; visual similarity or a repetition count alone does not. New dependencies or substantial custom machinery merit bounded investigation of material gaps in mature alternatives, reusing decisions whose conditions still hold. A local style or condition fix does not require a fresh architecture or library survey.
+
+## Use design resources as scoped inputs
+
+Keep sources, visuals, prototypes, assets and exploration records outside Context, in an existing resource location or optionally `docs/design-resources/`. The existing page, component or feature owner keeps the current adopted entry, applicable scope and confirmed decisions with reasons. Shared resources belong to a shared owner; other owners link there. Global Context needs only useful brief navigation, not resource inventories or generation history.
+
+For example, an existing owner can declare a local entry:
+
+```markdown
+<!-- ty-context-controlling-source domain="design" path="docs/design-resources/web/results/ADOPTED.md" -->
+
+This entry controls result-list composition and assets for desktop, light theme
+and populated results. Business and state meaning remain with this owner;
+shared visual rules remain with the existing shared design owner. Other regions,
+themes and states retain their current requirements.
+```
+
+The entry can map several nonconflicting scopes to different resources; one applicable scope has one current basis. A newer candidate or a preference during exploration does not supersede an adopted resource. Authorized partial adoption replaces only its scope, reconciles affected rules and preserves the remaining valid references. Images do not silently override business, accessibility or platform constraints, and stale rules must not silently negate an authorized design change. Keep indices as navigation to the decision owner, repairing relevant stale references without concealing unfinished implementation.
+
+Development follows defaults and affected owners to their current entry, then opens the relevant sources, actually views current visuals and inspects necessary prototypes or behavior descriptions. Adopted resources are implementation requirements within their declared scope. Compare the real target runtime under meaningful conditions such as viewport, fonts, theme, data and dynamic state, and repair deviations. The entry identifies illustrative content outside production scope and project adaptation rules; different screen sizes need not be scaled into one image. Report missing inputs, conflicts, platform limits and unverified scope. Ordinary repairs reuse existing resources; they do not require regeneration, another adoption decision or invocation of a resource Skill.
+
+The existing declaration checks a repository-relative local UTF-8 entry. It does not recursively check linked assets or declarations inside that entry, load images, visit external links or add resources to default Context. Declare a shared entry once in its owning Context: duplicate declarations of the same target are diagnosed, even in the same domain. Different targets with overlapping prose scopes require review; the validator cannot infer those collisions. Resource usability and runtime checks are explicit task work. Structural success proves neither adoption, agent viewing, aesthetics nor production correctness.
+
+### Optional resource creation and adoption Skill
+
+The package includes `assets/skills/design-resource/`, containing `SKILL.md`, `references/stitch.md`, `references/adoption.md` and `agents/openai.yaml`. The capability uses **Stitch for visual generation and design revisions**, with official MCP first and the authenticated official Stitch website when a needed operation is unavailable through MCP. It preserves actual editable sources and exports, records reference purpose and necessary versions, distinguishes original outputs from revisions, and reports screenshot-only or missing-input limits honestly. Scope and iterations follow the task; project Context supplies style and design rules. Read the [resource capability](https://github.com/Seven128/project-tiny-context-harness/blob/main/.codex/ty-context-managed/skills/design-resource/SKILL.md), [Stitch operation reference](https://github.com/Seven128/project-tiny-context-harness/blob/main/.codex/ty-context-managed/skills/design-resource/references/stitch.md) and [adoption guidance](https://github.com/Seven128/project-tiny-context-harness/blob/main/.codex/ty-context-managed/skills/design-resource/references/adoption.md), or the corresponding installed files.
+
+The Stitch reference covers live tool/schema discovery, project and screen identity, initial generation, selected-screen edits, requested variants, uncertain-write recovery and retrieval of original HTML/images. It requires actual refreshed output inspection and avoids duplicate generation after an uncertain timeout. Tool signatures are checked against the connected service; a listed tool or successful transport is not proof of a usable design. A local image path in a prompt is not an upload: use an available Stitch attachment/upload operation or the official web flow. If neither Stitch route works, report the missing capability and retain the input bundle; do not silently switch providers. Existing-resource reading and adoption can continue independently.
+
+`agents/openai.yaml` declares the Stitch MCP dependency for hosts that support this metadata. The connection uses `https://stitch.googleapis.com/mcp`; configure authentication through the host's supported mechanism using existing authorized credentials. The Skill does not install a server, obtain credentials or edit global settings. Copying or reading a Skill alone does not make its MCP available, and reading the base from a project wrapper does not automatically load the base's metadata. Supporting hosts can use the dependency hint; other hosts need the connection configured separately. Keep authentication values out of project files and logs. See the [official connection configuration](https://github.com/gemini-cli-extensions/stitch/blob/e22b3aac9a43bce2d740c5172844e9a2eebba37f/gemini-extension-apikey.json) and [Stitch setup](https://stitch.withgoogle.com/docs/mcp/setup).
+
+To opt in, use a project Skill that reads the packaged capability as described below, or copy the **entire** `node_modules/project-tiny-context-harness/assets/skills/design-resource/` directory into your host's supported project Skill location, preserving `references/` and `agents/`. Choose an unused destination; if a local copy exists, review and merge it instead of overwriting project changes. Consult your host's discovery rules and reload as needed. Project Skills and copied Skills are project-owned: `init`, `sync` and `upgrade` do not install or update them. No design directory or resource template is created automatically.
+
+The managed `AGENTS.md` block remains the generic development entry; this optional Skill is for resource work and does not restore retired design commands or replace the startup contract. An old development Skill does not need to remain enabled alongside it. Explicit upgrade handles supported historical managed assets; project-authored Skills and instructions still need their own review. Already loaded instructions do not change when a file is synced, and host loading is distinct from file installation.
+
+### Extend it in a project
+
+For projects with their own resource Skill, keep that entry and compose the packaged capability into it. The project entry can add target-platform handling, reference conventions, export/integration procedures and project-specific checks while reading design requirements from their existing Context owners. Stitch remains the generator and visual editor; a wrapper must not silently substitute another provider. Other tools may inspect or package results and perform an explicitly needed downstream conversion. Route resource tasks to the project entry through the host's Skill discovery or the project's own AGENTS prose. There is no automatic `extends` field or extension-directory scan.
+
+An illustrative project Skill can contain:
+
+```markdown
+Read the project's default Context and affected owners.
+Read node_modules/project-tiny-context-harness/assets/skills/design-resource/SKILL.md
+from the repository root; resolve its relative references from that file's directory.
+Use its Stitch route for generation and visual revision, together with this Skill's
+target-platform and integration methods. Keep durable design rules in their owning Context.
+```
+
+Use the actual installed package location if the project has a different dependency layout. Keep the project Skill outside `node_modules` and the managed AGENTS block. Referencing the packaged base avoids maintaining another copy of its generic instructions: an intentional dependency update updates the base, while local extension methods remain project-owned. Review upstream changes for conflicts with those methods. If a frozen local copy is preferred, update it by deliberate comparison and merge; `sync` does not refresh it. If the referenced package is unavailable, report the missing base instead of pretending it was read.
+
+Confirmed style, visual principles, business meaning and interaction rules belong in Context, with their scope and rationale. Design techniques and tool procedures belong in the project Skill. Exact token values, component implementations and design-source entities remain in their actual code or design files; Context links to them instead of duplicating a second inventory. A project does not need to rename or consolidate its existing Context files to use this capability.
+
+For an existing schema-5 installation, install a package version containing this capability and run its local `ty-context sync` to refresh the managed startup block. This addition does not require a schema migration: project Context, resources, local Skills and prose outside that block remain project-owned. Retain existing adopted entries and resource scopes; moving methods into a wrapper does not require regenerating or re-adopting designs. Review overlapping generic instructions in the local Skill when choosing to reuse the base. Schema-4 installations still follow the explicit upgrade procedure below. These are the package's supported boundaries, not a claim that any particular project's current installation has already been inspected or migrated.
 
 ## Maintain files safely
 

@@ -5,7 +5,7 @@ on:
       expected_version:
         description: Must match the package version.
         required: true
-        default: '0.12.0'
+        default: '0.12.1'
       dry_run:
         description: Prepare and test without publishing.
         required: true

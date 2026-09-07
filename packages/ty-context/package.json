@@ -1,6 +1,6 @@
 {
   "name": "project-tiny-context-harness",
-  "version": "0.12.0",
+  "version": "0.12.1",
   "description": "Durable project facts and a short development contract for coding agents.",
   "license": "MIT",
   "author": "Seven128",
